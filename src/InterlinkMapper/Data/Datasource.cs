@@ -68,9 +68,13 @@ public class Datasource
 		return sq;
 	}
 
-	private SelectQuery GenerateSelectPreviousData(int transactionId, string procMapTable, string procTable, string keyTable, string procIdColumnName, string tranIdColumnName, string placeholderIndentifer)
+	private SelectQuery GenerateSelectPreviousData(int transactionId, Datasource datasource, Database database)
 	{
 		var dest = Destination;
+
+		var procMapTable = database.KeyMapNameBuilder(datasource);
+		var keyTable = database.KeyMapNameBuilder(datasource);
+		var procTable = database.BatchProcessTableName;
 
 		//FROM destination AS d
 		//INNER JOIN key_map AS l, ON d.destination_id = pm.destination_id
@@ -80,15 +84,15 @@ public class Datasource
 		var (from, d) = sq.From(Destination!.Table.TableFullName).As("d");
 		var keymap = from.InnerJoin(keyTable).As("km").On(d, Destination.Sequence.Column);
 		var procmap = from.InnerJoin(procMapTable).As("pm").On(d, Destination.Sequence.Column);
-		var proc = from.InnerJoin(procTable).As("p").On(procmap, procIdColumnName);
+		var proc = from.InnerJoin(procTable).As("p").On(procmap, database.BatchProcessIdColumnName);
 
 		//SELECT d.*, km.key
 		sq.Select(d);
 		KeyColumns.ForEach(x => sq.Select(keymap, x));
 
 		//WHERE p.transaction_id = :transaction_id
-		var pname = placeholderIndentifer + tranIdColumnName;
-		sq.Where(proc, tranIdColumnName).Equal(pname);
+		var pname = database.PlaceholderIdentifier + database.BatchTransctionIdColumnName;
+		sq.Where(proc, database.BatchTransctionIdColumnName).Equal(pname);
 		sq.Parameters.Add(pname, transactionId);
 
 		return sq;
