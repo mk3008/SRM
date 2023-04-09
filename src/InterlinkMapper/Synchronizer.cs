@@ -29,14 +29,14 @@ public class Synchronizer
 		var trn = Database.RegistAndGetBatchTransactionAsNew(cn, datasource, arguments);
 		var proc = Database.RegistAndGetBatchProcessAsNew(cn, trn, datasource);
 
-		var createq = datasource.GenerateCreateBridgeQuery(bridgename, (x) =>
+		var createq = datasource.BuildCreateBridgeTableQuery(bridgename, (x) =>
 		{
 			if (Injector == null) return x;
 			return Injector(x, arguments);
 		});
 		cn.Execute(createq);
 
-		var bridgeq = datasource.GenerateSelectBridgeQuery(bridgename);
+		var bridgeq = datasource.BuildSelectBridgeQuery(bridgename);
 
 		var cnt = cn.ExecuteScalar<int>(bridgeq.ToCountQuery());
 		if (cnt == 0) return;
@@ -55,14 +55,14 @@ public class Synchronizer
 		var trn = Database.RegistAndGetBatchTransactionAsNew(cn, datasource, arguments);
 		var proc = Database.RegistAndGetBatchProcessAsNew(cn, trn, datasource);
 
-		var createq = datasource.GenerateCreateBridgeQuery(bridgename, (x) =>
+		var createq = datasource.BuildCreateBridgeTableQuery(bridgename, (x) =>
 		{
 			if (Injector == null) return x;
 			return Injector(x, arguments);
 		});
 		cn.Execute(createq);
 
-		var bridgeq = datasource.GenerateSelectBridgeQuery(bridgename);
+		var bridgeq = datasource.BuildSelectBridgeQuery(bridgename);
 
 		var cnt = cn.ExecuteScalar<int>(bridgeq.ToCountQuery());
 		if (cnt == 0) return;
@@ -92,7 +92,7 @@ public class Synchronizer
 		var createq = datasource.GenerateSelectDatasourceQueryIfDifference(trn.TransactionId, procMapTable, procTable, keyMapTable, procIdColumnName, tranIdColumnName, palceholder);
 		cn.Execute(createq);
 
-		var bridgeq = datasource.GenerateSelectBridgeQuery(bridgename);
+		var bridgeq = datasource.BuildSelectBridgeQuery(bridgename);
 
 		var cnt = cn.ExecuteScalar<int>(bridgeq.ToCountQuery());
 		if (cnt == 0) return;
@@ -110,14 +110,14 @@ public class Synchronizer
 		var trn = Database.RegistAndGetBatchTransactionAsNew(cn, datasource, arguments);
 		var proc = Database.RegistAndGetBatchProcessAsNew(cn, trn, datasource);
 
-		var createq = datasource.GenerateCreateBridgeQuery(bridgename, (x) =>
+		var createq = datasource.BuildCreateBridgeTableQuery(bridgename, (x) =>
 		{
 			if (Injector == null) return x;
 			return Injector(x, arguments);
 		});
 		cn.Execute(createq);
 
-		var bridgeq = datasource.GenerateSelectBridgeQuery(bridgename);
+		var bridgeq = datasource.BuildSelectBridgeQuery(bridgename);
 
 		var cnt = cn.ExecuteScalar<int>(bridgeq.ToCountQuery());
 		if (cnt == 0) return;

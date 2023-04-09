@@ -26,7 +26,43 @@ public class Datasource
 
 	public List<string> KeyColumns { get; set; } = new();
 
-	private SelectQuery GenerateSelectDatasourceQueryIfNotExists()
+	public SelectQuery BuildSelectBridgeQuery(string bridgeName)
+	{
+		if (Destination == null) throw new NullReferenceException(nameof(Destination));
+		if (Destination.Sequence == null) throw new NullReferenceException(nameof(Destination.Sequence));
+
+		var tmp = new SelectQuery(Query);
+		var cols = tmp.SelectClause!.Select(x => x.Alias).ToList();
+
+		var sq = new SelectQuery();
+		var (f, b) = sq.From(bridgeName).As("b");
+
+		sq.Select(b);
+
+		return sq;
+	}
+
+	public CreateTableQuery BuildCreateBridgeTableQuery(string bridgeName, Func<SelectQuery, SelectQuery>? injector)
+	{
+		if (Destination == null) throw new NullReferenceException(nameof(Destination));
+		if (Destination.Table == null) throw new NullReferenceException(nameof(Destination.Table));
+		if (Destination.Sequence == null) throw new NullReferenceException(nameof(Destination.Sequence));
+
+		var q = BuildSelectDatasourceQueryIfNotExists();
+
+		var sq = new SelectQuery();
+		var ds = sq.With(q).As("_datasource");
+		var (_, d) = sq.From(ds).As("d");
+
+		sq.Select(Destination.Sequence.Command).As(Destination.Sequence.Column);
+		sq.Select(d);
+
+		if (injector != null) sq = injector(sq);
+
+		return sq.ToCreateTableQuery(bridgeName, isTemporary: true);
+	}
+
+	private SelectQuery BuildSelectDatasourceQueryIfNotExists()
 	{
 		//WITH _full_datasource as (SELECT v1, v2, ...)
 		//SELECT d.v1, d.v2, ... FROM _datasource AS d
@@ -65,154 +101,6 @@ public class Datasource
 		};
 
 		//no filter
-		return sq;
-	}
-
-	private SelectQuery GenerateSelectPreviousData(int transactionId, Datasource datasource, Database database)
-	{
-		var dest = Destination;
-
-		var procMapTable = database.KeyMapNameBuilder(datasource);
-		var keyTable = database.KeyMapNameBuilder(datasource);
-		var procTable = database.BatchProcessTableName;
-
-		//FROM destination AS d
-		//INNER JOIN key_map AS l, ON d.destination_id = pm.destination_id
-		//INNER JOIN porcess_map AS pm ON d.destination_id = pm.destination_id
-		//INNER JOIN process AS p ON pm.process_id = p.process_id
-		var sq = new SelectQuery();
-		var (from, d) = sq.From(Destination!.Table.TableFullName).As("d");
-		var keymap = from.InnerJoin(keyTable).As("km").On(d, Destination.Sequence.Column);
-		var procmap = from.InnerJoin(procMapTable).As("pm").On(d, Destination.Sequence.Column);
-		var proc = from.InnerJoin(procTable).As("p").On(procmap, database.BatchProcessIdColumnName);
-
-		//SELECT d.*, km.key
-		sq.Select(d);
-		KeyColumns.ForEach(x => sq.Select(keymap, x));
-
-		//WHERE p.transaction_id = :transaction_id
-		var pname = database.PlaceholderIdentifier + database.BatchTransctionIdColumnName;
-		sq.Where(proc, database.BatchTransctionIdColumnName).Equal(pname);
-		sq.Parameters.Add(pname, transactionId);
-
-		return sq;
-	}
-
-	public SelectQuery GenerateSelectDatasourceQueryIfDifference(int transactionId, string procMapTable, string procTable, string keyTable, string procIdColumnName, string tranIdColumnName, string placeholderIndentifer)
-	{
-		if (Destination == null) throw new Exception();
-
-		var previousq = GenerateSelectPreviousData(transactionId, procMapTable, procTable, keyTable, procIdColumnName, tranIdColumnName, placeholderIndentifer);
-
-		//WITH
-		//_previous as (select previous data)
-		//_current as (select current data)
-		var sq = new SelectQuery();
-		var ctePrevious = sq.With(previousq).As("_previous");
-		var cteCurrent = sq.With(new SelectQuery(Query)).As("_current");
-
-		//FROM _previous AS p
-		//LEFT JOIN _current AS c ON p.key = c.key
-		var (from, p) = sq.From(ctePrevious).As("p");
-		var c = from.LeftJoin(cteCurrent).As("c").On(p, KeyColumns);
-
-		sq.Select(() =>
-		{
-			var exp = new CaseExpression();
-			exp.When(new ColumnValue(c, KeyColumns.First()).IsNull()).Then(new LiteralValue("true"));
-			exp.Else(new LiteralValue("false"));
-			return exp;
-		}).As("_is_deleted");
-		Destination.ReverseOption.ReversalColumns.ForEach(x => sq.Select(() =>
-		{
-			var v = new ColumnValue(p, x);
-			v.AddOperatableValue("*", new LiteralValue("-1"));
-			return v;
-		}).As(x));
-		sq.Select(p);
-
-		//create condition
-		//removed changed
-		var ce = new CaseExpression();
-		ce.When(new ColumnValue(c, KeyColumns.First()).IsNull()).Then(new LiteralValue("true"));
-		ce.Else(new LiteralValue("false"));
-		ValueBase condition = ce;
-
-		//value changed
-		var commonColumns = Destination!.GetDifferenceCheckColumns().Where((string x) => x.IsEqualNoCase(cteCurrent.GetColumnNames())).ToList();
-		commonColumns.ForEach(x =>
-		{
-			//CASE WHEN is_changed THEN true ElSE false END
-			var prevValue = new ColumnValue(p, x);
-			var currentValue = new ColumnValue(c, x);
-
-			var exp = new CaseExpression();
-			exp.When(prevValue.IsNull().And(currentValue.IsNull())).Then(new LiteralValue("false"));
-			exp.When(prevValue.IsNull().And(currentValue.IsNotNull())).Then(new LiteralValue("true"));
-			exp.When(prevValue.IsNotNull().And(currentValue.IsNull())).Then(new LiteralValue("true"));
-			exp.When(prevValue.Equal(currentValue)).Then(new LiteralValue("false"));
-			exp.When(prevValue.NotEqual(currentValue)).Then(new LiteralValue("false"));
-
-			condition = condition.Or(exp);
-		});
-		// WHERE (CASE WHEN .. END OR CASE WHEN .. END OR CASE WHEN .. END)
-		if (condition != null) sq.Where(condition.ToGroup());
-
-		return sq;
-	}
-
-	public CreateTableQuery GenerateCreateBridgeQueryAsDifferent(int transactionId, string procMapTable, string procTable, string keyTable, string procIdColumnName, string tranIdColumnName, string placeholderIndentifer, string bridgeName, Func<SelectQuery, SelectQuery>? injector)
-	{
-		if (Destination == null) throw new NullReferenceException(nameof(Destination));
-		if (Destination.Table == null) throw new NullReferenceException(nameof(Destination.Table));
-		if (Destination.Sequence == null) throw new NullReferenceException(nameof(Destination.Sequence));
-
-		var q = GenerateSelectDatasourceQueryIfDifference(transactionId, procMapTable, procTable, keyTable, procIdColumnName, tranIdColumnName, placeholderIndentifer);
-
-		var sq = new SelectQuery();
-		var ds = sq.With(q).As("_datasource");
-		var (_, d) = sq.From(ds).As("d");
-
-		sq.Select(d);
-
-		if (injector != null) sq = injector(sq);
-
-		return sq.ToCreateTableQuery(bridgeName, isTemporary: true);
-	}
-
-	public CreateTableQuery GenerateCreateBridgeQuery(string bridgeName, Func<SelectQuery, SelectQuery>? injector)
-	{
-		if (Destination == null) throw new NullReferenceException(nameof(Destination));
-		if (Destination.Table == null) throw new NullReferenceException(nameof(Destination.Table));
-		if (Destination.Sequence == null) throw new NullReferenceException(nameof(Destination.Sequence));
-
-		var q = GenerateSelectDatasourceQueryIfNotExists();
-
-		var sq = new SelectQuery();
-		var ds = sq.With(q).As("_datasource");
-		var (_, d) = sq.From(ds).As("d");
-
-		sq.Select(Destination.Sequence.Command).As(Destination.Sequence.Column);
-		sq.Select(d);
-
-		if (injector != null) sq = injector(sq);
-
-		return sq.ToCreateTableQuery(bridgeName, isTemporary: true);
-	}
-
-	public SelectQuery GenerateSelectBridgeQuery(string bridgeName)
-	{
-		if (Destination == null) throw new NullReferenceException(nameof(Destination));
-		if (Destination.Sequence == null) throw new NullReferenceException(nameof(Destination.Sequence));
-
-		var tmp = new SelectQuery(Query);
-		var cols = tmp.SelectClause!.Select(x => x.Alias).ToList();
-
-		var sq = new SelectQuery();
-		var (f, b) = sq.From(bridgeName).As("b");
-
-		sq.Select(b);
-
 		return sq;
 	}
 }
