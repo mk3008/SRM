@@ -14,7 +14,7 @@ public class Datasource
 
 	public string Description { get; set; } = string.Empty;
 
-	public Destination? Destination { get; set; }
+	public Destination Destination { get; set; } = new();
 
 	public string Query { get; set; } = string.Empty;
 

@@ -1,13 +1,10 @@
 ﻿using Carbunql;
 using Carbunql.Building;
 using Carbunql.Clauses;
-using Carbunql.Dapper;
 using Carbunql.Extensions;
 using Carbunql.Values;
 using InterlinkMapper.Data;
-using InterlinkMapper.TableAndMap;
 using System.Data;
-using System.Diagnostics;
 
 namespace InterlinkMapper;
 
@@ -16,7 +13,6 @@ public class Database
 	public string BatchTransctionTableName { get; set; } = "im_transactions";
 
 	public string BatchProcessTableName { get; set; } = "im_processes";
-
 
 	public string BatchTransctionIdColumnName { get; set; } = "transaction_id";
 
