@@ -82,11 +82,11 @@ public class Synchronizer
 		var trn = Database.RegistAndGetBatchTransactionAsNew(cn, datasource, arguments);
 		var proc = Database.RegistAndGetBatchProcessAsNew(cn, trn, datasource);
 
-		var procTable = Database.BatchProcessTableName;
+		var procTable = Database.ProcessTableName;
 		var procMapTable = Database.ProcessMapNameBuilder(datasource.Destination);
 		var keyMapTable = Database.KeyMapNameBuilder(datasource);
-		var procIdColumnName = Database.BatchProcessIdColumnName;
-		var tranIdColumnName = Database.BatchTransctionIdColumnName;
+		var procIdColumnName = Database.ProcessIdColumnName;
+		var tranIdColumnName = Database.TransctionIdColumnName;
 		var palceholder = Database.PlaceholderIdentifier;
 
 		var createq = datasource.GenerateSelectDatasourceQueryIfDifference(trn.TransactionId, procMapTable, procTable, keyMapTable, procIdColumnName, tranIdColumnName, palceholder);

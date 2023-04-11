@@ -1,6 +1,4 @@
-﻿using InterlinkMapper.Data;
-
-namespace InterlinkMapper.TableAndMap;
+﻿namespace InterlinkMapper.Data;
 
 /// <summary>
 /// This class represents the table that stores the relationship between the destination and the process.

@@ -5,9 +5,9 @@ using InterlinkMapper.Data;
 
 namespace InterlinkMapper;
 
-public class NotExistsBridge
+public class NotExistsBridgeService
 {
-	public NotExistsBridge(Datasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
+	public NotExistsBridgeService(Datasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		Datasource = datasource;
 		BridgeName = bridgeName;
@@ -24,7 +24,7 @@ public class NotExistsBridge
 
 	private Destination Destination => Datasource.Destination;
 
-	private bool IsSequenceDatasource => Datasource.IsSequenceDatasource;
+	private bool IsSequenceDatasource => Datasource.IsSequence;
 
 	private string? KeyMapTableName => Datasource.KeyMapTable?.TableFullName;
 

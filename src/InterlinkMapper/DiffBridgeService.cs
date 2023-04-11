@@ -6,9 +6,9 @@ using InterlinkMapper.Data;
 
 namespace InterlinkMapper;
 
-public class DiffBridge
+public class DiffBridgeService
 {
-	public DiffBridge(int tranId, Datasource datasource, string bridgeName, string procMapTableName, string procTableName, string procIdColumnName, string tranIdColumnName, string placeHolderIdentifer, Func<SelectQuery, SelectQuery>? injector = null)
+	public DiffBridgeService(int tranId, Datasource datasource, string bridgeName, string procMapTableName, string procTableName, string procIdColumnName, string tranIdColumnName, string placeHolderIdentifer, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		Datasource = datasource;
 		BridgeName = bridgeName;
@@ -22,15 +22,15 @@ public class DiffBridge
 		if (injector != null) Injector = injector;
 	}
 
-	public DiffBridge(int tranId, Datasource datasource, string bridgeName, Database db, Func<SelectQuery, SelectQuery>? injector = null)
+	public DiffBridgeService(int tranId, Datasource datasource, string bridgeName, Database db, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		Datasource = datasource;
 		BridgeName = bridgeName;
 		TransactionId = tranId;
 		ProcessMapTableName = db.ProcessMapNameBuilder(datasource.Destination);
-		ProcessTableName = db.BatchProcessTableName;
-		ProcessIdColumnName = db.BatchProcessIdColumnName;
-		TransactionIdColumnName = db.BatchTransctionIdColumnName;
+		ProcessTableName = db.ProcessTableName;
+		ProcessIdColumnName = db.ProcessIdColumnName;
+		TransactionIdColumnName = db.TransctionIdColumnName;
 		PlaceholderIdentifer = db.PlaceholderIdentifier;
 
 		if (injector != null) Injector = injector;

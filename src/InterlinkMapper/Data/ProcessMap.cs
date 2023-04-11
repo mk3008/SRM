@@ -1,6 +1,6 @@
-﻿namespace InterlinkMapper.Data
-{
-	internal class ProcessMap
-	{
-	}
-}
+﻿//namespace InterlinkMapper.Data
+//{
+//	internal class ProcessMap
+//	{
+//	}
+//}
