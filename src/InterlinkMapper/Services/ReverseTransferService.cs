@@ -1,16 +1,19 @@
 ﻿using Carbunql;
 using Carbunql.Building;
+using Carbunql.Dapper;
 using Carbunql.Extensions;
 using Carbunql.Values;
 using InterlinkMapper.Data;
+using System.Data;
 
-namespace InterlinkMapper;
+namespace InterlinkMapper.Services;
 
-public class DiffBridgeService
+public class ReverseTransferService
 {
-	public DiffBridgeService(int tranId, Datasource datasource, string bridgeName, string procMapTableName, string procTableName, string procIdColumnName, string tranIdColumnName, string placeHolderIdentifer, Func<SelectQuery, SelectQuery>? injector = null)
+	public ReverseTransferService(IDbConnection cn, int tranId, Datasource ds, string bridgeName, string procMapTableName, string procTableName, string procIdColumnName, string tranIdColumnName, string placeHolderIdentifer, Func<SelectQuery, SelectQuery>? injector = null)
 	{
-		Datasource = datasource;
+		Connection = cn;
+		DS = ds;
 		BridgeName = bridgeName;
 		TransactionId = tranId;
 		ProcessMapTableName = procMapTableName;
@@ -22,12 +25,13 @@ public class DiffBridgeService
 		if (injector != null) Injector = injector;
 	}
 
-	public DiffBridgeService(int tranId, Datasource datasource, string bridgeName, Database db, Func<SelectQuery, SelectQuery>? injector = null)
+	public ReverseTransferService(IDbConnection cn, int tranId, Datasource ds, string bridgeName, Database db, Func<SelectQuery, SelectQuery>? injector = null)
 	{
-		Datasource = datasource;
+		Connection = cn;
+		DS = ds;
 		BridgeName = bridgeName;
 		TransactionId = tranId;
-		ProcessMapTableName = db.ProcessMapNameBuilder(datasource.Destination);
+		ProcessMapTableName = db.ProcessMapNameBuilder(ds.Destination);
 		ProcessTableName = db.ProcessTableName;
 		ProcessIdColumnName = db.ProcessIdColumnName;
 		TransactionIdColumnName = db.TransctionIdColumnName;
@@ -36,23 +40,25 @@ public class DiffBridgeService
 		if (injector != null) Injector = injector;
 	}
 
-	public string BridgeName { get; init; }
-
-	public Datasource Datasource { get; init; }
+	private IDbConnection Connection { get; init; }
 
 	public int TransactionId { get; init; }
 
-	private string Query => Datasource.Query;
+	public string BridgeName { get; init; }
 
-	private List<string> KeyColumns => Datasource.KeyColumns;
+	public Datasource DS { get; init; }
 
-	private Destination Destination => Datasource.Destination;
+	private string DatasourceQuery => DS.Query;
+
+	private List<string> KeyColumns => DS.KeyColumns;
+
+	private Destination Destination => DS.Destination;
 
 	private string DestinationTableName => Destination.Table.TableFullName;
 
 	//private bool IsSequenceDatasource => Datasource.IsSequenceDatasource;
 
-	private string? KeyMapTableName => Datasource.KeyMapTable?.TableFullName;
+	private string? KeyMapTableName => DS.KeyMapTable?.TableFullName;
 
 	private Sequence Sequence => Destination.Sequence;
 
@@ -70,9 +76,17 @@ public class DiffBridgeService
 
 	private ReverseOption ReverseOption => Destination.ReverseOption;
 
-	public CreateTableQuery GetCreateTableQuery()
+	public bool IsStarted { get; private set; } = false;
+
+	public SelectQuery Query => GetSelectQuery();
+
+	private List<string> Columns { get; set; } = new();
+
+	public SelectQuery Initialize()
 	{
-		var q = GetDatasourceQuery();
+		if (IsStarted) throw new InvalidOperationException();
+
+		var q = GetFilteredDatasourceQuery();
 
 		var sq = new SelectQuery();
 		var ds = sq.With(q).As("_datasource");
@@ -82,12 +96,54 @@ public class DiffBridgeService
 
 		if (Injector != null) sq = Injector(sq);
 
-		return sq.ToCreateTableQuery(BridgeName, isTemporary: true);
+		sq.SelectClause!.ToList().ForEach(x => Columns.Add(x.Alias));
+
+		var cq = sq.ToCreateTableQuery(BridgeName, isTemporary: true);
+
+		Connection.Execute(cq);
+
+		IsStarted = true;
+
+		return GetSelectQuery();
 	}
 
-	private SelectQuery GetDatasourceQuery()
+	public void ReverseTransfer()
 	{
-		var tmpq = GetDatasourceDetailQuery();
+
+	}
+
+	public void AllowRetarnsfer()
+	{
+
+	}
+
+	public void MapWithDatasource()
+	{
+
+	}
+
+	public void MapWithProcess()
+	{
+
+	}
+
+
+
+	private SelectQuery GetSelectQuery()
+	{
+		if (!IsStarted) throw new InvalidOperationException();
+
+		var sq = new SelectQuery();
+		var (_, b) = sq.From(BridgeName).As("b");
+
+		Columns.ForEach(x => sq.Select(b, x));
+
+		return sq;
+	}
+
+	private SelectQuery GetFilteredDatasourceQuery()
+	{
+		var tmpq = GetDifferenceDetailsDatasourceQuery();
 		var sq = new SelectQuery();
 
 		var (from, d) = sq.From(tmpq).As("d");
@@ -110,7 +166,7 @@ public class DiffBridgeService
 		return sq;
 	}
 
-	private SelectQuery GetDatasourceDetailQuery()
+	private SelectQuery GetDifferenceDetailsDatasourceQuery()
 	{
 		var previousq = GetPreviousDatasourceQuery();
 
@@ -119,7 +175,7 @@ public class DiffBridgeService
 		//_current as (select current data)
 		var sq = new SelectQuery();
 		var ctePrevious = sq.With(previousq).As("_previous");
-		var cteCurrent = sq.With(new SelectQuery(Query)).As("_current");
+		var cteCurrent = sq.With(new SelectQuery(DatasourceQuery)).As("_current");
 
 		//FROM _previous AS p
 		//LEFT JOIN _current AS c ON p.key = c.key
@@ -147,7 +203,7 @@ public class DiffBridgeService
 		}).As("_deleted");
 
 		//SELECT value flag
-		var commonColumns = Destination!.GetDifferenceCheckColumns().Where((string x) => x.IsEqualNoCase(cteCurrent.GetColumnNames())).ToList();
+		var commonColumns = Destination!.GetDifferenceCheckColumns().Where((x) => x.IsEqualNoCase(cteCurrent.GetColumnNames())).ToList();
 		commonColumns.ForEach(x =>
 		{
 			//CASE WHEN value is changed THEN TRUE ElSE FALSE END AS _changed_val
