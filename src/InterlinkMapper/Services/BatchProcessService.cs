@@ -48,41 +48,4 @@ public class BatchProcessService
 
 		return new BatchProcess(id, transactionId, datasource);
 	}
-
-	//public void Mapping(SelectQuery brigeQuery)
-	//{
-	//	//with _bridge as (select ...)
-	//	//select :process_id as process_id, b.dest_id from _bridge as b
-	//	//where b.dest_id is not null
-	//	var pname = PlaceholderIdentifier + ProcessIdColumn;
-
-	//	var sq = new SelectQuery();
-	//	var bridge = sq.With(brigeQuery).As("_bridge");
-	//	var (_, b) = sq.From(bridge).As("b");
-	//	sq.Select(b, DestinaionIdColumn);
-	//	sq.Select(pname).As(ProcessIdColumn);
-	//	sq.Parameters.Add(pname, Process.ProcessId);
-
-	//	sq.Where(b, DestinaionIdColumn).IsNotNull();
-
-	//	//insert into process map
-	//	var iq = sq.ToInsertQuery(ProcessMapTable);
-
-	//	Connection.Execute(iq);
-	//}
-
-	//public void CancelMapping(SelectQuery brigeQuery)
-	//{
-	//	//with _bridge as (select ...)
-	//	//select b.destination_id from _bridge as b
-	//	var sq = new SelectQuery();
-	//	var bridge = sq.With(brigeQuery).As("_bridge");
-	//	var (_, b) = sq.From(bridge).As("b");
-	//	sq.Select(b, DestinaionIdColumn);
-
-	//	//delete from key map
-	//	var dq = sq.ToDeleteQuery(ProcessMapTable, new[] { DestinaionIdColumn });
-
-	//	Connection.Execute(dq);
-	//}
 }

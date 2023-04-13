@@ -8,6 +8,8 @@ public class Destination
 
 	public DbTable Table { get; set; } = new();
 
+	public DbTable ProcessMap { get; set; } = new();
+
 	public Sequence Sequence { get; set; } = new();
 
 	public string Description { get; set; } = string.Empty;

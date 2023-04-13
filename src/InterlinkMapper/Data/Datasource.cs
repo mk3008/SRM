@@ -16,6 +16,8 @@ public class Datasource
 
 	public DbTable RelationTable { get; set; } = new();
 
+	public DbTable HoldTable { get; set; } = new();
+
 	public bool IsSequence { get; set; } = false;
 
 	public List<string> KeyColumns { get; set; } = new();

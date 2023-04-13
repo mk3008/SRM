@@ -59,18 +59,18 @@ public class BatchTransactionService
 		return new BatchTransaction(id, datasource, arguments);
 	}
 
-	public BatchTransaction FindById(int transactinId)
-	{
+	//public BatchTransaction FindById(int transactinId)
+	//{
 
-	}
+	//}
 
-	public List<BatchTransaction> FindByDatasource(int datasourceId)
-	{
+	//public List<BatchTransaction> FindByDatasource(int datasourceId)
+	//{
 
-	}
+	//}
 
-	public List<BatchTransaction> FindByDestination(int destinationId)
-	{
+	//public List<BatchTransaction> FindByDestination(int destinationId)
+	//{
 
-	}
+	//}
 }

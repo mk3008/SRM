@@ -1,16 +1,15 @@
 ﻿using Carbunql;
 using Carbunql.Building;
 using Carbunql.Dapper;
-using Carbunql.Values;
-using Dapper;
 using InterlinkMapper.Data;
 using System.Data;
 
 namespace InterlinkMapper.Services;
 
-public class NotExistsBridgeService
+public class BridgeService
 {
-	public NotExistsBridgeService(IDbConnection cn)
+
+	public BridgeService(IDbConnection cn)
 	{
 		Connection = cn;
 	}
@@ -19,9 +18,7 @@ public class NotExistsBridgeService
 
 	public SelectQuery CreateAsNew(Datasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
 	{
-		var keymapTable = datasource.KeyMapTable.TableFullName;
-
-		var q = GetFilteredDatasourceQuery(datasource, keymapTable);
+		var q = GetDatasourceQuery(datasource);
 
 		var sq = new SelectQuery();
 		var ds = sq.With(q).As("_datasource");
@@ -43,7 +40,7 @@ public class NotExistsBridgeService
 		return GetSelectQuery(bridgeName, columns);
 	}
 
-	private SelectQuery GetFilteredDatasourceQuery(Datasource ds, string keymapTable)
+	private SelectQuery GetDatasourceQuery(Datasource ds)
 	{
 		//WITH _full_datasource as (SELECT v1, v2, ...)
 		//SELECT d.v1, d.v2, ... FROM _datasource AS d
@@ -51,37 +48,6 @@ public class NotExistsBridgeService
 		var (f, d) = sq.From(cteDatasource).As("d");
 		sq.Select(d);
 
-		if (string.IsNullOrEmpty(keymapTable)) return sq;
-
-		if (ds.IsSequence && ds.KeyColumns.Count == 1)
-		{
-			var seq = ds.KeyColumns.First();
-
-			//WHERE (SELECT MAX(m.seq) FROM map AS m) < d.key
-			sq.Where(() =>
-			{
-				var subq = new SelectQuery();
-				subq.From(keymapTable).As("m");
-				subq.Select($"max(m.{seq})");
-
-				return subq.ToValue().AddOperatableValue("<", new ColumnValue(d, "key"));
-			});
-			return sq;
-		};
-
-		if (ds.KeyColumns.Any())
-		{
-			var key = ds.KeyColumns[0];
-
-			//LEFT JOIN map AS m ON d.key1 = m.key1 AND d.key2 = m.key2
-			//WHERE m.key IS NULL
-			var m = f.LeftJoin(keymapTable).As("m").On(d, ds.KeyColumns);
-			sq.Where(m, key).IsNull();
-
-			return sq;
-		};
-
-		//no filter
 		return sq;
 	}
 

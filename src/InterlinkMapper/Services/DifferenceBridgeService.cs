@@ -8,9 +8,9 @@ using System.Data;
 
 namespace InterlinkMapper.Services;
 
-public class ReverseDifferenceBridgeService
+public class DifferenceBridgeService
 {
-	public ReverseDifferenceBridgeService(IDbConnection cn, Database db)
+	public DifferenceBridgeService(IDbConnection cn, Database db)
 	{
 		Connection = cn;
 
