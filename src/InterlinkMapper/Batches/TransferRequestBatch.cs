@@ -14,14 +14,6 @@ internal class TransferRequestBatch
 		Connection = cn;
 		Datasource = datasource;
 		Query = selectBridgeQuery;
-
-		var table = new DbTable()
-		{
-			TableName = db.ProcessMapNameBuilder(Datasource.Destination),
-		};
-		table.Columns.Add(db.ProcessIdColumnName);
-		table.Columns.Add(datasource.Destination.Sequence.Column);
-		ProcessMapTable = table;
 	}
 
 	private IDbConnection Connection { get; init; }
@@ -29,8 +21,6 @@ internal class TransferRequestBatch
 	private Datasource Datasource { get; init; }
 
 	private SelectQuery Query { get; init; }
-
-	private DbTable ProcessMapTable { get; init; }
 
 	public int Postpone()
 	{

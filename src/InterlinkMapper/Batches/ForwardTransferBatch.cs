@@ -55,33 +55,5 @@ public class ForwardTransferBatch
 		return Connection.Execute(iq);
 	}
 
-	public int AddHold()
-	{
-		var table = Datasource.HoldTable;
-		var seq = Datasource.Destination.Sequence;
 
-		var sq = new SelectQuery();
-		var (_, b) = sq.From(Query).As("b");
-		sq.Select(b);
-		sq.SelectClause!.FilterInColumns(table.Columns);
-		sq.Where(new ColumnValue(b, seq.Column).IsNull());
-
-		var iq = Query.ToInsertQuery(table.TableFullName);
-		return Connection.Execute(iq);
-	}
-
-	public int RemoveHold()
-	{
-		var table = Datasource.HoldTable;
-		var seq = Datasource.Destination.Sequence;
-
-		var sq = new SelectQuery();
-		var (_, b) = sq.From(Query).As("b");
-		sq.Select(b);
-		sq.SelectClause!.FilterInColumns(table.Columns);
-		sq.Where(new ColumnValue(b, seq.Column).IsNotNull());
-
-		var dq = sq.ToDeleteQuery(table.TableFullName, Datasource.KeyColumns);
-		return Connection.Execute(dq);
-	}
 }
