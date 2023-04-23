@@ -8,9 +8,9 @@ using System.Data;
 
 namespace InterlinkMapper.Services;
 
-public class TableDefinitionService
+public class DbEnvironmentService
 {
-	public TableDefinitionService(IDbConnection cn, ILogger? logger = null)
+	public DbEnvironmentService(IDbConnection cn, ILogger? logger = null)
 	{
 		Connection = cn;
 		Logger = logger;
@@ -21,7 +21,7 @@ public class TableDefinitionService
 	private IDbConnection Connection { get; init; }
 
 
-	public void CreateOrDefault(DbTableDefinition def)
+	public void CreateTableOrDefault(DbTableDefinition def)
 	{
 		var sql = def.ToCreateCommandText();
 		Logger?.LogInformation("create table sql : {Sql}", sql);

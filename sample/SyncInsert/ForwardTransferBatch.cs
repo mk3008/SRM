@@ -51,12 +51,12 @@ public class ForwardTransferBatch
 	/// <param name="ds"></param>
 	private void CreateSystemTable(IDatasource ds)
 	{
-		var service = new TableDefinitionService(Connection, Logger);
+		var service = new DbEnvironmentService(Connection, Logger);
 
-		if (ds.HasRelationMapTable()) service.CreateOrDefault(ds.RelationMapTable);
-		if (ds.HasKeyMapTable()) service.CreateOrDefault(ds.KeyMapTable);
-		if (ds.HasHoldTable()) service.CreateOrDefault(ds.HoldTable);
-		if (ds.HasRequestTable()) service.CreateOrDefault(ds.RequestTable);
+		if (ds.HasRelationMapTable()) service.CreateTableOrDefault(ds.RelationMapTable);
+		if (ds.HasKeyMapTable()) service.CreateTableOrDefault(ds.KeyMapTable);
+		if (ds.HasHoldTable()) service.CreateTableOrDefault(ds.HoldTable);
+		if (ds.HasRequestTable()) service.CreateTableOrDefault(ds.RequestTable);
 	}
 
 	/// <summary>

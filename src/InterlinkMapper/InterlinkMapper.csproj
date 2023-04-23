@@ -46,7 +46,7 @@
     <Compile Include="Data\DbTableDefinition.cs" />
     <Compile Include="Services\ForwardTransferService.cs" />
     <Compile Include="Services\NotExistsBridgeService.cs" />
-    <Compile Include="Services\TableDefinitionService.cs" />
+    <Compile Include="Services\DbEnvironmentService.cs" />
   </ItemGroup>
 
   <ItemGroup>
