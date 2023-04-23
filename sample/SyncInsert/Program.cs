@@ -19,6 +19,7 @@ var ds = new DbDatasource()
 {
 	Destination = dest,
 	KeyColumns = new() { "sale_id" },
+	IsSequence = true,
 	KeyMapTable = new()
 	{
 		TableName = "sale_journals__key_sales",

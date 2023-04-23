@@ -1,5 +1,6 @@
 ﻿using Carbunql;
 using Carbunql.Building;
+using Carbunql.Clauses;
 using Carbunql.Dapper;
 using Carbunql.Extensions;
 using Carbunql.Values;
@@ -107,11 +108,9 @@ public class NotExistsBridgeService
 			//WHERE (SELECT MAX(m.seq) FROM map AS m) < d.key
 			sq.Where(() =>
 			{
-				var subq = new SelectQuery();
-				subq.From(keymapTable).As("m");
-				subq.Select($"max(m.{seq})");
-
-				return subq.ToValue().AddOperatableValue("<", new ColumnValue(d, "key"));
+				var v = GetMaxIdSelectValue(keymapTable, seq);
+				v.AddOperatableValue("<", new ColumnValue(d, seq));
+				return v;
 			});
 			return sq;
 		};
@@ -140,5 +139,13 @@ public class NotExistsBridgeService
 		columns.ForEach(x => sq.Select(b, x));
 
 		return sq;
+	}
+
+	private static ValueBase GetMaxIdSelectValue(string keymapTable, string datasourceSeqColumn)
+	{
+		var sq = new SelectQuery();
+		var (_, m) = sq.From(keymapTable).As("m");
+		sq.Select($"coalesce(max(m.{datasourceSeqColumn}),0)").As(datasourceSeqColumn);
+		return sq.ToValue();
 	}
 }
