@@ -27,6 +27,14 @@ var ds = new Datasource()
 			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8", IsUniqueKey = true }
 		},
 	},
+	RelationMapTable = new()
+	{
+		TableName = "sale_journals__rel_sales",
+		ColumnDefinitions = new() {
+			new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
+			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" }
+		},
+	},
 	Query = @"
 select
 	s.sale_date,
