@@ -16,7 +16,7 @@ public interface IDatasource
 
 	DbTableDefinition RequestTable { get; }
 
-	bool IsSequence { get; }
+	bool IsSupportSequenceTransfer { get; }
 
 	List<string> KeyColumns { get; }
 }

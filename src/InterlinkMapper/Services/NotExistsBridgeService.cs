@@ -27,8 +27,13 @@ public class NotExistsBridgeService
 
 	private IDbConnection Connection { get; init; }
 
-	public string HoldJudgmentColumnName { get; init; }
+	private string HoldJudgmentColumnName { get; init; }
 
+	/// <summary>
+	/// Generate a bridge name.
+	/// </summary>
+	/// <param name="datasource"></param>
+	/// <returns></returns>
 	public static string GenerateBridgeName(IDatasource datasource)
 	{
 		using MD5 md5Hash = MD5.Create();
@@ -43,6 +48,13 @@ public class NotExistsBridgeService
 		return sb.ToString();
 	}
 
+	/// <summary>
+	/// Create a new bridge table.
+	/// </summary>
+	/// <param name="datasource"></param>
+	/// <param name="bridgeName"></param>
+	/// <param name="injector"></param>
+	/// <returns></returns>
 	public SelectQuery CreateAsNew(IDatasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		var keymapTable = datasource.KeyMapTable.TableFullName;
@@ -76,6 +88,11 @@ public class NotExistsBridgeService
 		return GetSelectQuery(bridgeName, columns);
 	}
 
+	/// <summary>
+	/// Returns the number of records.
+	/// </summary>
+	/// <param name="bridgeQuery"></param>
+	/// <returns></returns>
 	public int GetCount(SelectQuery bridgeQuery)
 	{
 		var q = bridgeQuery.ToCountQuery();
@@ -86,38 +103,49 @@ public class NotExistsBridgeService
 		return cnt;
 	}
 
+	/// <summary>
+	/// SELECT columns FROM datasource WHERE not_forwarded
+	/// </summary>
+	/// <param name="ds"></param>
+	/// <param name="keymapTable"></param>
+	/// <returns></returns>
 	private SelectQuery GetFilteredDatasourceQuery(IDatasource ds, string keymapTable)
 	{
 		//WITH _full_datasource as (SELECT v1, v2, ...)
 		//SELECT d.v1, d.v2, ... FROM _datasource AS d
-		var (sq, cteDatasource) = new SelectQuery(ds.Query).ToCTE("_full_datasource");
-		var (f, d) = sq.From(cteDatasource).As("d");
+		var (sq, fullds) = new SelectQuery(ds.Query).ToCTE("_full_datasource");
+		var (f, d) = sq.From(fullds).As("d");
 		sq.Select(d);
 
+		//If there is no column for hold judgment, it is fixed to "false".
+		//In other words, all are treated as transfer targets.
 		if (!sq.SelectClause!.Where(x => x.Alias.IsEqualNoCase(HoldJudgmentColumnName)).Any())
 		{
 			sq.Select("false").As(HoldJudgmentColumnName);
 		}
 
+		//If there is no keymap, select all (assuming proper filtering in the datasource query).
 		if (string.IsNullOrEmpty(keymapTable)) return sq;
 
-		if (ds.IsSequence && ds.KeyColumns.Count == 1)
+		//If Sequence transfer is supported, simplify forwarded key determination.
+		if (ds.IsSupportSequenceTransfer && ds.KeyColumns.Count == 1)
 		{
 			var seq = ds.KeyColumns.First();
 
-			//WHERE (SELECT MAX(m.seq) FROM map AS m) < d.key
+			//WHERE (SELECT COALESCE(MAX(m.seq), 0) AS seq FROM map AS m) < d.key
 			sq.Where(() =>
 			{
-				var v = GetMaxIdSelectValue(keymapTable, seq);
+				var v = GetMaxIdOrDefaultValue(keymapTable, seq);
 				v.AddOperatableValue("<", new ColumnValue(d, seq));
 				return v;
 			});
 			return sq;
 		};
 
+		//If Sequence transfer is not supported, check individual keys.
 		if (ds.KeyColumns.Any())
 		{
-			var key = ds.KeyColumns[0];
+			var key = ds.KeyColumns.First();
 
 			//LEFT JOIN map AS m ON d.key1 = m.key1 AND d.key2 = m.key2
 			//WHERE m.key1 IS NULL
@@ -127,21 +155,31 @@ public class NotExistsBridgeService
 			return sq;
 		};
 
-		//no filter
 		return sq;
 	}
 
-	private static SelectQuery GetSelectQuery(string bridgeName, List<string> columns)
+	/// <summary>
+	/// SELECT columns FROM bridgeTable
+	/// </summary>
+	/// <param name="bridgeTable"></param>
+	/// <param name="columns"></param>
+	/// <returns></returns>
+	private static SelectQuery GetSelectQuery(string bridgeTable, List<string> columns)
 	{
 		var sq = new SelectQuery();
-		var (_, b) = sq.From(bridgeName).As("b");
-
-		columns.ForEach(x => sq.Select(b, x));
-
+		var (_, b) = sq.From(bridgeTable).As("b");
+		sq.Select(b);
+		sq.SelectClause!.FilterInColumns(columns);
 		return sq;
 	}
 
-	private static ValueBase GetMaxIdSelectValue(string keymapTable, string datasourceSeqColumn)
+	/// <summary>
+	/// (SELECT COALESCE(MAX(datasourceSeqColumn), 0) FROM keymapTable)
+	/// </summary>
+	/// <param name="keymapTable"></param>
+	/// <param name="datasourceSeqColumn"></param>
+	/// <returns></returns>
+	private static ValueBase GetMaxIdOrDefaultValue(string keymapTable, string datasourceSeqColumn)
 	{
 		var sq = new SelectQuery();
 		sq.From(keymapTable).As("m");

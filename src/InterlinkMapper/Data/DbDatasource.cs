@@ -20,7 +20,7 @@ public class DbDatasource : IDatasource
 
 	public DbTableDefinition RequestTable { get; set; } = new();
 
-	public bool IsSequence { get; set; } = false;
+	public bool IsSupportSequenceTransfer { get; set; } = false;
 
 	public List<string> KeyColumns { get; set; } = new();
 }
