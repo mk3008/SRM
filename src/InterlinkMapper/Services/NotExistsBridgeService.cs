@@ -2,20 +2,42 @@
 using Carbunql.Building;
 using Carbunql.Dapper;
 using Carbunql.Values;
+using Cysharp.Text;
 using Dapper;
 using InterlinkMapper.Data;
+using Microsoft.Extensions.Logging;
 using System.Data;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace InterlinkMapper.Services;
 
 public class NotExistsBridgeService
 {
-	public NotExistsBridgeService(IDbConnection cn)
+	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null)
 	{
 		Connection = cn;
+		Logger = logger;
 	}
 
+	private readonly ILogger? Logger;
+
 	private IDbConnection Connection { get; init; }
+
+	public string GenerateBridgeName(Datasource datasource)
+	{
+		using MD5 md5Hash = MD5.Create();
+
+		byte[] data = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(datasource.DatasourceName));
+		var sb = ZString.CreateStringBuilder();
+		sb.Append("_");
+		for (int i = 0; i < 4; i++)
+		{
+			sb.Append(data[i].ToString("x2"));
+		}
+		return sb.ToString();
+	}
 
 	public SelectQuery CreateAsNew(Datasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
 	{
@@ -38,9 +60,21 @@ public class NotExistsBridgeService
 
 		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
 
+		Logger?.LogInformation(cq.ToCommand().CommandText);
+
 		Connection.Execute(cq);
 
 		return GetSelectQuery(bridgeName, columns);
+	}
+
+	public int GetCount(SelectQuery bridgeQuery)
+	{
+		var q = bridgeQuery.ToCountQuery();
+		Logger?.LogInformation(q.ToCommand().CommandText);
+
+		var cnt = Connection.ExecuteScalar<int>(q);
+		Logger?.LogInformation($"count : {cnt} row(s)");
+		return cnt;
 	}
 
 	private SelectQuery GetFilteredDatasourceQuery(Datasource ds, string keymapTable)

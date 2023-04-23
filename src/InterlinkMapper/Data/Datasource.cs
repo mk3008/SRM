@@ -12,13 +12,22 @@ public class Datasource
 
 	public string Query { get; set; } = string.Empty;
 
-	public DbTable KeyMapTable { get; set; } = new();
+	public DbTable ProcessMapTable => Destination.ProcessMap;
 
-	public DbTable RelationTable { get; set; } = new();
+	public DbTableDefinition KeyMapTable { get; set; } = new();
 
-	public DbTable HoldTable { get; set; } = new();
+	public DbTableDefinition RelationMapTable { get; set; } = new();
+
+	public DbTableDefinition HoldTable { get; set; } = new();
+
+	public DbTableDefinition RequestTable { get; set; } = new();
 
 	public bool IsSequence { get; set; } = false;
 
 	public List<string> KeyColumns { get; set; } = new();
+
+	public bool HasKeyMapTable => (string.IsNullOrEmpty(KeyMapTable.GetTableFullName()) ? false : true);
+	public bool HasRelationMapTable => (string.IsNullOrEmpty(RelationMapTable.GetTableFullName()) ? false : true);
+	public bool HasHoldTable => (string.IsNullOrEmpty(HoldTable.GetTableFullName()) ? false : true);
+	public bool HasRequestTable => (string.IsNullOrEmpty(RequestTable.GetTableFullName()) ? false : true);
 }

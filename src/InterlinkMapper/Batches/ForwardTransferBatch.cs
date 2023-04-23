@@ -36,7 +36,7 @@ public class ForwardTransferBatch
 
 	public int PreventRetransfer() => Insert(Datasource.KeyMapTable);
 
-	public int MapWithDatasource() => Insert(Datasource.RelationTable);
+	public int MapWithDatasource() => Insert(Datasource.RelationMapTable);
 
 	public int MapWithProcess() => Insert(ProcessMapTable);
 

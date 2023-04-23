@@ -7,14 +7,50 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Batches\**" />
+    <Compile Remove="Configs\**" />
+    <Compile Remove="Data\**" />
+    <Compile Remove="Services\**" />
     <Compile Remove="Tables\**" />
+    <EmbeddedResource Remove="Batches\**" />
+    <EmbeddedResource Remove="Configs\**" />
+    <EmbeddedResource Remove="Data\**" />
+    <EmbeddedResource Remove="Services\**" />
     <EmbeddedResource Remove="Tables\**" />
+    <None Remove="Batches\**" />
+    <None Remove="Configs\**" />
+    <None Remove="Data\**" />
+    <None Remove="Services\**" />
     <None Remove="Tables\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Database.cs" />
+    <Compile Remove="DictionaryExtension.cs" />
+    <Compile Remove="KeyMapService.cs" />
+    <Compile Remove="RelationMapService.cs" />
+    <Compile Remove="StringExtension.cs" />
+    <Compile Remove="Synchronizer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Data\ColumnDefinition.cs" />
+    <Compile Include="Data\Datasource.cs" />
+    <Compile Include="Data\DbTable.cs" />
+    <Compile Include="Data\Destination.cs" />
+    <Compile Include="Data\IDbTableDefinition.cs" />
+    <Compile Include="Data\ReverseOption.cs" />
+    <Compile Include="Data\Sequence.cs" />
+    <Compile Include="Data\DbTableDefinition.cs" />
+    <Compile Include="Services\ForwardTransferService.cs" />
+    <Compile Include="Services\NotExistsBridgeService.cs" />
+    <Compile Include="Services\TableDefinitionService.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Carbunql" Version="0.2.3" />
     <PackageReference Include="Carbunql.Dapper" Version="0.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-preview.3.23174.8" />
   </ItemGroup>
 
 </Project>
