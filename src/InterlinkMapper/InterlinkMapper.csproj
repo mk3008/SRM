@@ -35,10 +35,12 @@
 
   <ItemGroup>
     <Compile Include="Data\ColumnDefinition.cs" />
-    <Compile Include="Data\Datasource.cs" />
+    <Compile Include="Data\DbDatasource.cs" />
     <Compile Include="Data\DbTable.cs" />
-    <Compile Include="Data\Destination.cs" />
+    <Compile Include="Data\DbDestination.cs" />
+    <Compile Include="Data\IDatasource.cs" />
     <Compile Include="Data\IDbTableDefinition.cs" />
+    <Compile Include="Data\IDestination.cs" />
     <Compile Include="Data\ReverseOption.cs" />
     <Compile Include="Data\Sequence.cs" />
     <Compile Include="Data\DbTableDefinition.cs" />

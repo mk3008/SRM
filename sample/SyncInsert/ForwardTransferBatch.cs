@@ -27,16 +27,16 @@ public class ForwardTransferBatch
 	/// Execute the transfer process.
 	/// </summary>
 	/// <param name="ds"></param>
-	public void Execute(Datasource ds)
+	public void Execute(IDatasource ds)
 	{
-		Logger!.LogInformation($"start {ds.Destination.Table.GetTableFullName()} <- {ds.DatasourceName}");
+		Logger!.LogInformation("start {Destination} <- {Datasource}", ds.Destination.Table.GetTableFullName(), ds.DatasourceName);
 
 		CreateSystemTable(ds);
 
 		var bridge = CreateBridgeTable(ds);
 		if (bridge == null)
 		{
-			Logger?.LogInformation("Transfer target not found");
+			Logger?.LogWarning("Transfer target not found");
 			return;
 		}
 
@@ -49,14 +49,14 @@ public class ForwardTransferBatch
 	/// Generate the tables used by the system.
 	/// </summary>
 	/// <param name="ds"></param>
-	private void CreateSystemTable(Datasource ds)
+	private void CreateSystemTable(IDatasource ds)
 	{
 		var service = new TableDefinitionService(Connection, Logger);
 
-		if (ds.HasRelationMapTable) service.CreateOrDefault(ds.RelationMapTable);
-		if (ds.HasKeyMapTable) service.CreateOrDefault(ds.KeyMapTable);
-		if (ds.HasHoldTable) service.CreateOrDefault(ds.HoldTable);
-		if (ds.HasRequestTable) service.CreateOrDefault(ds.RequestTable);
+		if (ds.HasRelationMapTable()) service.CreateOrDefault(ds.RelationMapTable);
+		if (ds.HasKeyMapTable()) service.CreateOrDefault(ds.KeyMapTable);
+		if (ds.HasHoldTable()) service.CreateOrDefault(ds.HoldTable);
+		if (ds.HasRequestTable()) service.CreateOrDefault(ds.RequestTable);
 	}
 
 	/// <summary>
@@ -64,10 +64,10 @@ public class ForwardTransferBatch
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <returns></returns>
-	private SelectQuery? CreateBridgeTable(Datasource ds)
+	private SelectQuery? CreateBridgeTable(IDatasource ds)
 	{
 		var service = new NotExistsBridgeService(Connection, Logger);
-		if (string.IsNullOrEmpty(BridgeName)) BridgeName = service.GenerateBridgeName(ds);
+		if (string.IsNullOrEmpty(BridgeName)) BridgeName = NotExistsBridgeService.GenerateBridgeName(ds);
 		var bridgeq = service.CreateAsNew(ds, BridgeName);
 
 		var cnt = service.GetCount(bridgeq);
@@ -81,14 +81,14 @@ public class ForwardTransferBatch
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <param name="bridge"></param>
-	private void Transfer(Datasource ds, SelectQuery bridge)
+	private void Transfer(IDatasource ds, SelectQuery bridge)
 	{
 		var service = new ForwardTransferService(Connection, Logger);
 
 		service.TransferToDestination(ds, bridge);
-		if (ds.HasRelationMapTable) service.TransferToRelationMap(ds, bridge);
-		if (ds.HasKeyMapTable) service.TransferToKeyMap(ds, bridge);
-		if (ds.HasHoldTable) service.TransferToHold(ds, bridge);
-		if (ds.HasRequestTable) service.RemoveRequest(ds, bridge);
+		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge);
+		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge);
+		if (ds.HasHoldTable()) service.TransferToHold(ds, bridge);
+		if (ds.HasRequestTable()) service.RemoveRequest(ds, bridge);
 	}
 }

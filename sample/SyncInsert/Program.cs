@@ -2,7 +2,7 @@
 using Npgsql;
 using SyncInsert;
 
-var dest = new Destination()
+var dest = new DbDestination()
 {
 	Table = new()
 	{
@@ -15,7 +15,7 @@ var dest = new Destination()
 		Command = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
 	}
 };
-var ds = new Datasource()
+var ds = new DbDatasource()
 {
 	Destination = dest,
 	KeyColumns = new() { "sale_id" },

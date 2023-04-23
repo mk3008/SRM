@@ -24,7 +24,7 @@ public class NotExistsBridgeService
 
 	private IDbConnection Connection { get; init; }
 
-	public string GenerateBridgeName(Datasource datasource)
+	public static string GenerateBridgeName(IDatasource datasource)
 	{
 		using MD5 md5Hash = MD5.Create();
 
@@ -38,7 +38,7 @@ public class NotExistsBridgeService
 		return sb.ToString();
 	}
 
-	public SelectQuery CreateAsNew(Datasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
+	public SelectQuery CreateAsNew(IDatasource datasource, string bridgeName, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		var keymapTable = datasource.KeyMapTable.TableFullName;
 
@@ -59,7 +59,7 @@ public class NotExistsBridgeService
 
 		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
 
-		Logger?.LogInformation(cq.ToCommand().CommandText);
+		Logger?.LogInformation("sql : {Sql}", cq.ToCommand().CommandText);
 
 		Connection.Execute(cq);
 
@@ -69,14 +69,14 @@ public class NotExistsBridgeService
 	public int GetCount(SelectQuery bridgeQuery)
 	{
 		var q = bridgeQuery.ToCountQuery();
-		Logger?.LogInformation(q.ToCommand().CommandText);
+		Logger?.LogInformation("sql : {Sql}", q.ToCommand().CommandText);
 
 		var cnt = Connection.ExecuteScalar<int>(q);
-		Logger?.LogInformation($"count : {cnt} row(s)");
+		Logger?.LogInformation("count : {Count} row(s)", cnt);
 		return cnt;
 	}
 
-	private SelectQuery GetFilteredDatasourceQuery(Datasource ds, string keymapTable)
+	private static SelectQuery GetFilteredDatasourceQuery(IDatasource ds, string keymapTable)
 	{
 		//WITH _full_datasource as (SELECT v1, v2, ...)
 		//SELECT d.v1, d.v2, ... FROM _datasource AS d
@@ -118,7 +118,7 @@ public class NotExistsBridgeService
 		return sq;
 	}
 
-	private SelectQuery GetSelectQuery(string bridgeName, List<string> columns)
+	private static SelectQuery GetSelectQuery(string bridgeName, List<string> columns)
 	{
 		var sq = new SelectQuery();
 		var (_, b) = sq.From(bridgeName).As("b");

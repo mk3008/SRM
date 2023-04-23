@@ -1,6 +1,6 @@
 ﻿namespace InterlinkMapper.Data;
 
-public class Datasource
+public class DbDatasource : IDatasource
 {
 	public int DatasourceId { get; set; }
 
@@ -8,11 +8,9 @@ public class Datasource
 
 	public string Description { get; set; } = string.Empty;
 
-	public Destination Destination { get; set; } = new();
+	public IDestination Destination { get; set; } = new DbDestination();
 
 	public string Query { get; set; } = string.Empty;
-
-	public DbTable ProcessMapTable => Destination.ProcessMap;
 
 	public DbTableDefinition KeyMapTable { get; set; } = new();
 
@@ -25,9 +23,4 @@ public class Datasource
 	public bool IsSequence { get; set; } = false;
 
 	public List<string> KeyColumns { get; set; } = new();
-
-	public bool HasKeyMapTable => (string.IsNullOrEmpty(KeyMapTable.GetTableFullName()) ? false : true);
-	public bool HasRelationMapTable => (string.IsNullOrEmpty(RelationMapTable.GetTableFullName()) ? false : true);
-	public bool HasHoldTable => (string.IsNullOrEmpty(HoldTable.GetTableFullName()) ? false : true);
-	public bool HasRequestTable => (string.IsNullOrEmpty(RequestTable.GetTableFullName()) ? false : true);
 }

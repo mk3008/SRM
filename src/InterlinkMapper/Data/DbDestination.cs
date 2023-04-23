@@ -1,8 +1,6 @@
-﻿using Carbunql.Extensions;
+﻿namespace InterlinkMapper.Data;
 
-namespace InterlinkMapper.Data;
-
-public class Destination
+public class DbDestination : IDestination
 {
 	public int DestinationId { get; set; }
 
@@ -15,11 +13,4 @@ public class Destination
 	public string Description { get; set; } = string.Empty;
 
 	public ReverseOption ReverseOption { get; set; } = new();
-
-	public List<string> GetDifferenceCheckColumns()
-	{
-		var q = Table.Columns.Where(x => !x.IsEqualNoCase(Sequence.Column));
-		q = q.Where(x => !x.IsEqualNoCase(ReverseOption.ExcludedColumns));
-		return q.ToList();
-	}
 }
