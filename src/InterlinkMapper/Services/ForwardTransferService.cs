@@ -21,7 +21,6 @@ public class ForwardTransferService
 
 	private IDbConnection Connection { get; init; }
 
-
 	public int TransferToDestination(IDatasource ds, SelectQuery bridge)
 	{
 		var iq = ToInsertQuery(bridge, ds.Destination.Table);
@@ -84,9 +83,10 @@ public class ForwardTransferService
 
 	private int ExecuteWithLogging(IQueryCommandable query)
 	{
-		Logger?.LogInformation("sql : {Sql}", query.ToCommand().CommandText);
+		var type = (query is InsertQuery) ? "insert" : (query is UpdateQuery) ? "update" : (query is DeleteQuery) ? "delete" : "unknown";
+		Logger?.LogInformation("{Type} sql : {Sql}", type, query.ToCommand().CommandText);
 		var cnt = Connection.Execute(query);
-		Logger?.LogInformation("count : {Count} row(s)", cnt);
+		Logger?.LogInformation("results : {Count} row(s)", cnt);
 
 		return cnt;
 	}

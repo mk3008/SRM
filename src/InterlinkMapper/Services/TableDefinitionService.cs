@@ -24,7 +24,7 @@ public class TableDefinitionService
 	public void CreateOrDefault(DbTableDefinition def)
 	{
 		var sql = def.ToCreateCommandText();
-		Logger?.LogInformation(sql);
+		Logger?.LogInformation("create table sql : {Sql}", sql);
 
 		Connection.Execute(sql);
 	}

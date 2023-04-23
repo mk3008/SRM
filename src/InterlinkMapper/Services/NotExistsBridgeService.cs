@@ -1,6 +1,7 @@
 ﻿using Carbunql;
 using Carbunql.Building;
 using Carbunql.Dapper;
+using Carbunql.Extensions;
 using Carbunql.Values;
 using Cysharp.Text;
 using Dapper;
@@ -14,15 +15,18 @@ namespace InterlinkMapper.Services;
 
 public class NotExistsBridgeService
 {
-	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null)
+	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null, string holdJudgmentColumnName = "")
 	{
 		Connection = cn;
 		Logger = logger;
+		HoldJudgmentColumnName = !string.IsNullOrEmpty(holdJudgmentColumnName) ? holdJudgmentColumnName : "_is_hold";
 	}
 
 	private readonly ILogger? Logger;
 
 	private IDbConnection Connection { get; init; }
+
+	public string HoldJudgmentColumnName { get; init; }
 
 	public static string GenerateBridgeName(IDatasource datasource)
 	{
@@ -49,7 +53,12 @@ public class NotExistsBridgeService
 		var (_, d) = sq.From(ds).As("d");
 
 		var seq = datasource.Destination.Sequence;
-		sq.Select(seq.Command).As(seq.Column);
+		sq.Select(() =>
+		{
+			var c = new CaseExpression();
+			c.When(new ColumnValue(d, HoldJudgmentColumnName).False()).Then(new LiteralValue(seq.Command));
+			return c;
+		}).As(seq.Column);
 		sq.Select(d);
 
 		if (injector != null) sq = injector(sq);
@@ -59,7 +68,7 @@ public class NotExistsBridgeService
 
 		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
 
-		Logger?.LogInformation("sql : {Sql}", cq.ToCommand().CommandText);
+		Logger?.LogInformation("create table sql : {Sql}", cq.ToCommand().CommandText);
 
 		Connection.Execute(cq);
 
@@ -69,20 +78,25 @@ public class NotExistsBridgeService
 	public int GetCount(SelectQuery bridgeQuery)
 	{
 		var q = bridgeQuery.ToCountQuery();
-		Logger?.LogInformation("sql : {Sql}", q.ToCommand().CommandText);
+		Logger?.LogInformation("count sql : {Sql}", q.ToCommand().CommandText);
 
 		var cnt = Connection.ExecuteScalar<int>(q);
 		Logger?.LogInformation("count : {Count} row(s)", cnt);
 		return cnt;
 	}
 
-	private static SelectQuery GetFilteredDatasourceQuery(IDatasource ds, string keymapTable)
+	private SelectQuery GetFilteredDatasourceQuery(IDatasource ds, string keymapTable)
 	{
 		//WITH _full_datasource as (SELECT v1, v2, ...)
 		//SELECT d.v1, d.v2, ... FROM _datasource AS d
 		var (sq, cteDatasource) = new SelectQuery(ds.Query).ToCTE("_full_datasource");
 		var (f, d) = sq.From(cteDatasource).As("d");
 		sq.Select(d);
+
+		if (!sq.SelectClause!.Where(x => x.Alias.IsEqualNoCase(HoldJudgmentColumnName)).Any())
+		{
+			sq.Select("false").As(HoldJudgmentColumnName);
+		}
 
 		if (string.IsNullOrEmpty(keymapTable)) return sq;
 
@@ -107,7 +121,7 @@ public class NotExistsBridgeService
 			var key = ds.KeyColumns[0];
 
 			//LEFT JOIN map AS m ON d.key1 = m.key1 AND d.key2 = m.key2
-			//WHERE m.key IS NULL
+			//WHERE m.key1 IS NULL
 			var m = f.LeftJoin(keymapTable).As("m").On(d, ds.KeyColumns);
 			sq.Where(m, key).IsNull();
 
