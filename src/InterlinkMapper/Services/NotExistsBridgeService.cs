@@ -144,7 +144,7 @@ public class NotExistsBridgeService
 	private static ValueBase GetMaxIdSelectValue(string keymapTable, string datasourceSeqColumn)
 	{
 		var sq = new SelectQuery();
-		var (_, m) = sq.From(keymapTable).As("m");
+		sq.From(keymapTable).As("m");
 		sq.Select($"coalesce(max(m.{datasourceSeqColumn}),0)").As(datasourceSeqColumn);
 		return sq.ToValue();
 	}
