@@ -1,7 +1,4 @@
 ﻿using Carbunql;
-using Carbunql.Building;
-using Carbunql.Dapper;
-using Carbunql.Values;
 using InterlinkMapper.Data;
 using InterlinkMapper.Services;
 using Microsoft.Extensions.Logging;
@@ -9,6 +6,9 @@ using System.Data;
 
 namespace SyncInsert;
 
+/// <summary>
+/// Transfer only data that has not been transferred.
+/// </summary>
 public class ForwardTransferBatch
 {
 	public ForwardTransferBatch(IDbConnection connection, ILogger? logger = null)
@@ -23,6 +23,10 @@ public class ForwardTransferBatch
 
 	public string BridgeName { get; private set; } = string.Empty;
 
+	/// <summary>
+	/// Execute the transfer process.
+	/// </summary>
+	/// <param name="ds"></param>
 	public void Execute(Datasource ds)
 	{
 		Logger!.LogInformation($"start {ds.Destination.Table.GetTableFullName()} <- {ds.DatasourceName}");
@@ -41,6 +45,10 @@ public class ForwardTransferBatch
 		Logger!.LogInformation("end");
 	}
 
+	/// <summary>
+	/// Generate the tables used by the system.
+	/// </summary>
+	/// <param name="ds"></param>
 	private void CreateSystemTable(Datasource ds)
 	{
 		var service = new TableDefinitionService(Connection, Logger);
@@ -51,6 +59,11 @@ public class ForwardTransferBatch
 		if (ds.HasRequestTable) service.CreateOrDefault(ds.RequestTable);
 	}
 
+	/// <summary>
+	/// Create a bridge table.
+	/// </summary>
+	/// <param name="ds"></param>
+	/// <returns></returns>
 	private SelectQuery? CreateBridgeTable(Datasource ds)
 	{
 		var service = new NotExistsBridgeService(Connection, Logger);
@@ -62,6 +75,12 @@ public class ForwardTransferBatch
 		return bridgeq;
 	}
 
+	/// <summary>
+	/// Transfers the contents of the bridge table to the map table and removes them from the request.
+	/// Those that could not be transferred are transferred to the hold table.
+	/// </summary>
+	/// <param name="ds"></param>
+	/// <param name="bridge"></param>
 	private void Transfer(Datasource ds, SelectQuery bridge)
 	{
 		var service = new ForwardTransferService(Connection, Logger);
