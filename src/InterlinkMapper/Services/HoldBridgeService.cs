@@ -14,9 +14,9 @@ using System.Text;
 
 namespace InterlinkMapper.Services;
 
-public class NotExistsBridgeService
+public class HoldBridgeService
 {
-	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null, string holdJudgmentColumnName = "")
+	public HoldBridgeService(IDbConnection cn, ILogger? logger = null, string holdJudgmentColumnName = "")
 	{
 		Connection = cn;
 		Logger = logger;
@@ -40,7 +40,7 @@ public class NotExistsBridgeService
 
 		byte[] data = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(datasource.DatasourceName));
 		var sb = ZString.CreateStringBuilder();
-		sb.Append("_nex_");
+		sb.Append("_hld_");
 		for (int i = 0; i < 4; i++)
 		{
 			sb.Append(data[i].ToString("x2"));
@@ -52,7 +52,6 @@ public class NotExistsBridgeService
 	/// Create a new bridge table.
 	/// </summary>
 	/// <param name="datasource"></param>
-	/// <param name="bridgeName"></param>
 	/// <param name="injector"></param>
 	/// <returns></returns>
 	public SelectQuery CreateAsNew(IDatasource datasource, Func<SelectQuery, SelectQuery>? injector = null)
@@ -74,6 +73,9 @@ public class NotExistsBridgeService
 			return c;
 		}).As(seq.Column);
 		sq.Select(d);
+
+		//Re-held data is not subject to extraction.
+		sq.Where(() => new ColumnValue(d, HoldJudgmentColumnName).False());
 
 		if (injector != null) sq = injector(sq);
 
@@ -125,30 +127,7 @@ public class NotExistsBridgeService
 			sq.Select("false").As(HoldJudgmentColumnName);
 		}
 
-		//If there is no keymap, select all (assuming proper filtering in the datasource query).
-		if (string.IsNullOrEmpty(keymapTable)) return sq;
-
-		//If Sequence transfer is supported, simplify forwarded key determination.
-		if (ds.IsSupportSequenceTransfer && ds.KeyColumns.Count == 1)
-		{
-			//WHERE (SELECT COALESCE(MAX(m.seq), 0) AS seq FROM map AS m) < d.key
-			sq.Where(() => GetSequenceTransferCondition(ds, d));
-			return sq;
-		};
-
-		//If Sequence transfer is not supported, check individual keys.
-		if (ds.KeyColumns.Any())
-		{
-			var key = ds.KeyColumns.First();
-
-			//LEFT JOIN map AS m ON d.key1 = m.key1 AND d.key2 = m.key2
-			//WHERE m.key1 IS NULL
-			var m = f.LeftJoin(keymapTable).As("m").On(d, ds.KeyColumns);
-			sq.Where(m, key).IsNull();
-
-			return sq;
-		};
-
+		sq.Where(() => GetHoldCondition(ds, d));
 		return sq;
 	}
 
@@ -169,22 +148,21 @@ public class NotExistsBridgeService
 	}
 
 	/// <summary>
-	/// (SELECT COALESCE(MAX(datasourceSeqColumn), 0) FROM keymapTable) < datasourceTable.datasourceSeqColumn
+	/// (datasourceTable.key1, datasourceTable.key2) IN (SELECT hld.key1, hld.key2 FROM holdTable AS hld)
 	/// </summary>
-	/// <param name="keymapTable"></param>
+	/// <param name="holdTable"></param>
 	/// <param name="datasourceSeqColumn"></param>
 	/// <returns></returns>
-	private static ValueBase GetSequenceTransferCondition(IDatasource ds, SelectableTable datasourceTable)
+	private static ValueBase GetHoldCondition(IDatasource ds, SelectableTable datasourceTable)
 	{
-		var seqColumnName = ds.KeyColumns.First();
-
 		var sq = new SelectQuery();
-		sq.From(ds.KeyMapTable.GetTableFullName()).As("m");
-		sq.Select($"coalesce(max(m.{seqColumnName}),0)").As(seqColumnName);
+		var (_, hld) = sq.From(ds.HoldTable.GetTableFullName()).As("hld");
+		ds.KeyColumns.ForEach(key => sq.Select(hld, key));
 
-		var v = sq.ToValue();
+		var keys = new ValueCollection();
+		ds.KeyColumns.ForEach(key => keys.Add(new ColumnValue(datasourceTable, key)));
+		var exp = new InExpression(keys, sq.ToValue());
 
-		v.AddOperatableValue("<", new ColumnValue(datasourceTable, seqColumnName));
-		return v;
+		return exp;
 	}
 }

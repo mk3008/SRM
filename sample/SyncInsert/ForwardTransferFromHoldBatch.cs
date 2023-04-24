@@ -9,9 +9,9 @@ namespace SyncInsert;
 /// <summary>
 /// Transfer only data that has not been transferred.
 /// </summary>
-public class ForwardTransferBatch
+public class ForwardTransferFromHoldBatch
 {
-	public ForwardTransferBatch(IDbConnection connection, ILogger? logger = null)
+	public ForwardTransferFromHoldBatch(IDbConnection connection, ILogger? logger = null)
 	{
 		Connection = connection;
 		Logger = logger;
@@ -20,6 +20,8 @@ public class ForwardTransferBatch
 	private IDbConnection Connection { get; init; }
 
 	public ILogger? Logger { get; init; }
+
+	public string BridgeName { get; private set; } = string.Empty;
 
 	/// <summary>
 	/// Execute the transfer process.
@@ -64,7 +66,7 @@ public class ForwardTransferBatch
 	/// <returns></returns>
 	private SelectQuery? CreateBridgeTable(IDatasource ds)
 	{
-		var service = new NotExistsBridgeService(Connection, Logger);
+		var service = new HoldBridgeService(Connection, Logger);
 		var bridgeq = service.CreateAsNew(ds);
 
 		var cnt = service.GetCount(bridgeq);
@@ -85,7 +87,7 @@ public class ForwardTransferBatch
 		service.TransferToDestination(ds, bridge);
 		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge);
 		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge);
-		if (ds.HasHoldTable()) service.TransferToHold(ds, bridge);
+		if (ds.HasHoldTable()) service.RemoveHold(ds, bridge);
 		if (ds.HasRequestTable()) service.RemoveRequest(ds, bridge);
 	}
 }

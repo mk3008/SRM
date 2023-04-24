@@ -1,3 +1,7 @@
+drop table if exists sales
+;
+drop table if exists sale_journals
+;
 create table sales (
     sale_id serial8 not null primary key,
     sale_date date not null,

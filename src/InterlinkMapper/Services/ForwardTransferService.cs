@@ -57,9 +57,24 @@ public class ForwardTransferService
 		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
 
 		//wait for unnumbered
-		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNull());
+		var f = sq.FromClause;
+		if (f == null) throw new NullReferenceException(nameof(f));
+		var h = f.LeftJoin(ds.HoldTable.GetTableFullName()).As("h").On(f.Root, ds.KeyColumns);
+
+		sq.Where(new ColumnValue(f.Root, ds.Destination.Sequence.Column).IsNull());
+		sq.Where(new ColumnValue(h, ds.KeyColumns.First()).IsNull());
 
 		return ExecuteWithLogging(iq);
+	}
+
+	public int RemoveHold(IDatasource ds, SelectQuery bridge)
+	{
+		var sq = new SelectQuery();
+		var (_, b) = sq.From(bridge).As("b");
+		sq.Select(b);
+		var dq = sq.ToDeleteQuery(ds.HoldTable.GetTableFullName(), ds.KeyColumns);
+
+		return ExecuteWithLogging(dq);
 	}
 
 	public int RemoveRequest(IDatasource ds, SelectQuery bridge)

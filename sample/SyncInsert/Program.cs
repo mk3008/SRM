@@ -1,4 +1,6 @@
-﻿using InterlinkMapper.Data;
+﻿using Carbunql.Dapper;
+using Dapper;
+using InterlinkMapper.Data;
 using Npgsql;
 using SyncInsert;
 
@@ -36,11 +38,19 @@ var ds = new DbDatasource()
 			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" }
 		},
 	},
+	HoldTable = new()
+	{
+		TableName = "sale_journals__hld_sales",
+		ColumnDefinitions = new() {
+			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" , IsPrimaryKey= true }
+		},
+	},
 	Query = @"
 select
 	s.sale_date,
 	s.price,
 	s.remarks,
+	case when s.remarks = 'remarks_0' then false else true end as _is_hold,
 	--key
 	s.sale_id	
 from
@@ -51,16 +61,35 @@ from
 
 var cnstring = "Server=localhost;Port=5430;Database=postgres;User Id=root;Password=root;";
 
-using var cn = new NpgsqlConnection(cnstring);
-cn.Open();
-using var trn = cn.BeginTransaction();
+using (var cn = new NpgsqlConnection(cnstring))
+{
+	cn.Open();
+	using var trn = cn.BeginTransaction();
 
-var logger = new ConsoleLogger();
+	var logger = new ConsoleLogger();
 
-var batch = new ForwardTransferBatch(cn, logger);
+	var batch = new ForwardTransferBatch(cn, logger);
 
-//be transferred
-batch.Execute(ds);
+	//be transferred
+	batch.Execute(ds);
+	trn.Commit();
+}
+
+using (var cn = new NpgsqlConnection(cnstring))
+{
+	cn.Open();
+	using var trn = cn.BeginTransaction();
+
+	cn.Execute("update sales set remarks = 'remarks_0' where remarks = 'remarks_1'");
+
+	var logger = new ConsoleLogger();
+
+	var batch = new ForwardTransferFromHoldBatch(cn, logger);
+
+	//be transferred
+	batch.Execute(ds);
+	trn.Commit();
+}
 
 Console.ReadLine();
 
