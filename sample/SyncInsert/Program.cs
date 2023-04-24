@@ -50,7 +50,7 @@ select
 	s.sale_date,
 	s.price,
 	s.remarks,
-	case when s.remarks = 'remarks_0' then false else true end as _is_hold,
+	case when s.remarks = 'remarks_0' then false else true end as _hold,
 	--key
 	s.sale_id	
 from

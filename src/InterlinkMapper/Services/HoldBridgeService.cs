@@ -16,18 +16,21 @@ namespace InterlinkMapper.Services;
 
 public class HoldBridgeService
 {
-	public HoldBridgeService(IDbConnection cn, ILogger? logger = null, string holdJudgmentColumnName = "")
+	public HoldBridgeService(IDbConnection cn, ILogger? logger = null, string holdJudgementColumnName = "_hold", string transferJudgementColumnName = "_target")
 	{
 		Connection = cn;
 		Logger = logger;
-		HoldJudgmentColumnName = !string.IsNullOrEmpty(holdJudgmentColumnName) ? holdJudgmentColumnName : "_is_hold";
+		HoldJudgementColumnName = holdJudgementColumnName;
+		TransferJudgementColumnName = transferJudgementColumnName;
 	}
 
 	private readonly ILogger? Logger;
 
 	private IDbConnection Connection { get; init; }
 
-	private string HoldJudgmentColumnName { get; init; }
+	private string HoldJudgementColumnName { get; init; }
+
+	private string TransferJudgementColumnName { get; init; }
 
 	/// <summary>
 	/// Generate a bridge name.
@@ -69,13 +72,13 @@ public class HoldBridgeService
 		sq.Select(() =>
 		{
 			var c = new CaseExpression();
-			c.When(new ColumnValue(d, HoldJudgmentColumnName).False()).Then(new LiteralValue(seq.Command));
+			c.When(new ColumnValue(d, HoldJudgementColumnName).False()).Then(new LiteralValue(seq.Command));
 			return c;
 		}).As(seq.Column);
 		sq.Select(d);
 
 		//Re-held data is not subject to extraction.
-		sq.Where(() => new ColumnValue(d, HoldJudgmentColumnName).False());
+		sq.Where(() => new ColumnValue(d, HoldJudgementColumnName).False());
 
 		if (injector != null) sq = injector(sq);
 
@@ -122,10 +125,12 @@ public class HoldBridgeService
 
 		//If there is no column for hold judgment, it is fixed to "false".
 		//In other words, all are treated as transfer targets.
-		if (!sq.SelectClause!.Where(x => x.Alias.IsEqualNoCase(HoldJudgmentColumnName)).Any())
+		if (!sq.SelectClause!.Where(x => x.Alias.IsEqualNoCase(HoldJudgementColumnName)).Any())
 		{
-			sq.Select("false").As(HoldJudgmentColumnName);
+			sq.Select("false").As(HoldJudgementColumnName);
 		}
+
+		//ignore_column
 
 		sq.Where(() => GetHoldCondition(ds, d));
 		return sq;
