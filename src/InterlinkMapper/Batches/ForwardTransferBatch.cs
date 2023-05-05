@@ -1,59 +1,101 @@
 ﻿using Carbunql;
-using Carbunql.Building;
-using Carbunql.Dapper;
-using Carbunql.Values;
-using InterlinkMapper.Data;
+using InterlinkMapper.Services;
+using Microsoft.Extensions.Logging;
 using System.Data;
 
 namespace InterlinkMapper.Batches;
 
+/// <summary>
+/// Transfer only data that has not been transferred.
+/// </summary>
 public class ForwardTransferBatch
 {
-	public ForwardTransferBatch(IDbConnection cn, Database db, Datasource datasource, SelectQuery selectBridgeQuery)
+	public ForwardTransferBatch(IDbConnection connection, ILogger? logger = null)
 	{
-		Connection = cn;
-		Datasource = datasource;
-		Query = selectBridgeQuery;
-
-		var table = new DbTable()
-		{
-			TableName = db.ProcessMapNameBuilder(Datasource.Destination),
-		};
-		table.Columns.Add(db.ProcessIdColumnName);
-		table.Columns.Add(datasource.Destination.Sequence.Column);
-		ProcessMapTable = table;
+		Connection = connection;
+		Logger = logger;
 	}
 
 	private IDbConnection Connection { get; init; }
 
-	private Datasource Datasource { get; init; }
+	public ILogger? Logger { get; init; }
 
-	private SelectQuery Query { get; init; }
-
-	private DbTable ProcessMapTable { get; init; }
-
-	public int ForwardTransfer() => Insert(Datasource.Destination.Table);
-
-	public int PreventRetransfer() => Insert(Datasource.KeyMapTable);
-
-	public int MapWithDatasource() => Insert(Datasource.RelationMapTable);
-
-	public int MapWithProcess() => Insert(ProcessMapTable);
-
-	private int Insert(DbTable table)
+	/// <summary>
+	/// Execute the transfer process.
+	/// </summary>
+	/// <param name="ds"></param>
+	public void Execute(IDatasource ds)
 	{
-		var seq = Datasource.Destination.Sequence;
+		Logger!.LogInformation("start {Destination} <- {Datasource}", ds.Destination.Table.GetTableFullName(), ds.DatasourceName);
 
-		var sq = new SelectQuery();
-		var (_, b) = sq.From(Query).As("b");
-		sq.Select(b);
-		sq.SelectClause!.FilterInColumns(table.Columns);
+		CreateEnvironmentOnDBMS(ds);
 
-		sq.Where(new ColumnValue(b, seq.Column).IsNotNull());
+		var bridge = PrepareForTransfer(ds);
+		if (bridge == null)
+		{
+			Logger?.LogWarning("Transfer target not found");
+			return;
+		}
 
-		var iq = Query.ToInsertQuery(table.TableFullName);
-		return Connection.Execute(iq);
+		Transfer(bridge);
+
+		Logger!.LogInformation("end");
 	}
 
+	/// <summary>
+	/// Generate the tables used by the system.
+	/// </summary>
+	/// <param name="ds"></param>
+	private void CreateEnvironmentOnDBMS(IDatasource ds)
+	{
+		var service = new DbEnvironmentService(Connection, Logger);
 
+		if (ds.HasRelationMapTable()) service.CreateTableOrDefault(ds.RelationMapTable);
+		if (ds.HasKeyMapTable()) service.CreateTableOrDefault(ds.KeyMapTable);
+		if (ds.HasRequestTable()) service.CreateTableOrDefault(ds.RequestTable);
+	}
+
+	/// <summary>
+	/// Create a bridge table.
+	/// </summary>
+	/// <param name="ds"></param>
+	/// <returns></returns>
+	private Bridge? PrepareForTransfer(IDatasource ds)
+	{
+		var service = new NotExistsBridgeService(Connection, Logger);
+		var bridgeQuery = service.CreateAndSelect(ds);
+
+		var cnt = service.GetCount(bridgeQuery);
+		if (cnt == 0) return null;
+		return new Bridge(ds, bridgeQuery);
+	}
+
+	/// <summary>
+	/// Transfers the contents of the bridge table to the map table and removes them from the request.
+	/// Those that could not be transferred are transferred to the hold table.
+	/// </summary>
+	/// <param name="bridge"></param>
+	private void Transfer(Bridge bridge)
+	{
+		var service = new ForwardTransferService(Connection, Logger);
+		var ds = bridge.Datasource;
+
+		service.TransferToDestination(ds, bridge.Query);
+		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
+		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
+		if (ds.HasRequestTable()) service.TransferToRequest(ds, bridge.Query);
+		if (ds.HasRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
+	}
+
+	private class Bridge
+	{
+		public Bridge(IDatasource datasource, SelectQuery bridgeQuery)
+		{
+			Datasource = datasource;
+			Query = bridgeQuery;
+		}
+
+		public IDatasource Datasource { get; init; }
+		public SelectQuery Query { get; init; }
+	}
 }

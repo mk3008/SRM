@@ -1,59 +1,48 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Batches\**" />
-    <Compile Remove="Configs\**" />
-    <Compile Remove="Data\**" />
-    <Compile Remove="Services\**" />
-    <Compile Remove="Tables\**" />
-    <EmbeddedResource Remove="Batches\**" />
-    <EmbeddedResource Remove="Configs\**" />
-    <EmbeddedResource Remove="Data\**" />
-    <EmbeddedResource Remove="Services\**" />
-    <EmbeddedResource Remove="Tables\**" />
-    <None Remove="Batches\**" />
-    <None Remove="Configs\**" />
-    <None Remove="Data\**" />
-    <None Remove="Services\**" />
-    <None Remove="Tables\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Batches\**" />
+		<Compile Remove="Configs\**" />
+		<Compile Remove="Services\**" />
+		<Compile Remove="Tables\**" />
+		<EmbeddedResource Remove="Batches\**" />
+		<EmbeddedResource Remove="Configs\**" />
+		<EmbeddedResource Remove="Services\**" />
+		<EmbeddedResource Remove="Tables\**" />
+		<None Remove="Batches\**" />
+		<None Remove="Configs\**" />
+		<None Remove="Services\**" />
+		<None Remove="Tables\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Database.cs" />
-    <Compile Remove="DictionaryExtension.cs" />
-    <Compile Remove="KeyMapService.cs" />
-    <Compile Remove="RelationMapService.cs" />
-    <Compile Remove="StringExtension.cs" />
-    <Compile Remove="Synchronizer.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Database.cs" />
+		<Compile Remove="DictionaryExtension.cs" />
+		<Compile Remove="KeyMapService.cs" />
+		<Compile Remove="RelationMapService.cs" />
+		<Compile Remove="StringExtension.cs" />
+		<Compile Remove="Synchronizer.cs" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="Data\ColumnDefinition.cs" />
-    <Compile Include="Data\DbDatasource.cs" />
-    <Compile Include="Data\DbTable.cs" />
-    <Compile Include="Data\DbDestination.cs" />
-    <Compile Include="Data\IDatasource.cs" />
-    <Compile Include="Data\IDbTableDefinition.cs" />
-    <Compile Include="Data\IDestination.cs" />
-    <Compile Include="Data\ReverseOption.cs" />
-    <Compile Include="Data\Sequence.cs" />
-    <Compile Include="Data\DbTableDefinition.cs" />
-    <Compile Include="Services\ForwardTransferService.cs" />
-    <Compile Include="Services\HoldBridgeService.cs" />
-    <Compile Include="Services\NotExistsBridgeService.cs" />
-    <Compile Include="Services\DbEnvironmentService.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="Batches\ForwardTransferBatch.cs" />
+		<Compile Include="Batches\ForwardTransferFromRequest.cs" />
+		<Compile Include="Services\ForwardTransferService.cs" />
+		<Compile Include="Services\RequestBridgeService.cs" />
+		<Compile Include="Services\NotExistsBridgeService.cs" />
+		<Compile Include="Services\DbEnvironmentService.cs" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Carbunql" Version="0.2.3" />
-    <PackageReference Include="Carbunql.Dapper" Version="0.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-preview.3.23174.8" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Carbunql" Version="0.2.5" />
+		<PackageReference Include="Carbunql.Dapper" Version="0.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-preview.3.23174.8" />
+	</ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using Carbunql.Analysis.Parser;
 
-namespace InterlinkMapper.Data;
+namespace InterlinkMapper;
 
 public class ColumnDefinition
 {

@@ -9,9 +9,9 @@ namespace SyncInsert;
 /// <summary>
 /// Transfer only data that has not been transferred.
 /// </summary>
-public class ForwardTransferBatch
+public class ForwardTransferFromRequest
 {
-	public ForwardTransferBatch(IDbConnection connection, ILogger? logger = null)
+	public ForwardTransferFromRequest(IDbConnection connection, ILogger? logger = null)
 	{
 		Connection = connection;
 		Logger = logger;
@@ -20,6 +20,8 @@ public class ForwardTransferBatch
 	private IDbConnection Connection { get; init; }
 
 	public ILogger? Logger { get; init; }
+
+	public string BridgeName { get; private set; } = string.Empty;
 
 	/// <summary>
 	/// Execute the transfer process.
@@ -38,7 +40,7 @@ public class ForwardTransferBatch
 			return;
 		}
 
-		Transfer(ds, bridge);
+		Transfer(bridge);
 
 		Logger!.LogInformation("end");
 	}
@@ -61,14 +63,17 @@ public class ForwardTransferBatch
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <returns></returns>
-	private SelectQuery? PrepareForTransfer(IDatasource ds)
+	private Bridge? PrepareForTransfer(IDatasource ds)
 	{
-		var service = new NotExistsBridgeService(Connection, Logger);
-		var bridgeq = service.CreateAndSelect(ds);
+		var service = new RequestBridgeService(Connection, Logger);
+		var maxid = service.GetLastRequestId(ds);
+		var bridgeq = service.CreateAndSelect(ds, maxid);
 
 		var cnt = service.GetCount(bridgeq);
 		if (cnt == 0) return null;
-		return bridgeq;
+
+		var bridge = new Bridge(ds, bridgeq, cnt);
+		return bridge;
 	}
 
 	/// <summary>
@@ -77,14 +82,29 @@ public class ForwardTransferBatch
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <param name="bridge"></param>
-	private void Transfer(IDatasource ds, SelectQuery bridge)
+	private void Transfer(Bridge bridge)
 	{
 		var service = new ForwardTransferService(Connection, Logger);
 
-		service.TransferToDestination(ds, bridge);
-		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge);
-		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge);
-		if (ds.HasRequestTable()) service.TransferToRequest(ds, bridge);
-		if (ds.HasRequestTable()) service.RemoveRequestAsSuccess(ds, bridge);
+		var ds = bridge.Datasource;
+		service.TransferToDestination(ds, bridge.Query);
+		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
+		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
+		if (ds.HasRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
+		if (ds.HasRequestTable()) service.RemoveRequestAsIgnore(ds, bridge.Query, bridge.MaxRequestId);
+	}
+
+	private class Bridge
+	{
+		public Bridge(IDatasource datasource, SelectQuery bridgeQuery, int maxRequestId)
+		{
+			Datasource = datasource;
+			Query = bridgeQuery;
+			MaxRequestId = maxRequestId;
+		}
+
+		public IDatasource Datasource { get; init; }
+		public SelectQuery Query { get; init; }
+		public int MaxRequestId { get; init; }
 	}
 }

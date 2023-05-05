@@ -2,7 +2,6 @@
 using Carbunql.Extensions;
 using Cysharp.Text;
 using Dapper;
-using InterlinkMapper.Data;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -20,13 +19,14 @@ public class DbEnvironmentService
 
 	private IDbConnection Connection { get; init; }
 
+	public int CommandTimeout { get; set; } = 60 * 15;
 
 	public void CreateTableOrDefault(DbTableDefinition def)
 	{
 		var sql = def.ToCreateCommandText();
 		Logger?.LogInformation("create table sql : {Sql}", sql);
 
-		Connection.Execute(sql);
+		Connection.Execute(sql, CommandTimeout);
 	}
 
 	//public string NumericType { get; init; }

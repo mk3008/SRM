@@ -1,4 +1,4 @@
-﻿namespace InterlinkMapper.Data;
+﻿namespace InterlinkMapper;
 
 public class DbDatasource : IDatasource
 {
@@ -16,11 +16,11 @@ public class DbDatasource : IDatasource
 
 	public DbTableDefinition RelationMapTable { get; set; } = new();
 
-	public DbTableDefinition HoldTable { get; set; } = new();
-
 	public DbTableDefinition RequestTable { get; set; } = new();
 
 	public bool IsSupportSequenceTransfer { get; set; } = false;
 
 	public List<string> KeyColumns { get; set; } = new();
+
+	public string HoldJudgementColumnName { get; set; } = string.Empty;
 }

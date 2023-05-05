@@ -1,4 +1,4 @@
-﻿namespace InterlinkMapper.Data;
+﻿namespace InterlinkMapper;
 
 public class DbDestination : IDestination
 {

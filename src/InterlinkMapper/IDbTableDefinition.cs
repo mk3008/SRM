@@ -1,7 +1,7 @@
 ﻿using Carbunql.Analysis.Parser;
 using Cysharp.Text;
 
-namespace InterlinkMapper.Data;
+namespace InterlinkMapper;
 
 public interface IDbTable
 {
@@ -9,7 +9,7 @@ public interface IDbTable
 
 	string TableName { get; set; }
 
-	IEnumerable<String> Columns { get; }
+	IEnumerable<string> Columns { get; }
 }
 
 public interface IDbTableDefinition : IDbTable

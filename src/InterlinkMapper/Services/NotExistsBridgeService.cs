@@ -1,12 +1,10 @@
 ﻿using Carbunql;
 using Carbunql.Building;
-using Carbunql.Clauses;
 using Carbunql.Dapper;
 using Carbunql.Extensions;
 using Carbunql.Values;
 using Cysharp.Text;
 using Dapper;
-using InterlinkMapper.Data;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Security.Cryptography;
@@ -16,18 +14,17 @@ namespace InterlinkMapper.Services;
 
 public class NotExistsBridgeService
 {
-	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null, string holdJudgmentColumnName = "_hold")
+	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null)
 	{
 		Connection = cn;
 		Logger = logger;
-		HoldJudgmentColumnName = holdJudgmentColumnName;
 	}
 
 	private readonly ILogger? Logger;
 
 	private IDbConnection Connection { get; init; }
 
-	private string HoldJudgmentColumnName { get; init; }
+	public int CommandTimeout { get; set; } = 60 * 15;
 
 	/// <summary>
 	/// Generate a bridge name.
@@ -51,22 +48,22 @@ public class NotExistsBridgeService
 	/// <summary>
 	/// Create a new bridge table.
 	/// </summary>
-	/// <param name="datasource"></param>
+	/// <param name="ds"></param>
 	/// <param name="bridgeName"></param>
 	/// <param name="injector"></param>
 	/// <returns></returns>
-	public SelectQuery CreateAsNew(IDatasource datasource, Func<SelectQuery, SelectQuery>? injector = null)
+	public SelectQuery CreateAndSelect(IDatasource ds, Func<SelectQuery, SelectQuery>? injector = null)
 	{
-		var bridgeName = GenerateBridgeName(datasource);
+		var bridgeName = GenerateBridgeName(ds);
 
 		var sq = new SelectQuery();
-		var (_, d) = sq.From(GetSelectDatasourceQueryForTransfer(datasource)).As("d");
+		var (_, d) = sq.From(GetSelectDatasourceQueryForTransfer(ds)).As("d");
 
 		sq.Select(d);
 
 		//assign a Sequence to the transfer target
-		var seq = datasource.Destination.Sequence;
-		if (sq.SelectClause!.Where(x => x.Alias.IsEqualNoCase(HoldJudgmentColumnName)).Any())
+		var seq = ds.Destination.Sequence;
+		if (sq.SelectClause!.Where(x => x.Alias.IsEqualNoCase(ds.HoldJudgementColumnName)).Any())
 		{
 			sq.Select(seq.Command).As(seq.Column);
 		}
@@ -75,7 +72,7 @@ public class NotExistsBridgeService
 			sq.Select(() =>
 			{
 				var c = new CaseExpression();
-				c.When(new ColumnValue(d, HoldJudgmentColumnName).False()).Then(new LiteralValue(seq.Command));
+				c.When(new ColumnValue(d, ds.HoldJudgementColumnName).False()).Then(new LiteralValue(seq.Command));
 				return c;
 			}).As(seq.Column);
 		}
@@ -88,7 +85,7 @@ public class NotExistsBridgeService
 
 		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
 		Logger?.LogInformation("create table sql : {Sql}", cq.ToCommand().CommandText);
-		Connection.Execute(cq);
+		Connection.Execute(cq, commandTimeout: CommandTimeout);
 
 		return GetSelectBridgeQuery(bridgeName, columns);
 	}
@@ -103,7 +100,7 @@ public class NotExistsBridgeService
 		var q = bridgeQuery.ToCountQuery();
 		Logger?.LogInformation("count sql : {Sql}", q.ToCommand().CommandText);
 
-		var cnt = Connection.ExecuteScalar<int>(q);
+		var cnt = Connection.ExecuteScalar<int>(q, commandTimeout: CommandTimeout);
 		Logger?.LogInformation("count : {Count} row(s)", cnt);
 		return cnt;
 	}
@@ -116,10 +113,10 @@ public class NotExistsBridgeService
 	/// <returns></returns>
 	private SelectQuery GetSelectDatasourceQueryForTransfer(IDatasource ds)
 	{
-		var keymapTable = ds.KeyMapTable.GetTableFullName();
 		var sq = GetSelectDatasourceQuery(ds);
 
 		//If there is no keymap, select all (assuming proper filtering in the datasource query).
+		var keymapTable = ds.KeyMapTable.GetTableFullName();
 		if (string.IsNullOrEmpty(keymapTable) || !ds.KeyColumns.Any()) return sq;
 
 		if (ds.IsSupportSequenceTransfer && ds.KeyColumns.Count == 1)
@@ -181,6 +178,8 @@ public class NotExistsBridgeService
 		var dsTable = from.Root;
 
 		var keymapTable = ds.KeyMapTable.GetTableFullName();
+		if (string.IsNullOrEmpty(keymapTable)) throw new NullReferenceException(nameof(keymapTable));
+
 		var key = ds.KeyColumns.First();
 
 		var m = from.LeftJoin(keymapTable).As("m").On(dsTable, ds.KeyColumns);

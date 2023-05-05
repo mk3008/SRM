@@ -1,6 +1,6 @@
 ﻿using Carbunql.Extensions;
 
-namespace InterlinkMapper.Data;
+namespace InterlinkMapper;
 
 public interface IDestination
 {

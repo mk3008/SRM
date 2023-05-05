@@ -1,5 +1,6 @@
 ﻿using Carbunql.Dapper;
 using Dapper;
+using InterlinkMapper.Batches;
 using InterlinkMapper.Data;
 using Npgsql;
 using SyncInsert;
@@ -38,11 +39,12 @@ var ds = new DbDatasource()
 			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" }
 		},
 	},
-	HoldTable = new()
+	RequestTable = new()
 	{
-		TableName = "sale_journals__hld_sales",
+		TableName = "sale_journals__req_sales",
 		ColumnDefinitions = new() {
-			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" , IsPrimaryKey= true }
+			new ColumnDefinition() { ColumnName = "request_id", TypeName = "int8" , IsPrimaryKey = true, IsAutoNumber = true },
+			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" , IsUniqueKey= true }
 		},
 	},
 	Query = @"
@@ -55,7 +57,8 @@ select
 	s.sale_id	
 from
 	sales as s
-"
+",
+	HoldJudgementColumnName = "_hold"
 };
 
 
@@ -84,7 +87,7 @@ using (var cn = new NpgsqlConnection(cnstring))
 
 	var logger = new ConsoleLogger();
 
-	var batch = new ForwardTransferFromHoldBatch(cn, logger);
+	var batch = new ForwardTransferFromRequest(cn, logger);
 
 	//be transferred
 	batch.Execute(ds);
