@@ -12,9 +12,9 @@ using System.Text;
 
 namespace InterlinkMapper.Services;
 
-public class RequestBridgeService
+public class ForwardRequestBridgeService
 {
-	public RequestBridgeService(IDbConnection cn, ILogger? logger = null, string placeHolderIdentifer = ":")
+	public ForwardRequestBridgeService(IDbConnection cn, ILogger? logger = null, string placeHolderIdentifer = ":")
 	{
 		Connection = cn;
 		Logger = logger;
@@ -119,7 +119,7 @@ public class RequestBridgeService
 		var q = bridgeQuery.ToCountQuery();
 		Logger?.LogInformation("count sql : {Sql}", q.ToCommand().CommandText);
 
-		var cnt = Connection.ExecuteScalar<int>(q, , commandTimeout: CommandTimeout);
+		var cnt = Connection.ExecuteScalar<int>(q, commandTimeout: CommandTimeout);
 		Logger?.LogInformation("count : {Count} row(s)", cnt);
 		return cnt;
 	}

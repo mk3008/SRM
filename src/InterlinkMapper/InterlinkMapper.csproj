@@ -33,10 +33,14 @@
 	<ItemGroup>
 		<Compile Include="Batches\ForwardTransferBatch.cs" />
 		<Compile Include="Batches\ForwardTransferFromRequest.cs" />
+		<Compile Include="Services\DatasourceService.cs" />
+		<Compile Include="Services\DestinationService.cs" />
 		<Compile Include="Services\ForwardTransferService.cs" />
-		<Compile Include="Services\RequestBridgeService.cs" />
+		<Compile Include="Services\ForwardRequestBridgeService.cs" />
 		<Compile Include="Services\NotExistsBridgeService.cs" />
 		<Compile Include="Services\DbEnvironmentService.cs" />
+		<Compile Include="Services\ValidateRequestService.cs" />
+		<Compile Include="Services\ReverseRequestService.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,53 +1,60 @@
 ﻿using Carbunql.Dapper;
 using Dapper;
+using InterlinkMapper;
+using InterlinkMapper.Actions;
 using InterlinkMapper.Batches;
-using InterlinkMapper.Data;
-using Npgsql;
 using SyncInsert;
 
-var dest = new DbDestination()
+DbDestination GetDestination()
 {
-	Table = new()
+	return new DbDestination()
 	{
-		TableName = "sale_journals",
-		Columns = new() { "sale_journal_id", "sale_date", "price", "remarks" }
-	},
-	Sequence = new()
-	{
-		Column = "sale_journal_id",
-		Command = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
-	}
-};
-var ds = new DbDatasource()
+		Table = new()
+		{
+			TableName = "sale_journals",
+			Columns = new() { "sale_journal_id", "sale_date", "price", "remarks" }
+		},
+		Sequence = new()
+		{
+			Column = "sale_journal_id",
+			Command = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
+		}
+	};
+}
+
+DbDatasource GetDatasource()
 {
-	Destination = dest,
-	KeyColumns = new() { "sale_id" },
-	IsSupportSequenceTransfer = true,
-	KeyMapTable = new()
+	return new DbDatasource()
 	{
-		TableName = "sale_journals__key_sales",
-		ColumnDefinitions = new() {
+		DatasourceName = "sales",
+		Destination = GetDestination(),
+		KeyColumns = new() { "sale_id" },
+		IsSupportSequenceTransfer = true,
+		KeyMapTable = new()
+		{
+			TableName = "sale_journals__key_sales",
+			ColumnDefinitions = new() {
 			new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
 			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8", IsUniqueKey = true }
 		},
-	},
-	RelationMapTable = new()
-	{
-		TableName = "sale_journals__rel_sales",
-		ColumnDefinitions = new() {
+		},
+		RelationMapTable = new()
+		{
+			TableName = "sale_journals__rel_sales",
+			ColumnDefinitions = new() {
 			new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
 			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" }
 		},
-	},
-	RequestTable = new()
-	{
-		TableName = "sale_journals__req_sales",
-		ColumnDefinitions = new() {
+		},
+		RequestTable = new()
+		{
+			TableName = "sale_journals__req_sales",
+			ColumnDefinitions = new() {
 			new ColumnDefinition() { ColumnName = "request_id", TypeName = "int8" , IsPrimaryKey = true, IsAutoNumber = true },
 			new ColumnDefinition() { ColumnName = "sale_id", TypeName = "int8" , IsUniqueKey= true }
 		},
-	},
-	Query = @"
+		},
+		Query = @"
 select
 	s.sale_date,
 	s.price,
@@ -58,41 +65,27 @@ select
 from
 	sales as s
 ",
-	HoldJudgementColumnName = "_hold"
-};
+		HoldJudgementColumnName = "_hold"
+	};
+}
 
-
-var cnstring = "Server=localhost;Port=5430;Database=postgres;User Id=root;Password=root;";
-
-using (var cn = new NpgsqlConnection(cnstring))
+void ExecuteSql(IDbConnectAction connector, string sql)
 {
-	cn.Open();
+	using var cn = connector.Execute();
 	using var trn = cn.BeginTransaction();
-
-	var logger = new ConsoleLogger();
-
-	var batch = new ForwardTransferBatch(cn, logger);
-
-	//be transferred
-	batch.Execute(ds);
+	cn.Execute(sql);
 	trn.Commit();
 }
 
-using (var cn = new NpgsqlConnection(cnstring))
-{
-	cn.Open();
-	using var trn = cn.BeginTransaction();
+var connector = new PostgresDbConnectAction();
+var logger = new ConsoleLogger();
+var datasource = GetDatasource();
 
-	cn.Execute("update sales set remarks = 'remarks_0' where remarks = 'remarks_1'");
+var batch = new ForwardTransferBatch(connector, logger);
+batch.Execute(datasource);
 
-	var logger = new ConsoleLogger();
+ExecuteSql(connector, "update sales set remarks = 'remarks_0' where remarks = 'remarks_1'");
 
-	var batch = new ForwardTransferFromRequest(cn, logger);
-
-	//be transferred
-	batch.Execute(ds);
-	trn.Commit();
-}
+batch.Execute(datasource);
 
 Console.ReadLine();
-

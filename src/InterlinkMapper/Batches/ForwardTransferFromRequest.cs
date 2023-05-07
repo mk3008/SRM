@@ -1,4 +1,5 @@
 ﻿using Carbunql;
+using InterlinkMapper.Actions;
 using InterlinkMapper.Services;
 using Microsoft.Extensions.Logging;
 using System.Data;
@@ -10,9 +11,9 @@ namespace InterlinkMapper.Batches;
 /// </summary>
 public class ForwardTransferFromRequest
 {
-	public ForwardTransferFromRequest(IDbConnection connection, ILogger? logger = null)
+	public ForwardTransferFromRequest(IDbConnectAction connector, ILogger? logger = null)
 	{
-		Connection = connection;
+		Connection = connector.Execute();
 		Logger = logger;
 	}
 
@@ -30,6 +31,8 @@ public class ForwardTransferFromRequest
 	{
 		Logger!.LogInformation("start {Destination} <- {Datasource}", ds.Destination.Table.GetTableFullName(), ds.DatasourceName);
 
+		using var trn = Connection.BeginTransaction();
+
 		CreateEnvironmentOnDBMS(ds);
 
 		var bridge = PrepareForTransfer(ds);
@@ -40,6 +43,8 @@ public class ForwardTransferFromRequest
 		}
 
 		Transfer(bridge);
+
+		trn.Commit();
 
 		Logger!.LogInformation("end");
 	}
@@ -64,7 +69,7 @@ public class ForwardTransferFromRequest
 	/// <returns></returns>
 	private Bridge? PrepareForTransfer(IDatasource ds)
 	{
-		var service = new RequestBridgeService(Connection, Logger);
+		var service = new ForwardRequestBridgeService(Connection, Logger);
 		var maxid = service.GetLastRequestId(ds);
 		var bridgeQuery = service.CreateAndSelect(ds, maxid);
 
