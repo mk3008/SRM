@@ -6,11 +6,13 @@ public class DbDestination : IDestination
 
 	public DbTable Table { get; set; } = new();
 
-	public DbTable ProcessMap { get; set; } = new();
+	public DbTableDefinition ProcessTable { get; set; } = new();
 
 	public Sequence Sequence { get; set; } = new();
 
 	public string Description { get; set; } = string.Empty;
 
-	public ReverseOption ReverseOption { get; set; } = new();
+	public FlipOption FlipOption { get; set; } = new();
+
+	public DbTableDefinition ValidateRequestTable { get; set; } = new();
 }

@@ -60,4 +60,3 @@ public static class ITableDefinitionExtention
 		return sql;
 	}
 }
-

@@ -84,7 +84,7 @@ public class NotExistsBridgeService
 		sq.SelectClause!.ToList().ForEach(x => columns.Add(x.Alias));
 
 		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
-		Logger?.LogInformation("create table sql : {Sql}", cq.ToCommand().CommandText);
+		Logger?.LogInformation(cq.ToText() + ";");
 		Connection.Execute(cq, commandTimeout: CommandTimeout);
 
 		return GetSelectBridgeQuery(bridgeName, columns);
@@ -98,10 +98,10 @@ public class NotExistsBridgeService
 	public int GetCount(SelectQuery bridgeQuery)
 	{
 		var q = bridgeQuery.ToCountQuery();
-		Logger?.LogInformation("count sql : {Sql}", q.ToCommand().CommandText);
+		Logger?.LogInformation(q.ToText() + ";");
 
 		var cnt = Connection.ExecuteScalar<int>(q, commandTimeout: CommandTimeout);
-		Logger?.LogInformation("count : {Count} row(s)", cnt);
+		Logger?.LogInformation("count : {cnt} row(s)", cnt);
 		return cnt;
 	}
 

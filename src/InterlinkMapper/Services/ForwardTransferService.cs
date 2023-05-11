@@ -10,29 +10,41 @@ namespace InterlinkMapper.Services;
 
 public class ForwardTransferService
 {
-	public ForwardTransferService(IDbConnection cn, ILogger? logger = null, string placeHolderIdentifer = ":")
+	public ForwardTransferService(DbEnvironment environment, IDbConnection cn, ILogger? logger = null)
 	{
+		Environment = environment;
 		Connection = cn;
 		Logger = logger;
-		PlaceHolderIdentifer = placeHolderIdentifer;
 	}
 
 	private readonly ILogger? Logger;
 
 	private IDbConnection Connection { get; init; }
 
-	private string PlaceHolderIdentifer { get; init; }
+	private DbEnvironment Environment { get; init; }
 
 	public int CommandTimeout { get; set; } = 60 * 5;
 
-	public int TransferToDestination(IDatasource ds, SelectQuery bridge)
+	public int TransferToDestination(int procId, IDatasource ds, SelectQuery bridge)
 	{
+		TransferToProcessMap(procId, ds, bridge);
+
 		var iq = ToInsertQuery(bridge, ds.Destination.Table);
 		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
 
 		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNotNull());
 
 		return ExecuteWithLogging(iq);
+	}
+
+	private void TransferToProcessMap(int procId, IDatasource ds, SelectQuery bridge)
+	{
+		var iq = ToInsertQuery(procId, bridge, ds.Destination.ProcessTable);
+		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
+
+		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNotNull());
+
+		ExecuteWithLogging(iq);
 	}
 
 	public int TransferToKeyMap(IDatasource ds, SelectQuery bridge)
@@ -57,13 +69,13 @@ public class ForwardTransferService
 
 	public int TransferToRequest(IDatasource ds, SelectQuery bridge)
 	{
-		var iq = ToInsertQuery(bridge, ds.RequestTable);
+		var iq = ToInsertQuery(bridge, ds.ForwardRequestTable);
 		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
 
 		//wait for unnumbered
 		var f = sq.FromClause;
 		if (f == null) throw new NullReferenceException(nameof(f));
-		var r = f.LeftJoin(ds.RequestTable.GetTableFullName()).As("r").On(f.Root, ds.KeyColumns);
+		var r = f.LeftJoin(ds.ForwardRequestTable.GetTableFullName()).As("r").On(f.Root, ds.KeyColumns);
 
 		sq.Where(new ColumnValue(f.Root, ds.Destination.Sequence.Column).IsNull());
 		sq.Where(new ColumnValue(r, ds.KeyColumns.First()).IsNull());
@@ -73,7 +85,7 @@ public class ForwardTransferService
 
 	public int RemoveRequestAsSuccess(IDatasource ds, SelectQuery bridge)
 	{
-		var requestTable = ds.RequestTable.GetTableFullName();
+		var requestTable = ds.ForwardRequestTable.GetTableFullName();
 
 		var sq = new SelectQuery();
 		var (_, b) = sq.From(bridge).As("b");
@@ -85,8 +97,8 @@ public class ForwardTransferService
 
 	public int RemoveRequestAsIgnore(IDatasource ds, SelectQuery bridge, int maxRequestId)
 	{
-		var requestTable = ds.RequestTable.GetTableFullName();
-		var seq = ds.RequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
+		var requestTable = ds.ForwardRequestTable.GetTableFullName();
+		var seq = ds.ForwardRequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
 		var key = ds.KeyColumns.First();
 
 		var sq = new SelectQuery();
@@ -100,9 +112,9 @@ public class ForwardTransferService
 		//the maximum number of requests to be deleted is limited to the request ID used
 		//when creating the bridge table.
 		sq.Where(b, key).IsNull();
-		sq.Where(r, seq.ColumnName).AddOperatableValue("<=", new LiteralValue(sq.AddParameter(PlaceHolderIdentifer + "max_request_id", maxRequestId)));
+		sq.Where(r, seq.ColumnName).AddOperatableValue("<=", new LiteralValue(sq.AddParameter(Environment.PlaceHolderIdentifer + "max_request_id", maxRequestId)));
 
-		var dq = sq.ToDeleteQuery(ds.RequestTable.GetTableFullName());
+		var dq = sq.ToDeleteQuery(ds.ForwardRequestTable.GetTableFullName());
 
 		return ExecuteWithLogging(dq);
 	}
@@ -116,12 +128,21 @@ public class ForwardTransferService
 		return sq.ToInsertQuery(table.GetTableFullName());
 	}
 
+	private InsertQuery ToInsertQuery(int procId, SelectQuery bridge, IDbTable table)
+	{
+		var sq = new SelectQuery();
+		var (_, b) = sq.From(bridge).As("b");
+		sq.Select(b);
+		sq.Select(sq.AddParameter(Environment.PlaceHolderIdentifer + Environment.ProcessIdColumn, procId)).As(Environment.ProcessIdColumn);
+		sq.SelectClause!.FilterInColumns(table.Columns);
+		return sq.ToInsertQuery(table.GetTableFullName());
+	}
+
 	private int ExecuteWithLogging(IQueryCommandable query)
 	{
-		var type = (query is InsertQuery) ? "insert" : (query is UpdateQuery) ? "update" : (query is DeleteQuery) ? "delete" : "unknown";
-		Logger?.LogInformation("{Type} sql : {Sql}", type, query.ToCommand().CommandText);
+		Logger?.LogInformation(query.ToText() + ";");
 		var cnt = Connection.Execute(query, commandTimeout: CommandTimeout);
-		Logger?.LogInformation("results : {Count} row(s)", cnt);
+		Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
 		return cnt;
 	}

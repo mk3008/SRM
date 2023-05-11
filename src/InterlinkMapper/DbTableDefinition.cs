@@ -14,6 +14,8 @@ public class DbTableDefinition : IDbTableDefinition
 
 	IEnumerable<ColumnDefinition> IDbTableDefinition.ColumnDefinitions => ColumnDefinitions;
 
+	public List<DbIndexDefinition> Indexes { get; set; } = new();
+
 	//public IEnumerable<ColumnDefinition> ColumnDefinitions => throw new NotImplementedException();
 
 	//IEnumerable<string> ITable.Columns => throw new NotImplementedException();

@@ -16,7 +16,9 @@ public class DbDatasource : IDatasource
 
 	public DbTableDefinition RelationMapTable { get; set; } = new();
 
-	public DbTableDefinition RequestTable { get; set; } = new();
+	public DbTableDefinition ForwardRequestTable { get; set; } = new();
+
+	public DbTableDefinition ValidateRequestTable { get; set; } = new();
 
 	public bool IsSupportSequenceTransfer { get; set; } = false;
 

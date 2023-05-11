@@ -15,7 +15,9 @@ public interface IDatasource
 
 	DbTableDefinition RelationMapTable { get; }
 
-	DbTableDefinition RequestTable { get; }
+	DbTableDefinition ForwardRequestTable { get; }
+
+	DbTableDefinition ValidateRequestTable { get; }
 
 	bool IsSupportSequenceTransfer { get; }
 
@@ -30,7 +32,9 @@ public static class IDestinationExtension
 
 	public static bool HasRelationMapTable(this IDatasource source) => string.IsNullOrEmpty(source.RelationMapTable.GetTableFullName()) ? false : true;
 
-	public static bool HasRequestTable(this IDatasource source) => string.IsNullOrEmpty(source.RequestTable.GetTableFullName()) ? false : true;
+	public static bool HasForwardRequestTable(this IDatasource source) => string.IsNullOrEmpty(source.ForwardRequestTable.GetTableFullName()) ? false : true;
+
+	public static bool HasValidateRequestTable(this IDatasource source) => string.IsNullOrEmpty(source.ValidateRequestTable.GetTableFullName()) ? false : true;
 
 	public static SelectQuery ToSelectDatasourceQuery(this IDatasource source, string alias = "d")
 	{

@@ -1,7 +1,4 @@
-﻿using Carbunql.Analysis.Parser;
-using Carbunql.Extensions;
-using Cysharp.Text;
-using Dapper;
+﻿using Dapper;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -24,8 +21,35 @@ public class DbEnvironmentService
 	public void CreateTableOrDefault(DbTableDefinition def)
 	{
 		var sql = def.ToCreateCommandText();
-		Logger?.LogInformation("create table sql : {Sql}", sql);
-
+		Logger?.LogInformation(sql + ";");
 		Connection.Execute(sql, CommandTimeout);
+
+		foreach (var index in def.Indexes)
+		{
+			var q = index.ToCreateCommandText(def);
+			Logger?.LogInformation(q + ";");
+			Connection.Execute(q, CommandTimeout);
+		}
+	}
+
+	public void CreateTableOrDefault(DbEnvironment environment)
+	{
+		CreateTableOrDefault(environment.TransactionTable);
+		CreateTableOrDefault(environment.ProcessnTable);
+	}
+
+	public void CreateTableOrDefault(IDatasource d)
+	{
+		if (d.HasRelationMapTable()) CreateTableOrDefault(d.RelationMapTable);
+		if (d.HasKeyMapTable()) CreateTableOrDefault(d.KeyMapTable);
+		if (d.HasForwardRequestTable()) CreateTableOrDefault(d.ForwardRequestTable);
+		if (d.HasValidateRequestTable()) CreateTableOrDefault(d.ValidateRequestTable);
+	}
+
+	public void CreateTableOrDefault(IDestination d)
+	{
+		if (d.HasProcessTable()) CreateTableOrDefault(d.ProcessTable);
+		if (d.HasFlipTable()) CreateTableOrDefault(d.FlipOption.FlipTable);
+		if (d.HasValidateRequestTable()) CreateTableOrDefault(d.ValidateRequestTable);
 	}
 }

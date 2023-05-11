@@ -2,7 +2,9 @@
 using InterlinkMapper.Actions;
 using InterlinkMapper.Services;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Data;
+using System.Data.Common;
 
 namespace InterlinkMapper.Batches;
 
@@ -11,15 +13,18 @@ namespace InterlinkMapper.Batches;
 /// </summary>
 public class ForwardTransferBatch
 {
-	public ForwardTransferBatch(IDbConnectAction connector, ILogger? logger = null)
+	public ForwardTransferBatch(DbEnvironment environment, IDbConnectAction connector, ILogger? logger = null)
 	{
-		Connection = connector.Execute();
+		Connector = connector;
 		Logger = logger;
+		Environment = environment;
 	}
 
-	private IDbConnection Connection { get; init; }
+	private IDbConnectAction Connector { get; init; }
 
 	public ILogger? Logger { get; init; }
+
+	public DbEnvironment Environment { get; init; }
 
 	/// <summary>
 	/// Execute the transfer process.
@@ -29,35 +34,39 @@ public class ForwardTransferBatch
 	{
 		Logger!.LogInformation("start {Destination} <- {Datasource}", ds.Destination.Table.GetTableFullName(), ds.DatasourceName);
 
-		using var trn = Connection.BeginTransaction();
+		using var cn = Connector.Execute();
+		using var trn = cn.BeginTransaction();
 
-		CreateEnvironmentOnDBMS(ds);
+		var tranId = GetTranasctionId(cn, ds);
+		var procId = GetProcessId(tranId, cn, ds);
 
-		var bridge = PrepareForTransfer(ds);
+		var bridge = PrepareForTransfer(cn, ds);
 		if (bridge == null)
 		{
+			trn.Commit();
 			Logger?.LogWarning("Transfer target not found");
 			return;
 		}
 
-		Transfer(bridge);
+		Transfer(procId, cn, bridge);
 
 		trn.Commit();
 
 		Logger!.LogInformation("end");
 	}
 
-	/// <summary>
-	/// Generate the tables used by the system.
-	/// </summary>
-	/// <param name="ds"></param>
-	private void CreateEnvironmentOnDBMS(IDatasource ds)
+	private int GetTranasctionId(IDbConnection cn, IDatasource ds)
 	{
-		var service = new DbEnvironmentService(Connection, Logger);
+		var service = new BatchTransactionService(Environment, cn, Logger);
 
-		if (ds.HasRelationMapTable()) service.CreateTableOrDefault(ds.RelationMapTable);
-		if (ds.HasKeyMapTable()) service.CreateTableOrDefault(ds.KeyMapTable);
-		if (ds.HasRequestTable()) service.CreateTableOrDefault(ds.RequestTable);
+		return service.GetStart(ds);
+	}
+
+	private int GetProcessId(int tranId, IDbConnection cn, IDatasource ds)
+	{
+		var service = new BatchProcessService(Environment, cn, Logger);
+
+		return service.GetStart(tranId, ds);
 	}
 
 	/// <summary>
@@ -65,9 +74,9 @@ public class ForwardTransferBatch
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <returns></returns>
-	private Bridge? PrepareForTransfer(IDatasource ds)
+	private Bridge? PrepareForTransfer(IDbConnection cn, IDatasource ds)
 	{
-		var service = new NotExistsBridgeService(Connection, Logger);
+		var service = new NotExistsBridgeService(cn, Logger);
 		var bridgeQuery = service.CreateAndSelect(ds);
 
 		var cnt = service.GetCount(bridgeQuery);
@@ -80,16 +89,16 @@ public class ForwardTransferBatch
 	/// Those that could not be transferred are transferred to the hold table.
 	/// </summary>
 	/// <param name="bridge"></param>
-	private void Transfer(Bridge bridge)
+	private void Transfer(int procId, IDbConnection cn, Bridge bridge)
 	{
-		var service = new ForwardTransferService(Connection, Logger);
+		var service = new ForwardTransferService(Environment, cn, Logger);
 		var ds = bridge.Datasource;
 
-		service.TransferToDestination(ds, bridge.Query);
+		service.TransferToDestination(procId, ds, bridge.Query);
 		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
 		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
-		if (ds.HasRequestTable()) service.TransferToRequest(ds, bridge.Query);
-		if (ds.HasRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.TransferToRequest(ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
 	}
 
 	private class Bridge

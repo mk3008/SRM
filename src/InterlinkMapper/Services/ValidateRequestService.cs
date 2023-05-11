@@ -33,10 +33,10 @@ public class ValidateRequestService
 
 	public int GetLastRequestId(IDatasource ds)
 	{
-		var requestTable = ds.RequestTable.GetTableFullName();
+		var requestTable = ds.ForwardRequestTable.GetTableFullName();
 		if (string.IsNullOrEmpty(requestTable)) return 0;
 
-		var seq = ds.RequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
+		var seq = ds.ForwardRequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
 		var sq = new SelectQuery();
 		var (_, r) = sq.From(requestTable).As("r");
 		sq.Select($"coalesce(max(r.{seq.ColumnName}), 0)");
@@ -85,7 +85,7 @@ public class ValidateRequestService
 
 		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
 
-		Logger?.LogInformation("create table sql : {Sql}", cq.ToCommand().CommandText);
+		Logger?.LogInformation(cq.ToText() + ";");
 
 		Connection.Execute(cq);
 
@@ -119,10 +119,10 @@ public class ValidateRequestService
 	public int GetCount(SelectQuery bridgeQuery)
 	{
 		var q = bridgeQuery.ToCountQuery();
-		Logger?.LogInformation("count sql : {Sql}", q.ToCommand().CommandText);
+		Logger?.LogInformation(q.ToText() + ";");
 
 		var cnt = Connection.ExecuteScalar<int>(q, commandTimeout: CommandTimeout);
-		Logger?.LogInformation("count : {Count} row(s)", cnt);
+		Logger?.LogInformation("count : {cnt} row(s)", cnt);
 		return cnt;
 	}
 
@@ -166,12 +166,12 @@ public class ValidateRequestService
 		if (from == null) throw new NullReferenceException(nameof(from));
 		var dsTable = from.Root;
 
-		var requestTable = ds.RequestTable.GetTableFullName();
+		var requestTable = ds.ForwardRequestTable.GetTableFullName();
 		if (string.IsNullOrEmpty(requestTable)) throw new NullReferenceException(nameof(requestTable));
 
 		var r = from.InnerJoin(requestTable).As("r").On(dsTable, ds.KeyColumns);
 
-		var seq = ds.RequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
+		var seq = ds.ForwardRequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
 		query.Where(r, seq.ColumnName).AddOperatableValue("<=", new LiteralValue(query.AddParameter(PlaceHolderIdentifer + "max_request_id", maxRequestId)));
 	}
 }
