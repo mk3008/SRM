@@ -35,7 +35,8 @@ public class DbEnvironmentService
 	public void CreateTableOrDefault(DbEnvironment environment)
 	{
 		CreateTableOrDefault(environment.TransactionTable);
-		CreateTableOrDefault(environment.ProcessnTable);
+		CreateTableOrDefault(environment.ProcessTable);
+		CreateTableOrDefault(environment.ProcessResultTable);
 	}
 
 	public void CreateTableOrDefault(IDatasource d)

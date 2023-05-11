@@ -24,7 +24,7 @@ DbEnvironment GetDbEnvironment()
 				new DbIndexDefinition() { IndexNumber = 1, Columns = new() {"destination_table_name" , "datasource_name"}}
 			}
 		},
-		ProcessnTable = new()
+		ProcessTable = new()
 		{
 			TableName = "processes",
 			ColumnDefinitions = new()
@@ -44,12 +44,34 @@ DbEnvironment GetDbEnvironment()
 				new DbIndexDefinition() { IndexNumber = 3, Columns = new() { "keymap_table_name" }}
 			}
 		},
+		ProcessResultTable = new()
+		{
+			TableName = "process_results",
+			ColumnDefinitions = new()
+			{
+				new ColumnDefinition() { ColumnName = "process_result_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new ColumnDefinition() { ColumnName = "process_id", TypeName = "int8" },
+				new ColumnDefinition() { ColumnName = "function_name", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "table_name", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "action", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "result_count", TypeName = "int8" },
+				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "clock_timestamp()" },
+			},
+			Indexes = new()
+			{
+				new DbIndexDefinition() { IndexNumber = 1, Columns = new() { "process_id" }},
+			}
+		},
 		TransactionIdColumn = "transaction_id",
 		ProcessIdColumn = "process_id",
 		DestinationTableNameColumn = "destination_table_name",
 		DatasourceNameColumn = "datasource_name",
 		KeymapTableNameColumn = "keymap_table_name",
 		RelationmapTableNameColumn = "relationmap_table_name",
+		FunctionNameColumn = "function_name",
+		TableNameColumn = "table_name",
+		ActionNameColumn = "action",
+		ResultCountColumn = "result_count",
 		TimestampColumn = "created_at",
 		PlaceHolderIdentifer = ":"
 	};

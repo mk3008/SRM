@@ -95,10 +95,10 @@ public class ForwardTransferBatch
 		var ds = bridge.Datasource;
 
 		service.TransferToDestination(procId, ds, bridge.Query);
-		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
-		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
-		if (ds.HasForwardRequestTable()) service.TransferToRequest(ds, bridge.Query);
-		if (ds.HasForwardRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
+		if (ds.HasRelationMapTable()) service.TransferToRelationMap(procId, ds, bridge.Query);
+		if (ds.HasKeyMapTable()) service.TransferToKeyMap(procId, ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.TransferToRequest(procId, ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.RemoveRequestAsSuccess(procId, ds, bridge.Query);
 	}
 
 	private class Bridge

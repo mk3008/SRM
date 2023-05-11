@@ -42,7 +42,7 @@ public class BatchProcessService
 		}
 
 		//insert into process_table returning process_id
-		var iq = sq.ToInsertQuery(env.ProcessnTable.GetTableFullName());
+		var iq = sq.ToInsertQuery(env.ProcessTable.GetTableFullName());
 		iq.Returning(env.ProcessIdColumn);
 
 		Logger?.LogInformation(iq.ToText() + ";");

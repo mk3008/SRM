@@ -34,7 +34,11 @@ public class ForwardTransferService
 
 		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNotNull());
 
-		return ExecuteWithLogging(iq);
+		var cnt = ExecuteWithLogging(iq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, ds.Destination.Table.GetTableFullName(), QueryAction.Insert, cnt);
+
+		return cnt;
 	}
 
 	private void TransferToProcessMap(int procId, IDatasource ds, SelectQuery bridge)
@@ -44,30 +48,40 @@ public class ForwardTransferService
 
 		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNotNull());
 
-		ExecuteWithLogging(iq);
+		var cnt = ExecuteWithLogging(iq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, ds.Destination.ProcessTable.GetTableFullName(), QueryAction.Insert, cnt);
 	}
 
-	public int TransferToKeyMap(IDatasource ds, SelectQuery bridge)
+	public int TransferToKeyMap(int procId, IDatasource ds, SelectQuery bridge)
 	{
 		var iq = ToInsertQuery(bridge, ds.KeyMapTable);
 		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
 
 		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNotNull());
 
-		return ExecuteWithLogging(iq);
+		var cnt = ExecuteWithLogging(iq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, ds.KeyMapTable.GetTableFullName(), QueryAction.Insert, cnt);
+
+		return cnt;
 	}
 
-	public int TransferToRelationMap(IDatasource ds, SelectQuery bridge)
+	public int TransferToRelationMap(int procId, IDatasource ds, SelectQuery bridge)
 	{
 		var iq = ToInsertQuery(bridge, ds.RelationMapTable);
 		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
 
 		sq.Where(new ColumnValue(sq.FromClause!.Root, ds.Destination.Sequence.Column).IsNotNull());
 
-		return ExecuteWithLogging(iq);
+		var cnt = ExecuteWithLogging(iq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, ds.RelationMapTable.GetTableFullName(), QueryAction.Insert, cnt);
+
+		return cnt;
 	}
 
-	public int TransferToRequest(IDatasource ds, SelectQuery bridge)
+	public int TransferToRequest(int procId, IDatasource ds, SelectQuery bridge)
 	{
 		var iq = ToInsertQuery(bridge, ds.ForwardRequestTable);
 		if (iq.Query is not SelectQuery sq) throw new NullReferenceException(nameof(sq));
@@ -80,10 +94,14 @@ public class ForwardTransferService
 		sq.Where(new ColumnValue(f.Root, ds.Destination.Sequence.Column).IsNull());
 		sq.Where(new ColumnValue(r, ds.KeyColumns.First()).IsNull());
 
-		return ExecuteWithLogging(iq);
+		var cnt = ExecuteWithLogging(iq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, ds.ForwardRequestTable.GetTableFullName(), QueryAction.Insert, cnt);
+
+		return cnt;
 	}
 
-	public int RemoveRequestAsSuccess(IDatasource ds, SelectQuery bridge)
+	public int RemoveRequestAsSuccess(int procId, IDatasource ds, SelectQuery bridge)
 	{
 		var requestTable = ds.ForwardRequestTable.GetTableFullName();
 
@@ -92,10 +110,14 @@ public class ForwardTransferService
 		ds.KeyColumns.ForEach(x => sq.Select(b, x));
 		var dq = sq.ToDeleteQuery(requestTable);
 
-		return ExecuteWithLogging(dq);
+		var cnt = ExecuteWithLogging(dq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, requestTable, QueryAction.Delete, cnt);
+
+		return cnt;
 	}
 
-	public int RemoveRequestAsIgnore(IDatasource ds, SelectQuery bridge, int maxRequestId)
+	public int RemoveRequestAsIgnore(int procId, IDatasource ds, SelectQuery bridge, int maxRequestId)
 	{
 		var requestTable = ds.ForwardRequestTable.GetTableFullName();
 		var seq = ds.ForwardRequestTable.ColumnDefinitions.Where(x => x.IsAutoNumber).First();
@@ -116,7 +138,11 @@ public class ForwardTransferService
 
 		var dq = sq.ToDeleteQuery(ds.ForwardRequestTable.GetTableFullName());
 
-		return ExecuteWithLogging(dq);
+		var cnt = ExecuteWithLogging(dq);
+
+		SaveResult(procId, System.Reflection.MethodBase.GetCurrentMethod()?.Name, ds.ForwardRequestTable.GetTableFullName(), QueryAction.Delete, cnt);
+
+		return cnt;
 	}
 
 	private static InsertQuery ToInsertQuery(SelectQuery bridge, IDbTable table)
@@ -146,4 +172,26 @@ public class ForwardTransferService
 
 		return cnt;
 	}
+
+	private void SaveResult(int procId, string? functionName, string table, QueryAction action, int count)
+	{
+		var name = (functionName ?? "unknown");
+		var e = Environment;
+		var sq = new SelectQuery();
+		sq.Select(sq.AddParameter(e.PlaceHolderIdentifer + e.ProcessIdColumn, procId)).As(e.ProcessIdColumn);
+		sq.Select(sq.AddParameter(e.PlaceHolderIdentifer + e.FunctionNameColumn, name)).As(e.FunctionNameColumn);
+		sq.Select(sq.AddParameter(e.PlaceHolderIdentifer + e.TableNameColumn, table)).As(e.TableNameColumn);
+		sq.Select(sq.AddParameter(e.PlaceHolderIdentifer + e.ActionNameColumn, action.ToString())).As(e.ActionNameColumn);
+		sq.Select(sq.AddParameter(e.PlaceHolderIdentifer + e.ResultCountColumn, count)).As(e.ResultCountColumn);
+
+		var iq = sq.ToInsertQuery(e.ProcessResultTable.GetTableFullName());
+		ExecuteWithLogging(iq);
+	}
+}
+
+public enum QueryAction
+{
+	Insert,
+	Update,
+	Delete,
 }
