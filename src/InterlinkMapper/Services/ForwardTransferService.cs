@@ -115,6 +115,7 @@ public class ForwardTransferService : IQueryExecuteService
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(bridge).As("d");
 		sq.Select(d);
+		sq.Select(DbQueryConfig.PlaceHolderIdentifer, "process_id", ProcessId);
 		sq.Where(d, ds.Destination.Sequence.Column).IsNotNull();
 		return sq;
 	}

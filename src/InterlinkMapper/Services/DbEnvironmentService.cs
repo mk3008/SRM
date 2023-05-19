@@ -52,6 +52,7 @@ public class DbEnvironmentService
 	{
 		if (d.HasProcessTable()) CreateTableOrDefault(d.ProcessTable);
 		if (d.HasFlipTable()) CreateTableOrDefault(d.FlipOption.FlipTable);
+		if (d.HasDeleteRequestTable()) CreateTableOrDefault(d.DeleteRequestTable);
 		if (d.HasValidateRequestTable()) CreateTableOrDefault(d.ValidateRequestTable);
 	}
 }

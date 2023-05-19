@@ -33,8 +33,8 @@ DbTableConfig GetDbTableConfig()
 				new ColumnDefinition() { ColumnName = "transaction_id", TypeName = "int8" },
 				new ColumnDefinition() { ColumnName = "destination_table_name", TypeName = "text" },
 				new ColumnDefinition() { ColumnName = "datasource_name", TypeName = "text" },
-				new ColumnDefinition() { ColumnName = "keymap_table_name", TypeName = "text" },
-				new ColumnDefinition() { ColumnName = "relationmap_table_name", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "keymap_table_name", TypeName = "text", AllowNull = true },
+				new ColumnDefinition() { ColumnName = "relationmap_table_name", TypeName = "text", AllowNull = true },
 				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 			},
 			Indexes = new()
@@ -102,6 +102,15 @@ DbDestination GetDestination()
 			{
 				new DbIndexDefinition() { IndexNumber = 1, Columns = new() { "process_id" }},
 			}
+		},
+		DeleteRequestTable = new()
+		{
+			TableName = "sale_journals_delete_requests",
+			ColumnDefinitions = new() {
+				new ColumnDefinition() { ColumnName = "sale_journals_delete_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
+				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+			},
 		},
 		ValidateRequestTable = new()
 		{
@@ -220,11 +229,12 @@ var datasource = GetDatasource();
 var builder = new DbEnvironmentBuildBatch(environment, logger);
 builder.Execute(datasource);
 
-var transfer = new ForwardTransferBatch(environment, logger);
-transfer.Execute(datasource);
+var forwardTransfer = new ForwardTransferBatch(environment, logger);
+forwardTransfer.Execute(datasource);
 
-ExecuteSql(dbConnectionConfig, "update sales set remarks = 'remarks_0' where remarks = 'remarks_1'");
+ExecuteSql(dbConnectionConfig, "insert into sale_journals_delete_requests(sale_journal_id) select sale_journal_id from sale_journals");
 
-transfer.Execute(datasource);
+var deleteTransfer = new DeleteTransferFromRequestBatch(environment, logger);
+deleteTransfer.Execute(datasource.Destination);
 
 Console.ReadLine();

@@ -4,6 +4,7 @@ using Carbunql.Dapper;
 using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 
 namespace InterlinkMapper.Services;
@@ -46,11 +47,15 @@ public static class IQueryExecuteServiceExtention
 
 	public static int Insert(this IQueryExecuteService service, SelectQuery query, IDbTable destination, [CallerMemberName] string memberName = "")
 	{
-		var q = query.ToInsertQuery(destination.GetTableFullName());
+		var tmp = new SelectQuery();
+		var (f, d) = tmp.From(query).As("d");
+		tmp.Select(d);
+		tmp.SelectClause!.FilterInColumns(destination.Columns);
+		var q = tmp.ToInsertQuery(destination.GetTableFullName());
 
 		service.Logger?.LogInformation(q.ToText() + ";");
 
-		var cnt = service.Connection.Execute(query, commandTimeout: service.CommandTimeout);
+		var cnt = service.Connection.Execute(q, commandTimeout: service.CommandTimeout);
 		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
 		service.WriteQueryRestultLog(QueryAction.Insert, destination.GetTableFullName(), cnt, memberName);
@@ -64,10 +69,24 @@ public static class IQueryExecuteServiceExtention
 
 		service.Logger?.LogInformation(q.ToText() + ";");
 
-		var cnt = service.Connection.Execute(query, commandTimeout: service.CommandTimeout);
+		var cnt = service.Connection.Execute(q, commandTimeout: service.CommandTimeout);
 		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
 		service.WriteQueryRestultLog(QueryAction.Delete, destination.GetTableFullName(), cnt, memberName);
+
+		return cnt;
+	}
+
+	public static int Delete(this IQueryExecuteService service, SelectQuery query, string destination, [CallerMemberName] string memberName = "")
+	{
+		var q = query.ToDeleteQuery(destination);
+
+		service.Logger?.LogInformation(q.ToText() + ";");
+
+		var cnt = service.Connection.Execute(q, commandTimeout: service.CommandTimeout);
+		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
+
+		service.WriteQueryRestultLog(QueryAction.Delete, destination, cnt, memberName);
 
 		return cnt;
 	}

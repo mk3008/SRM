@@ -14,5 +14,7 @@ public class DbDestination : IDestination
 
 	public FlipOption FlipOption { get; set; } = new();
 
+	public DbTableDefinition DeleteRequestTable { get; set; } = new();
+
 	public DbTableDefinition ValidateRequestTable { get; set; } = new();
 }

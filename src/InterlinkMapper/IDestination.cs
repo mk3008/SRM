@@ -10,6 +10,8 @@ public interface IDestination
 
 	DbTableDefinition ValidateRequestTable { get; }
 
+	DbTableDefinition DeleteRequestTable { get; }
+
 	Sequence Sequence { get; set; }
 
 	FlipOption FlipOption { get; set; }
@@ -20,6 +22,8 @@ public static class DestinationExtension
 	public static bool HasProcessTable(this IDestination source) => string.IsNullOrEmpty(source.ProcessTable.GetTableFullName()) ? false : true;
 
 	public static bool HasFlipTable(this IDestination source) => string.IsNullOrEmpty(source.FlipOption.FlipTable.GetTableFullName()) ? false : true;
+
+	public static bool HasDeleteRequestTable(this IDestination source) => string.IsNullOrEmpty(source.DeleteRequestTable.GetTableFullName()) ? false : true;
 
 	public static bool HasValidateRequestTable(this IDestination source) => string.IsNullOrEmpty(source.ValidateRequestTable.GetTableFullName()) ? false : true;
 

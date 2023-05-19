@@ -33,6 +33,7 @@
 	<ItemGroup>
 		<Compile Include="Batches\DbEnvironmentBuildBatch.cs" />
 		<Compile Include="Batches\FlipAfterValidationBatch.cs" />
+		<Compile Include="Batches\DeleteTransferFromRequestBatch.cs" />
 		<Compile Include="Batches\ForwardTransferBatch.cs" />
 		<Compile Include="Batches\ForwardTransferFromRequest.cs" />
 		<Compile Include="Batches\ITransferBatch.cs" />
@@ -46,6 +47,7 @@
 		<Compile Include="Services\NotExistsBridgeService.cs" />
 		<Compile Include="Services\DbEnvironmentService.cs" />
 		<Compile Include="Services\IQueryExecuteService.cs" />
+		<Compile Include="Services\DeleteRequestService.cs" />
 		<Compile Include="Services\ValidateRequestService.cs" />
 		<Compile Include="Services\ReverseRequestService.cs" />
 	</ItemGroup>

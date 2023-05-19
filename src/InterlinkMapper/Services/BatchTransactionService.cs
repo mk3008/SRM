@@ -44,4 +44,23 @@ public class BatchTransactionService
 		Logger?.LogInformation($"TransactionId = {id}");
 		return id;
 	}
+
+	public int GetStart(IDestination ds, string datasource)
+	{
+		//select :destination_name, :datasoruce_name
+		var sq = new SelectQuery();
+		sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.DestinationTableNameColumn, ds.Table.GetTableFullName());
+		sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.DatasourceNameColumn, datasource);
+
+		//insert into transaction_table returning transaction_id
+		var iq = sq.ToInsertQuery(DbTableConfig.TransactionTable.GetTableFullName());
+		iq.Returning(DbTableConfig.TransactionIdColumn);
+
+		Logger?.LogInformation(iq.ToText() + ";");
+
+		var id = Connection.ExecuteScalar<int>(iq);
+
+		Logger?.LogInformation($"TransactionId = {id}");
+		return id;
+	}
 }
