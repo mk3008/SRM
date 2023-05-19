@@ -35,7 +35,7 @@ public class ForwardTransferBatch : ITransferBatch
 		var tranId = this.GetTranasctionId(cn, ds);
 		var procId = this.GetProcessId(tranId, cn, ds);
 
-		var bridge = GetBridgeAsNew(cn, ds);
+		var bridge = CreateBridgeAsNew(cn, procId, ds);
 		if (bridge == null)
 		{
 			trn.Commit();
@@ -55,14 +55,13 @@ public class ForwardTransferBatch : ITransferBatch
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <returns></returns>
-	private Bridge? GetBridgeAsNew(IDbConnection cn, IDatasource ds)
+	private Bridge? CreateBridgeAsNew(IDbConnection cn, int processId, IDatasource ds)
 	{
-		var service = new NotExistsBridgeService(cn, Logger);
-		var bridgeQuery = service.CreateAndSelect(ds);
+		var service = new NotExistsBridgeService(Environment, cn, processId, Logger);
+		var result = service.CreateAndSelectBridge(ds);
 
-		var cnt = service.GetCount(bridgeQuery);
-		if (cnt == 0) return null;
-		return new Bridge(ds, bridgeQuery);
+		if (result.Rows == 0) return null;
+		return new Bridge(ds, result.SelectBridgeQuery);
 	}
 
 	/// <summary>

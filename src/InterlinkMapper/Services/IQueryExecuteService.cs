@@ -19,20 +19,22 @@ public interface IQueryExecuteService
 	SystemEnvironment Environment { get; }
 }
 
-public static class QueryExecuteServiceExtention
+public static class IQueryExecuteServiceExtention
 {
 
 	public static int CreateTable(this IQueryExecuteService service, SelectQuery query, string tableName, bool isTemporary = true, int commandTimeout = 180, [CallerMemberName] string memberName = "")
 	{
-		var q = query.ToCreateTableQuery(tableName, isTemporary);
+		var createQuery = query.ToCreateTableQuery(tableName, isTemporary);
 
-		service.Logger?.LogInformation(q.ToText() + ";");
-		service.Connection.Execute(query, commandTimeout: commandTimeout);
+		service.Logger?.LogInformation(createQuery.ToText() + ";");
+		service.Connection.Execute(createQuery, commandTimeout: commandTimeout);
 
-		var sq = new SelectQuery();
-		sq.From(tableName);
-		sq.Select("count(*)");
-		var cnt = service.Connection.ExecuteScalar<int>(sq);
+		var countQuery = new SelectQuery();
+		countQuery.From(tableName);
+		countQuery.Select("count(*)");
+		service.Logger?.LogInformation(countQuery.ToText() + ";");
+
+		var cnt = service.Connection.ExecuteScalar<int>(countQuery, commandTimeout: commandTimeout);
 		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
 		service.WriteQueryRestultLog(QueryAction.CreateTable, tableName, cnt, commandTimeout, memberName);
@@ -70,17 +72,17 @@ public static class QueryExecuteServiceExtention
 
 	private static void WriteQueryRestultLog(this IQueryExecuteService service, QueryAction action, string table, int count, int commandTimeout, string memberName)
 	{
-		var dbQueryConfig = service.Environment.DbQueryConfig;
-		var dbTableConfig = service.Environment.DbTableConfig;
+		var qc = service.Environment.DbQueryConfig;
+		var tc = service.Environment.DbTableConfig;
 
 		var sq = new SelectQuery();
-		sq.Select(dbQueryConfig.PlaceHolderIdentifer, dbTableConfig.ProcessIdColumn, service.ProcessId);
-		sq.Select(dbQueryConfig.PlaceHolderIdentifer, dbTableConfig.MemberNameColumn, memberName);
-		sq.Select(dbQueryConfig.PlaceHolderIdentifer, dbTableConfig.ActionNameColumn, action.ToString());
-		sq.Select(dbQueryConfig.PlaceHolderIdentifer, dbTableConfig.TableNameColumn, table);
-		sq.Select(dbQueryConfig.PlaceHolderIdentifer, dbTableConfig.ResultCountColumn, count);
+		sq.Select(qc.PlaceHolderIdentifer, tc.ProcessIdColumn, service.ProcessId);
+		sq.Select(qc.PlaceHolderIdentifer, tc.MemberNameColumn, memberName);
+		sq.Select(qc.PlaceHolderIdentifer, tc.ActionNameColumn, action.ToString());
+		sq.Select(qc.PlaceHolderIdentifer, tc.TableNameColumn, table);
+		sq.Select(qc.PlaceHolderIdentifer, tc.ResultCountColumn, count);
 
-		var q = sq.ToInsertQuery(dbTableConfig.ProcessResultTable.GetTableFullName());
+		var q = sq.ToInsertQuery(tc.ProcessResultTable.GetTableFullName());
 
 		service.Logger?.LogInformation(q.ToText() + ";");
 		service.Connection.Execute(q, commandTimeout: commandTimeout);

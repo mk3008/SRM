@@ -1,10 +1,9 @@
 ﻿using Carbunql;
 using Carbunql.Building;
-using Carbunql.Dapper;
 using Carbunql.Extensions;
 using Carbunql.Values;
 using Cysharp.Text;
-using Dapper;
+using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Security.Cryptography;
@@ -12,17 +11,27 @@ using System.Text;
 
 namespace InterlinkMapper.Services;
 
-public class NotExistsBridgeService
+public class NotExistsBridgeService : IQueryExecuteService
 {
-	public NotExistsBridgeService(IDbConnection cn, ILogger? logger = null)
+	public NotExistsBridgeService(SystemEnvironment environment, IDbConnection cn, int processId, ILogger? logger = null)
 	{
+		Environment = environment;
 		Connection = cn;
+		ProcessId = processId;
 		Logger = logger;
 	}
 
-	private readonly ILogger? Logger;
+	public ILogger? Logger { get; init; }
 
-	private IDbConnection Connection { get; init; }
+	public IDbConnection Connection { get; init; }
+
+	public SystemEnvironment Environment { get; init; }
+
+	private DbQueryConfig DbQueryConfig => Environment.DbQueryConfig;
+
+	private DbTableConfig DbTableConfig => Environment.DbTableConfig;
+
+	public int ProcessId { get; init; }
 
 	public int CommandTimeout { get; set; } = 60 * 15;
 
@@ -52,7 +61,7 @@ public class NotExistsBridgeService
 	/// <param name="bridgeName"></param>
 	/// <param name="injector"></param>
 	/// <returns></returns>
-	public SelectQuery CreateAndSelect(IDatasource ds, Func<SelectQuery, SelectQuery>? injector = null)
+	public (SelectQuery SelectBridgeQuery, int Rows) CreateAndSelectBridge(IDatasource ds, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		var bridgeName = GenerateBridgeName(ds);
 
@@ -83,26 +92,10 @@ public class NotExistsBridgeService
 		var columns = new List<string>();
 		sq.SelectClause!.ToList().ForEach(x => columns.Add(x.Alias));
 
-		var cq = sq.ToCreateTableQuery(bridgeName, isTemporary: true);
-		Logger?.LogInformation(cq.ToText() + ";");
-		Connection.Execute(cq, commandTimeout: CommandTimeout);
+		var cnt = this.CreateTable(sq, bridgeName, isTemporary: true, commandTimeout: CommandTimeout);
+		var query = GetSelectBridgeQuery(bridgeName, columns);
 
-		return GetSelectBridgeQuery(bridgeName, columns);
-	}
-
-	/// <summary>
-	/// Returns the number of records.
-	/// </summary>
-	/// <param name="bridgeQuery"></param>
-	/// <returns></returns>
-	public int GetCount(SelectQuery bridgeQuery)
-	{
-		var q = bridgeQuery.ToCountQuery();
-		Logger?.LogInformation(q.ToText() + ";");
-
-		var cnt = Connection.ExecuteScalar<int>(q, commandTimeout: CommandTimeout);
-		Logger?.LogInformation("count : {cnt} row(s)", cnt);
-		return cnt;
+		return (query, cnt);
 	}
 
 	/// <summary>

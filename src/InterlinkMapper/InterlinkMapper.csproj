@@ -45,7 +45,7 @@
 		<Compile Include="Services\ForwardRequestBridgeService.cs" />
 		<Compile Include="Services\NotExistsBridgeService.cs" />
 		<Compile Include="Services\DbEnvironmentService.cs" />
-		<Compile Include="Services\QueryExecuteService.cs" />
+		<Compile Include="Services\IQueryExecuteService.cs" />
 		<Compile Include="Services\ValidateRequestService.cs" />
 		<Compile Include="Services\ReverseRequestService.cs" />
 	</ItemGroup>
