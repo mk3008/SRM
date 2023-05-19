@@ -81,8 +81,8 @@ public class ForwardTransferFromRequest : ITransferBatch
 		service.TransferToDestination(ds, bridge.Query);
 		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
 		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
-		if (ds.HasForwardRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
-		if (ds.HasForwardRequestTable()) service.RemoveRequestAsIgnore(ds, bridge.Query, bridge.MaxRequestId);
+		if (ds.HasForwardRequestTable()) service.DeleteRequestAsSuccess(ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.DeleteRequestAsIgnore(ds, bridge.Query, bridge.MaxRequestId);
 	}
 
 	private class Bridge

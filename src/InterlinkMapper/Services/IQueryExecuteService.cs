@@ -16,61 +16,63 @@ public interface IQueryExecuteService
 
 	ILogger? Logger { get; }
 
+	int CommandTimeout { get; set; }
+
 	SystemEnvironment Environment { get; }
 }
 
 public static class IQueryExecuteServiceExtention
 {
 
-	public static int CreateTable(this IQueryExecuteService service, SelectQuery query, string tableName, bool isTemporary = true, int commandTimeout = 180, [CallerMemberName] string memberName = "")
+	public static int CreateTable(this IQueryExecuteService service, SelectQuery query, string tableName, bool isTemporary = true, [CallerMemberName] string memberName = "")
 	{
 		var createQuery = query.ToCreateTableQuery(tableName, isTemporary);
 
 		service.Logger?.LogInformation(createQuery.ToText() + ";");
-		service.Connection.Execute(createQuery, commandTimeout: commandTimeout);
+		service.Connection.Execute(createQuery, commandTimeout: service.CommandTimeout);
 
 		var countQuery = new SelectQuery();
 		countQuery.From(tableName);
 		countQuery.Select("count(*)");
 		service.Logger?.LogInformation(countQuery.ToText() + ";");
 
-		var cnt = service.Connection.ExecuteScalar<int>(countQuery, commandTimeout: commandTimeout);
+		var cnt = service.Connection.ExecuteScalar<int>(countQuery, commandTimeout: service.CommandTimeout);
 		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
-		service.WriteQueryRestultLog(QueryAction.CreateTable, tableName, cnt, commandTimeout, memberName);
+		service.WriteQueryRestultLog(QueryAction.CreateTable, tableName, cnt, memberName);
 
 		return cnt;
 	}
 
-	public static int Insert(this IQueryExecuteService service, SelectQuery query, IDbTable destination, int commandTimeout = 180, [CallerMemberName] string memberName = "")
+	public static int Insert(this IQueryExecuteService service, SelectQuery query, IDbTable destination, [CallerMemberName] string memberName = "")
 	{
 		var q = query.ToInsertQuery(destination.GetTableFullName());
 
 		service.Logger?.LogInformation(q.ToText() + ";");
 
-		var cnt = service.Connection.Execute(query, commandTimeout: commandTimeout);
+		var cnt = service.Connection.Execute(query, commandTimeout: service.CommandTimeout);
 		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
-		service.WriteQueryRestultLog(QueryAction.Insert, destination.GetTableFullName(), cnt, commandTimeout, memberName);
+		service.WriteQueryRestultLog(QueryAction.Insert, destination.GetTableFullName(), cnt, memberName);
 
 		return cnt;
 	}
 
-	public static int Delete(this IQueryExecuteService service, SelectQuery query, IDbTable destination, int commandTimeout = 180, [CallerMemberName] string memberName = "")
+	public static int Delete(this IQueryExecuteService service, SelectQuery query, IDbTable destination, [CallerMemberName] string memberName = "")
 	{
 		var q = query.ToDeleteQuery(destination.GetTableFullName());
 
 		service.Logger?.LogInformation(q.ToText() + ";");
 
-		var cnt = service.Connection.Execute(query, commandTimeout: commandTimeout);
+		var cnt = service.Connection.Execute(query, commandTimeout: service.CommandTimeout);
 		service.Logger?.LogInformation("results : {cnt} row(s)", cnt);
 
-		service.WriteQueryRestultLog(QueryAction.Delete, destination.GetTableFullName(), cnt, commandTimeout, memberName);
+		service.WriteQueryRestultLog(QueryAction.Delete, destination.GetTableFullName(), cnt, memberName);
 
 		return cnt;
 	}
 
-	private static void WriteQueryRestultLog(this IQueryExecuteService service, QueryAction action, string table, int count, int commandTimeout, string memberName)
+	private static void WriteQueryRestultLog(this IQueryExecuteService service, QueryAction action, string table, int count, string memberName)
 	{
 		var qc = service.Environment.DbQueryConfig;
 		var tc = service.Environment.DbTableConfig;
@@ -85,6 +87,15 @@ public static class IQueryExecuteServiceExtention
 		var q = sq.ToInsertQuery(tc.ProcessResultTable.GetTableFullName());
 
 		service.Logger?.LogInformation(q.ToText() + ";");
-		service.Connection.Execute(q, commandTimeout: commandTimeout);
+		service.Connection.Execute(q, commandTimeout: service.CommandTimeout);
 	}
+}
+
+
+public enum QueryAction
+{
+	CreateTable,
+	Insert,
+	Update,
+	Delete,
 }

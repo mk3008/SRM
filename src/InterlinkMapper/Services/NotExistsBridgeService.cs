@@ -66,8 +66,7 @@ public class NotExistsBridgeService : IQueryExecuteService
 		var bridgeName = GenerateBridgeName(ds);
 
 		var sq = new SelectQuery();
-		var (_, d) = sq.From(GetSelectDatasourceQueryForTransfer(ds)).As("d");
-
+		var (_, d) = sq.From(GenerateSelectQueryFromDatasourceWhereNotTransfered(ds)).As("d");
 		sq.Select(d);
 
 		//assign a Sequence to the transfer target
@@ -92,8 +91,8 @@ public class NotExistsBridgeService : IQueryExecuteService
 		var columns = new List<string>();
 		sq.SelectClause!.ToList().ForEach(x => columns.Add(x.Alias));
 
-		var cnt = this.CreateTable(sq, bridgeName, isTemporary: true, commandTimeout: CommandTimeout);
-		var query = GetSelectBridgeQuery(bridgeName, columns);
+		var cnt = this.CreateTable(sq, bridgeName, isTemporary: true);
+		var query = GenerateSelectQueryFromBridge(bridgeName, columns);
 
 		return (query, cnt);
 	}
@@ -104,9 +103,9 @@ public class NotExistsBridgeService : IQueryExecuteService
 	/// <param name="ds"></param>
 	/// <param name="keymapTable"></param>
 	/// <returns></returns>
-	private SelectQuery GetSelectDatasourceQueryForTransfer(IDatasource ds)
+	private SelectQuery GenerateSelectQueryFromDatasourceWhereNotTransfered(IDatasource ds)
 	{
-		var sq = GetSelectDatasourceQuery(ds);
+		var sq = GenerateSelectQueryFromDatasource(ds);
 
 		//If there is no keymap, select all (assuming proper filtering in the datasource query).
 		var keymapTable = ds.KeyMapTable.GetTableFullName();
@@ -125,7 +124,7 @@ public class NotExistsBridgeService : IQueryExecuteService
 		return sq;
 	}
 
-	private static SelectQuery GetSelectDatasourceQuery(IDatasource ds)
+	private static SelectQuery GenerateSelectQueryFromDatasource(IDatasource ds)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(new SelectQuery(ds.Query)).As("d");
@@ -133,14 +132,11 @@ public class NotExistsBridgeService : IQueryExecuteService
 		return sq;
 	}
 
-	private static SelectQuery GetSelectBridgeQuery(string bridgeTable, List<string> columns)
+	private static SelectQuery GenerateSelectQueryFromBridge(string bridgeTable, List<string> columns)
 	{
-		//WHERE (SELECT COALESCE(MAX(datasourceSeqColumn), 0) FROM keymapTable) < datasourceTable.datasourceSeqColumn
 		var sq = new SelectQuery();
 		var (_, b) = sq.From(bridgeTable).As("b");
-
 		columns.ForEach(x => sq.Select(b, x));
-
 		return sq;
 	}
 
