@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -32,7 +33,7 @@ public class DbEnvironmentService
 		}
 	}
 
-	public void CreateTableOrDefault(DbEnvironment environment)
+	public void CreateTableOrDefault(DbTableConfig environment)
 	{
 		CreateTableOrDefault(environment.TransactionTable);
 		CreateTableOrDefault(environment.ProcessTable);

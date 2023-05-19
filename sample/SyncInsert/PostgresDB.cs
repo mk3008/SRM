@@ -1,12 +1,12 @@
-﻿using InterlinkMapper.Actions;
+﻿using InterlinkMapper.System;
 using Npgsql;
 using System.Data;
 
 namespace SyncInsert;
 
-internal class PostgresDbConnectAction : IDbConnectAction
+internal class PostgresDB : IDbConnetionConfig
 {
-	public IDbConnection Execute()
+	public IDbConnection ConnectionOpenAsNew()
 	{
 		var cnstring = "Server=localhost;Port=5430;Database=postgres;User Id=root;Password=root;";
 

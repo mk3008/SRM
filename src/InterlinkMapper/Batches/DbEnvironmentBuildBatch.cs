@@ -1,28 +1,28 @@
-﻿using InterlinkMapper.Actions;
-using InterlinkMapper.Services;
+﻿using InterlinkMapper.Services;
+using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 
 namespace InterlinkMapper.Batches;
 
 public class DbEnvironmentBuildBatch
 {
-	public DbEnvironmentBuildBatch(IDbConnectAction connector, ILogger? logger = null)
+	public DbEnvironmentBuildBatch(SystemEnvironment environment, ILogger? logger = null)
 	{
-		Connector = connector;
+		Environment = environment;
 		Logger = logger;
 	}
 
-	private IDbConnectAction Connector { get; init; }
+	private SystemEnvironment Environment { get; init; }
 
 	public ILogger? Logger { get; init; }
 
-	public void Execute(DbEnvironment environment, IDatasource datasource)
+	public void Execute(IDatasource datasource)
 	{
-		using var cn = Connector.Execute();
+		using var cn = Environment.DbConnetionConfig.ConnectionOpenAsNew();
 
 		var service = new DbEnvironmentService(cn, Logger);
 
-		service.CreateTableOrDefault(environment);
+		service.CreateTableOrDefault(Environment.DbTableConfig);
 		service.CreateTableOrDefault(datasource.Destination);
 		service.CreateTableOrDefault(datasource);
 	}

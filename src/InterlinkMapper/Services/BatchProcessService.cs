@@ -1,22 +1,27 @@
 ﻿using Carbunql;
 using Carbunql.Building;
 using Carbunql.Dapper;
+using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Data;
 
 namespace InterlinkMapper.Services;
 
 public class BatchProcessService
 {
-	public BatchProcessService(DbEnvironment environment, IDbConnection connection, ILogger? logger = null)
+	public BatchProcessService(SystemEnvironment environment, IDbConnection connection, ILogger? logger = null)
 	{
 		Environment = environment;
 		Connection = connection;
 		Logger = logger;
 	}
 
-	private DbEnvironment Environment { get; init; }
+	private SystemEnvironment Environment { get; init; }
+
+	private DbTableConfig DbTableConfig => Environment.DbTableConfig;
+
+	private DbQueryConfig DbQueryConfig => Environment.DbQueryConfig;
+
 
 	private IDbConnection Connection { get; init; }
 
@@ -24,26 +29,24 @@ public class BatchProcessService
 
 	public int GetStart(int transactionId, IDatasource ds)
 	{
-		var env = Environment;
-
 		//select :transaction_id, :destination_name, :datasoruce_name, :keymap_table, :relationmap_table
 		var sq = new SelectQuery();
-		sq.Select(sq.AddParameter(env.PlaceHolderIdentifer + env.TransactionIdColumn, transactionId)).As(env.TransactionIdColumn);
-		sq.Select(sq.AddParameter(env.PlaceHolderIdentifer + env.DestinationTableNameColumn, ds.Destination.Table.GetTableFullName())).As(env.DestinationTableNameColumn);
-		sq.Select(sq.AddParameter(env.PlaceHolderIdentifer + env.DatasourceNameColumn, ds.DatasourceName)).As(env.DatasourceNameColumn);
+		sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.TransactionIdColumn, transactionId);
+		sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.DestinationTableNameColumn, ds.Destination.Table.GetTableFullName());
+		sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.DatasourceNameColumn, ds.DatasourceName);
 
 		if (ds.HasKeyMapTable())
 		{
-			sq.Select(sq.AddParameter(env.PlaceHolderIdentifer + env.KeymapTableNameColumn, ds.KeyMapTable.GetTableFullName())).As(env.KeymapTableNameColumn);
+			sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.KeymapTableNameColumn, ds.KeyMapTable.GetTableFullName());
 		}
 		if (ds.HasRelationMapTable())
 		{
-			sq.Select(sq.AddParameter(env.PlaceHolderIdentifer + env.RelationmapTableNameColumn, ds.RelationMapTable.GetTableFullName())).As(env.RelationmapTableNameColumn);
+			sq.Select(DbQueryConfig.PlaceHolderIdentifer, DbTableConfig.RelationmapTableNameColumn, ds.RelationMapTable.GetTableFullName());
 		}
 
 		//insert into process_table returning process_id
-		var iq = sq.ToInsertQuery(env.ProcessTable.GetTableFullName());
-		iq.Returning(env.ProcessIdColumn);
+		var iq = sq.ToInsertQuery(DbTableConfig.ProcessTable.GetTableFullName());
+		iq.Returning(DbTableConfig.ProcessIdColumn);
 
 		Logger?.LogInformation(iq.ToText() + ";");
 

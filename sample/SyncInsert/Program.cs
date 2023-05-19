@@ -1,13 +1,13 @@
 ﻿using Carbunql.Dapper;
 using Dapper;
 using InterlinkMapper;
-using InterlinkMapper.Actions;
 using InterlinkMapper.Batches;
+using InterlinkMapper.System;
 using SyncInsert;
 
-DbEnvironment GetDbEnvironment()
+DbTableConfig GetDbTableConfig()
 {
-	return new DbEnvironment()
+	return new DbTableConfig()
 	{
 		TransactionTable = new()
 		{
@@ -68,12 +68,11 @@ DbEnvironment GetDbEnvironment()
 		DatasourceNameColumn = "datasource_name",
 		KeymapTableNameColumn = "keymap_table_name",
 		RelationmapTableNameColumn = "relationmap_table_name",
-		FunctionNameColumn = "function_name",
+		MemberNameColumn = "function_name",
 		TableNameColumn = "table_name",
 		ActionNameColumn = "action",
 		ResultCountColumn = "result_count",
 		TimestampColumn = "created_at",
-		PlaceHolderIdentifer = ":"
 	};
 }
 
@@ -198,26 +197,33 @@ from
 	};
 }
 
-void ExecuteSql(IDbConnectAction connector, string sql)
+void ExecuteSql(IDbConnetionConfig connector, string sql)
 {
-	using var cn = connector.Execute();
+	using var cn = connector.ConnectionOpenAsNew();
 	using var trn = cn.BeginTransaction();
 	cn.Execute(sql);
 	trn.Commit();
 }
 
-var connector = new PostgresDbConnectAction();
+var dbConnectionConfig = new PostgresDB();
+var dbTableConfig = GetDbTableConfig();
+var environment = new SystemEnvironment()
+{
+	DbConnetionConfig = dbConnectionConfig,
+	DbTableConfig = dbTableConfig,
+	DbQueryConfig = new() { PlaceHolderIdentifer = ":" }
+};
 var logger = new ConsoleLogger();
-var environment = GetDbEnvironment();
+
 var datasource = GetDatasource();
 
-var builder = new DbEnvironmentBuildBatch(connector, logger);
-builder.Execute(environment, datasource);
+var builder = new DbEnvironmentBuildBatch(environment, logger);
+builder.Execute(datasource);
 
-var transfer = new ForwardTransferBatch(environment, connector, logger);
+var transfer = new ForwardTransferBatch(environment, logger);
 transfer.Execute(datasource);
 
-ExecuteSql(connector, "update sales set remarks = 'remarks_0' where remarks = 'remarks_1'");
+ExecuteSql(dbConnectionConfig, "update sales set remarks = 'remarks_0' where remarks = 'remarks_1'");
 
 transfer.Execute(datasource);
 

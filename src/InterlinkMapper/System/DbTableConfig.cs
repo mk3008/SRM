@@ -1,6 +1,6 @@
-﻿namespace InterlinkMapper;
+﻿namespace InterlinkMapper.System;
 
-public class DbEnvironment
+public class DbTableConfig
 {
 	public DbTableDefinition TransactionTable { get; set; } = new();
 
@@ -20,7 +20,7 @@ public class DbEnvironment
 
 	public string RelationmapTableNameColumn { get; set; } = string.Empty;
 
-	public string FunctionNameColumn { get; set; } = string.Empty;
+	public string MemberNameColumn { get; set; } = string.Empty;
 
 	public string TableNameColumn { get; set; } = string.Empty;
 
@@ -29,6 +29,4 @@ public class DbEnvironment
 	public string ResultCountColumn { get; set; } = string.Empty;
 
 	public string TimestampColumn { get; set; } = string.Empty;
-
-	public string PlaceHolderIdentifer { get; set; } = string.Empty;
 }

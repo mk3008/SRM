@@ -1,6 +1,6 @@
 ﻿using Carbunql;
-using InterlinkMapper.Actions;
 using InterlinkMapper.Services;
+using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -9,19 +9,17 @@ namespace InterlinkMapper.Batches;
 /// <summary>
 /// Transfer only data that has not been transferred.
 /// </summary>
-public class ForwardTransferFromRequest
+public class ForwardTransferFromRequest : ITransferBatch
 {
-	public ForwardTransferFromRequest(IDbConnectAction connector, ILogger? logger = null)
+	public ForwardTransferFromRequest(SystemEnvironment environment, ILogger? logger = null)
 	{
-		Connection = connector.Execute();
 		Logger = logger;
+		Environment = environment;
 	}
-
-	private IDbConnection Connection { get; init; }
 
 	public ILogger? Logger { get; init; }
 
-	public string BridgeName { get; private set; } = string.Empty;
+	public SystemEnvironment Environment { get; init; }
 
 	/// <summary>
 	/// Execute the transfer process.
@@ -31,18 +29,21 @@ public class ForwardTransferFromRequest
 	{
 		Logger!.LogInformation("start {Destination} <- {Datasource}", ds.Destination.Table.GetTableFullName(), ds.DatasourceName);
 
-		using var trn = Connection.BeginTransaction();
+		using var cn = Environment.DbConnetionConfig.ConnectionOpenAsNew();
+		using var trn = cn.BeginTransaction();
 
-		CreateEnvironmentOnDBMS(ds);
+		var tranId = this.GetTranasctionId(cn, ds);
+		var procId = this.GetProcessId(tranId, cn, ds);
 
-		var bridge = PrepareForTransfer(ds);
+		var bridge = GetBridgeAsNew(cn, ds);
 		if (bridge == null)
 		{
+			trn.Commit();
 			Logger?.LogWarning("Transfer target not found");
 			return;
 		}
 
-		Transfer(bridge);
+		Transfer(cn, procId, bridge);
 
 		trn.Commit();
 
@@ -50,26 +51,13 @@ public class ForwardTransferFromRequest
 	}
 
 	/// <summary>
-	/// Generate the tables used by the system.
-	/// </summary>
-	/// <param name="ds"></param>
-	private void CreateEnvironmentOnDBMS(IDatasource ds)
-	{
-		var service = new DbEnvironmentService(Connection, Logger);
-
-		if (ds.HasRelationMapTable()) service.CreateTableOrDefault(ds.RelationMapTable);
-		if (ds.HasKeyMapTable()) service.CreateTableOrDefault(ds.KeyMapTable);
-		if (ds.HasForwardRequestTable()) service.CreateTableOrDefault(ds.ForwardRequestTable);
-	}
-
-	/// <summary>
 	/// Create a bridge table.
 	/// </summary>
 	/// <param name="ds"></param>
 	/// <returns></returns>
-	private Bridge? PrepareForTransfer(IDatasource ds)
+	private Bridge? GetBridgeAsNew(IDbConnection cn, IDatasource ds)
 	{
-		var service = new ForwardRequestBridgeService(Connection, Logger);
+		var service = new ForwardRequestBridgeService(cn, Logger);
 		var maxid = service.GetLastRequestId(ds);
 		var bridgeQuery = service.CreateAndSelect(ds, maxid);
 
@@ -85,16 +73,16 @@ public class ForwardTransferFromRequest
 	/// Those that could not be transferred are transferred to the hold table.
 	/// </summary>
 	/// <param name="bridge"></param>
-	private void Transfer(Bridge bridge)
+	private void Transfer(IDbConnection cn, int processId, Bridge bridge)
 	{
-		//var service = new ForwardTransferService(Connection, Logger);
+		var service = new ForwardTransferService(Environment, cn, processId, Logger);
 
-		//var ds = bridge.Datasource;
-		//service.TransferToDestination(0, ds, bridge.Query);
-		//if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
-		//if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
-		//if (ds.HasForwardRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
-		//if (ds.HasForwardRequestTable()) service.RemoveRequestAsIgnore(ds, bridge.Query, bridge.MaxRequestId);
+		var ds = bridge.Datasource;
+		service.TransferToDestination(ds, bridge.Query);
+		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
+		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.RemoveRequestAsSuccess(ds, bridge.Query);
+		if (ds.HasForwardRequestTable()) service.RemoveRequestAsIgnore(ds, bridge.Query, bridge.MaxRequestId);
 	}
 
 	private class Bridge
