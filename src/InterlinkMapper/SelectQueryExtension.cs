@@ -5,8 +5,10 @@ namespace InterlinkMapper;
 
 public static class SelectQueryExtension
 {
-	public static void Select(this SelectQuery source, string placeholderIndentifer, string parameterName, object value)
+	public static string Select(this SelectQuery source, string placeholderIndentifer, string parameterName, object value)
 	{
-		source.Select(source.AddParameter(placeholderIndentifer + parameterName, value)).As(parameterName);
+		var pname = placeholderIndentifer + parameterName;
+		source.Select(source.AddParameter(pname, value)).As(parameterName);
+		return pname;
 	}
 }

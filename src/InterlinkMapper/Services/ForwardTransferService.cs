@@ -44,7 +44,7 @@ public class ForwardTransferService : IQueryExecuteService
 	private int TransferToProcessMap(IDatasource ds, SelectQuery bridge)
 	{
 		var sq = GenerateSelectQueryFromBridgeWhereForwardable(ds, bridge);
-		var cnt = this.Insert(sq, ds.Destination.ProcessTable);
+		var cnt = this.Insert(sq, ds.Destination.ProcessTable.Definition);
 		return cnt;
 	}
 
@@ -116,6 +116,9 @@ public class ForwardTransferService : IQueryExecuteService
 		var (_, d) = sq.From(bridge).As("d");
 		sq.Select(d);
 		sq.Select(DbQueryConfig.PlaceHolderIdentifer, "process_id", ProcessId);
+		sq.Select(d, ds.Destination.Sequence.Column).As(ds.Destination.ProcessTable.RootIdColumnName);
+		sq.Select("false").As(ds.Destination.ProcessTable.FlipColumnName);
+
 		sq.Where(d, ds.Destination.Sequence.Column).IsNotNull();
 		return sq;
 	}

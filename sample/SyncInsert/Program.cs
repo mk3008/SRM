@@ -83,7 +83,7 @@ DbDestination GetDestination()
 		Table = new()
 		{
 			TableName = "sale_journals",
-			Columns = new() { "sale_journal_id", "sale_date", "price", "remarks" }
+			Columns = new() { "sale_journal_id", "journal_closing_date", "sale_date", "shop_id", "price", "remarks" }
 		},
 		Sequence = new()
 		{
@@ -92,49 +92,75 @@ DbDestination GetDestination()
 		},
 		ProcessTable = new()
 		{
-			TableName = "sale_journal_processes",
-			ColumnDefinitions = new() {
-				new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new ColumnDefinition() { ColumnName = "process_id", TypeName = "int8" },
-				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
-			},
-			Indexes = new()
+			Definition = new()
 			{
-				new DbIndexDefinition() { IndexNumber = 1, Columns = new() { "process_id" }},
-			}
-		},
-		DeleteRequestTable = new()
-		{
-			TableName = "sale_journals_delete_requests",
-			ColumnDefinitions = new() {
-				new ColumnDefinition() { ColumnName = "sale_journals_delete_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
-				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				TableName = "sale_journal_processes",
+				ColumnDefinitions = new() {
+					new() { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
+					new() { ColumnName = "root_sale_journal_id", TypeName = "int8" },
+					new() { ColumnName = "source_sale_journal_id", TypeName = "int8", AllowNull = true },
+					new() { ColumnName = "is_flip", TypeName = "boolean", DefaultValue = "false" },
+					new() { ColumnName = "process_id", TypeName = "int8" },
+					new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				},
+				Indexes = new()
+				{
+					new() { IndexNumber = 1, Columns = new() { "process_id" } },
+				}
 			},
+			RootIdColumnName = "root_sale_journal_id",
+			SourceIdColumnName = "source_sale_journal_id",
+			FlipColumnName = "is_flip",
 		},
 		ValidateRequestTable = new()
 		{
-			TableName = "sale_journal_validate_requests",
+			TableName = "sale_journal_watch_requests",
 			ColumnDefinitions = new() {
-				new ColumnDefinition() { ColumnName = "sale_journal_validate_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
-				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				new() { ColumnName = "sale_journal_watch_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
+				new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+			},
+		},
+		DeleteRequestTable = new()
+		{
+			TableName = "sale_journal_delete_requests",
+			ColumnDefinitions = new() {
+				new() { ColumnName = "sale_journal_delete_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
+				new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 			},
 		},
 		FlipOption = new()
 		{
 			FlipTable = new()
 			{
-				TableName = "sale_journal_flips",
+				TableName = "sale_journal_flip_requests",
 				ColumnDefinitions = new() {
-					new ColumnDefinition() { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
-					new ColumnDefinition() { ColumnName = "flip_sale_journal_id", TypeName = "int8", IsUniqueKey = true },
-					new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+					new() { ColumnName = "sale_journal_flip_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+					new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
+					new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 				}
 			},
 			ReversalColumns = new() { "price" },
-			ExcludedColumns = new() { "remarks" },
-			FlipIdColumn = "flip_sale_journal_id"
+			ExcludedColumns = new() { "remarks" }
+		},
+		DbCommonTableExtensions = new()
+		{
+			new()
+			{
+				CommanTableExtensionName = "cte_jc",
+				Query = "select max(journal_closing_year_month)::timestamp + '1 month' as journal_date from journal_closings",
+				ValueColumn = "journal_closing_date",
+				DbFunction = "greatest",
+			},
+			new()
+			{
+				CommanTableExtensionName = "cte_shop_jc",
+				Query = "select shop_id, max(journal_closing_year_month)::timestamp + '1 month' as journal_date from shop_journal_closings group by shop_id",
+				ValueColumn = "journal_closing_date",
+				DbFunction = "greatest",
+				//keycolumns = new() {"shop_id"}
+			}
 		}
 	};
 }
@@ -193,16 +219,17 @@ DbDatasource GetDatasource()
 		},
 		Query = @"
 select
+	s.sale_date as journal_closing_date,
 	s.sale_date,
+	s.shop_id,
 	s.price,
-	s.remarks,
-	case when s.remarks = 'remarks_0' then false else true end as _hold,
+	case when s.price > 10000 then false else true end as _is_hold,
 	--key
 	s.sale_id	
 from
 	sales as s
 ",
-		HoldJudgementColumnName = "_hold"
+		HoldJudgementColumnName = "_is_hold"
 	};
 }
 

@@ -99,7 +99,7 @@ public class DeleteRequestService : IQueryExecuteService
 
 		var sq = new SelectQuery();
 		var (f, r) = sq.From(ds.DeleteRequestTable.GetTableFullName()).As("r");
-		var dp = f.InnerJoin(ds.ProcessTable.GetTableFullName()).As("dp").On(r, seq);
+		var dp = f.InnerJoin(ds.ProcessTable.Definition.GetTableFullName()).As("dp").On(r, seq);
 		var p = f.InnerJoin(DbTableConfig.ProcessTable.GetTableFullName()).As("p").On(dp, key);
 
 		var pname = sq.AddParameter(DbQueryConfig.PlaceHolderIdentifer + "max_request_id", maxRequestId);
@@ -119,7 +119,7 @@ public class DeleteRequestService : IQueryExecuteService
 
 		var sq = new SelectQuery();
 		var (f, r) = sq.From(ds.DeleteRequestTable.GetTableFullName()).As("r");
-		var dp = f.InnerJoin(ds.ProcessTable.GetTableFullName()).As("dp").On(r, seq);
+		var dp = f.InnerJoin(ds.ProcessTable.Definition.GetTableFullName()).As("dp").On(r, seq);
 		var p = f.InnerJoin(DbTableConfig.ProcessTable.GetTableFullName()).As("p").On(dp, key);
 
 		var pname = sq.AddParameter(DbQueryConfig.PlaceHolderIdentifer + "max_request_id", maxRequestId);
@@ -139,7 +139,7 @@ public class DeleteRequestService : IQueryExecuteService
 
 		var sq = new SelectQuery();
 		var (f, r) = sq.From(ds.DeleteRequestTable.GetTableFullName()).As("r");
-		var dp = f.InnerJoin(ds.ProcessTable.GetTableFullName()).As("dp").On(r, seq);
+		var dp = f.InnerJoin(ds.ProcessTable.Definition.GetTableFullName()).As("dp").On(r, seq);
 		var p = f.InnerJoin(DbTableConfig.ProcessTable.GetTableFullName()).As("p").On(dp, key);
 
 		var pReq = sq.AddParameter(DbQueryConfig.PlaceHolderIdentifer + "max_request_id", maxRequestId);

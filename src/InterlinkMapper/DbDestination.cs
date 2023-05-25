@@ -6,7 +6,7 @@ public class DbDestination : IDestination
 
 	public DbTable Table { get; set; } = new();
 
-	public DbTableDefinition ProcessTable { get; set; } = new();
+	public ProcessTable ProcessTable { get; set; } = new();
 
 	public Sequence Sequence { get; set; } = new();
 
@@ -17,4 +17,6 @@ public class DbDestination : IDestination
 	public DbTableDefinition DeleteRequestTable { get; set; } = new();
 
 	public DbTableDefinition ValidateRequestTable { get; set; } = new();
+
+	public List<DbCommonTableExtension> DbCommonTableExtensions { get; set; } = new();
 }

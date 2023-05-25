@@ -6,7 +6,7 @@ public interface IDestination
 {
 	DbTable Table { get; set; }
 
-	DbTableDefinition ProcessTable { get; set; }
+	ProcessTable ProcessTable { get; set; }
 
 	DbTableDefinition ValidateRequestTable { get; }
 
@@ -19,7 +19,7 @@ public interface IDestination
 
 public static class DestinationExtension
 {
-	public static bool HasProcessTable(this IDestination source) => string.IsNullOrEmpty(source.ProcessTable.GetTableFullName()) ? false : true;
+	public static bool HasProcessTable(this IDestination source) => string.IsNullOrEmpty(source.ProcessTable.Definition.GetTableFullName()) ? false : true;
 
 	public static bool HasFlipTable(this IDestination source) => string.IsNullOrEmpty(source.FlipOption.FlipTable.GetTableFullName()) ? false : true;
 

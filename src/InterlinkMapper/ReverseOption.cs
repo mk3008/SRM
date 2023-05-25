@@ -8,5 +8,5 @@ public class FlipOption
 
 	public List<string> ExcludedColumns { get; set; } = new();
 
-	public string FlipIdColumn { get; set; } = string.Empty;
+	//public string FlipIdColumn { get; set; } = string.Empty;
 }
