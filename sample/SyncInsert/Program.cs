@@ -259,7 +259,7 @@ builder.Execute(datasource);
 var forwardTransfer = new ForwardTransferBatch(environment, logger);
 forwardTransfer.Execute(datasource);
 
-ExecuteSql(dbConnectionConfig, "insert into sale_journals_delete_requests(sale_journal_id) select sale_journal_id from sale_journals");
+ExecuteSql(dbConnectionConfig, "insert into sale_journal_delete_requests(sale_journal_id) select sale_journal_id from sale_journals");
 
 var deleteTransfer = new DeleteTransferFromRequestBatch(environment, logger);
 deleteTransfer.Execute(datasource.Destination);
