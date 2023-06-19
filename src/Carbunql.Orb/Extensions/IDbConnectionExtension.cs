@@ -25,12 +25,43 @@ internal static class IDbConnectionExtension
 
 	public static void Insert<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
+		var iq = GetInsertQuery(tabledef, instance, placeholderIdentifer);
+
 		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
 
+		if (iq.Sequence == null)
+		{
+			executor.Execute(iq.Query);
+			return;
+		}
+
+		var newId = executor.ExecuteScalar<long>(iq.Query, instance);
+		iq.Sequence.Identifer.ToPropertyInfo<T>().SetValue(instance, newId);
+	}
+
+	public static void Update<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var q = CreateUpdateQuery(tabledef, instance, placeholderIdentifer);
+
+		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
+		executor.Execute(q, instance);
+	}
+
+	public static void Delete<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var q = CreateDeleteQuery(tabledef, instance, placeholderIdentifer);
+
+		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
+		executor.Execute(q);
+	}
+
+	private static (InsertQuery Query, DbColumnDefinition? Sequence) GetInsertQuery<T>(IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
+	{
 		var seq = tabledef.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
 
 		var row = new ValueCollection();
 		var cols = new List<string>();
+
 		foreach (var item in tabledef.ColumnDefinitions)
 		{
 			if (string.IsNullOrEmpty(item.Identifer)) continue;
@@ -39,32 +70,26 @@ internal static class IDbConnectionExtension
 			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
 
 			if (item == seq && pv.Value == null) continue;
-			cols.Add(item.ColumnName);
 			row.Add(pv);
+			cols.Add(item.ColumnName);
 		}
 
 		var vq = new ValuesQuery(new List<ValueCollection>() { row });
-		var sq = vq.ToSelectQuery(cols);
+		var query = vq.ToSelectQuery(cols).ToInsertQuery(tabledef.GetTableFullName());
 
-		var q = sq.ToInsertQuery(tabledef.GetTableFullName());
+		if (seq != null) query.Returning(new ColumnValue(seq.ColumnName));
 
-		if (seq == null)
-		{
-			executor.Execute(q);
-			return;
-		}
-
-		q.Returning(new ColumnValue(seq.ColumnName));
-		var newId = executor.ExecuteScalar<long>(q, instance);
-		seq.Identifer.ToPropertyInfo<T>().SetValue(instance, newId);
+		return (query, seq);
 	}
 
-	public static void Update<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	private static UpdateQuery CreateUpdateQuery<T>(IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
 	{
-		var pkey = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey).FirstOrDefault();
-		if (pkey == null) throw new NotSupportedException("Primary key column not found.");
+		var pkeys = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey && !string.IsNullOrEmpty(x.Identifer)).ToList();
+		if (!pkeys.Any()) throw new NotSupportedException("Primary key column not found.");
 
 		var row = new ValueCollection();
+		var cols = new List<string>();
+
 		foreach (var item in tabledef.ColumnDefinitions)
 		{
 			if (string.IsNullOrEmpty(item.Identifer)) continue;
@@ -72,38 +97,32 @@ internal static class IDbConnectionExtension
 			var prop = item.Identifer.ToPropertyInfo<T>();
 			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
 
-			if (item == pkey && pv.Value == null) throw new InvalidOperationException($"Primary key is null. Identifer:{item.Identifer}");
 			row.Add(pv);
+			cols.Add(item.ColumnName);
 		}
 
 		var vq = new ValuesQuery(new List<ValueCollection>() { row });
-		var q = vq.ToUpdateQuery(tabledef.GetTableFullName(), new[] { pkey.Identifer });
-		connection.Execute(q);
+		return vq.ToSelectQuery(cols).ToUpdateQuery(tabledef.GetTableFullName(), pkeys.Select(x => x.ColumnName));
 	}
 
-	public static void Delete<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	private static DeleteQuery CreateDeleteQuery<T>(IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
 	{
-		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
-
-		var pkey = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey).FirstOrDefault();
-		if (pkey == null) throw new NotSupportedException("Primary key column not found.");
+		var pkeys = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey && !string.IsNullOrEmpty(x.Identifer)).ToList();
+		if (!pkeys.Any()) throw new NotSupportedException("Primary key column not found.");
 
 		var row = new ValueCollection();
 		var cols = new List<string>();
-		foreach (var item in tabledef.ColumnDefinitions)
-		{
-			if (item != pkey) continue;
 
+		foreach (var item in pkeys)
+		{
 			var prop = item.Identifer.ToPropertyInfo<T>();
 			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
 
-			if (pv.Value == null) throw new InvalidOperationException($"Primary key is null. Identifer:{item.Identifer}");
-			cols.Add(item.ColumnName);
 			row.Add(pv);
+			cols.Add(item.ColumnName);
 		}
 
 		var vq = new ValuesQuery(new List<ValueCollection>() { row });
-		var q = vq.ToSelectQuery(cols).ToDeleteQuery(tabledef.GetTableFullName());
-		executor.Execute(q);
+		return vq.ToSelectQuery(cols).ToDeleteQuery(tabledef.GetTableFullName());
 	}
 }

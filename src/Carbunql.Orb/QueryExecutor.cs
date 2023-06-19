@@ -54,6 +54,16 @@ internal class QueryExecutor
 		return count;
 	}
 
+	public int Execute(IQueryCommandable query, object? param, [CallerMemberName] string memberName = "")
+	{
+		var sql = query.ToCommand().CommandText;
+
+		Logger?.LogInformation(memberName + "\n" + sql + ";");
+		var count = Connection.Execute(sql, param, commandTimeout: Timeout);
+		Logger?.LogInformation($"results : {count} row(s)");
+		return count;
+	}
+
 	public int CreateTable(SelectQuery query, string tableName, bool isTemporary = true, [CallerMemberName] string memberName = "")
 	{
 		var createQuery = query.ToCreateTableQuery(tableName, isTemporary);

@@ -24,7 +24,7 @@ public class DBTest
 		cn.Execute(def.ToCreateTableCommandText());
 		foreach (var item in def.ToCreateIndexCommandTexts()) cn.Execute(item);
 
-		var SaleJournalDestination = new Destination()
+		var destination = new Destination()
 		{
 			DestinationTableName = "public.sale_journals",
 			Sequence = new()
@@ -91,11 +91,16 @@ public class DBTest
 		SqlMapper.AddTypeHandler(new DeleteOptionTypeHandler());
 
 		var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
-		ac.Save(cn, def, SaleJournalDestination);
 
-		//var loaddef = cn.Load<Destination>(def, 1);
+		//insert
+		ac.Save(cn, def, destination);
 
-		ac.Delete(cn, def, SaleJournalDestination);
+		//update
+		destination.FlipOption = null;
+		ac.Save(cn, def, destination);
+
+		//delete
+		ac.Delete(cn, def, destination);
 
 		trn.Commit();
 	}

@@ -18,6 +18,26 @@ primary key(transaction_id)
 	}
 
 	[Fact]
+	public void CreateDestinationTable()
+	{
+		var t = DefinitionRepository.GetDestinationTableDefinition();
+		var sql = t.ToCreateTableCommandText();
+
+		Assert.Equal(@"create table if not exists public.destinations (
+    destination_id serial8 not null, 
+    destination_table_name text not null, 
+    db_table_text text not null, 
+    sequence_text text not null, 
+    validate_option text, 
+    flip_option text, 
+    delete_option text, 
+    created_at timestamp not null default current_timestamp, 
+    updated_at timestamp not null default current_timestamp, 
+primary key(destination_id)
+)".Replace("\r\n", "\n"), sql.Replace("\r\n", "\n"));
+	}
+
+	[Fact]
 	public void CreateIndex()
 	{
 		var t = DefinitionRepository.GetDatasourceTableDefinition();

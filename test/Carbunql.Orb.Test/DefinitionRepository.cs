@@ -19,32 +19,7 @@ public static class DefinitionRepository
 				new () { Identifer = "DbTable", ColumnName = "db_table_text", TypeName = "text" },
 				new () { Identifer = "Sequence", ColumnName = "sequence_text", TypeName = "text" },
 				new () { Identifer = "ValidateOption", AllowNull = true,  ColumnName = "validate_option", TypeName = "text" },
-				new () { Identifer = "DeleteOption", AllowNull = true, ColumnName = "delete_option", TypeName = "text" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
-				new () { ColumnName = "updated_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
-			},
-			Indexes = new()
-			{
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "DestinationTableName"}, IsUnique = true },
-			}
-		};
-		return t;
-	}
-
-	public static DbTableDefinition GetSequenceDefinition()
-	{
-		var t = new DbTableDefinition()
-		{
-			SchemaName = "public",
-			TableName = "destinations",
-			//Type = typeof(Sequence),
-			ColumnDefinitions = new()
-			{
-				new () { Identifer = "DestinationId", ColumnName = "destination_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new () { Identifer = "DestinationTableName", ColumnName = "destination_table_name", TypeName = "text" },
-				new () { Identifer = "DbTable", ColumnName = "db_table_text", TypeName = "text" },
-				new () { Identifer = "Sequence", ColumnName = "sequence_text", TypeName = "text" },
-				new () { Identifer = "ValidateOption", AllowNull = true,  ColumnName = "validate_option", TypeName = "text" },
+				new () { Identifer = "FlipOption", AllowNull = true, ColumnName = "flip_option", TypeName = "text" },
 				new () { Identifer = "DeleteOption", AllowNull = true, ColumnName = "delete_option", TypeName = "text" },
 				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 				new () { ColumnName = "updated_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
