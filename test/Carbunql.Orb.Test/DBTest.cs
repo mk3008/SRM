@@ -44,7 +44,6 @@ public class DBTest
 				{
 					SchemaName = "public",
 					TableName = "sale_journal_delete_requests",
-					//Type = typeof(DeleteOption),
 					ColumnDefinitions = new() {
 						new() { Identifer = "RequestId", ColumnName = "sale_journal_delete_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
 						new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
@@ -58,7 +57,6 @@ public class DBTest
 				{
 					SchemaName = "public",
 					TableName = "sale_journal_validate_requests",
-					//Type = typeof(ValidateOption),
 					ColumnDefinitions = new() {
 						new() { Identifer = "RequestId", ColumnName = "sale_journal_validate_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
 						new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
@@ -72,7 +70,6 @@ public class DBTest
 				{
 					SchemaName = "public",
 					TableName = "sale_journal_flip_requests",
-					//Type = typeof(FlipOption),
 					ColumnDefinitions = new() {
 						new() { Identifer = "RequestId", ColumnName = "sale_journal_flip_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
 						new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
@@ -98,6 +95,9 @@ public class DBTest
 		//update
 		destination.FlipOption = null;
 		ac.Save(cn, def, destination);
+
+		//select
+		var dest = ac.Load<Destination>(cn, def, destination.DestinationId);
 
 		//delete
 		ac.Delete(cn, def, destination);

@@ -1,4 +1,5 @@
 ﻿using Carbunql.Analysis.Parser;
+using Carbunql.Building;
 using Cysharp.Text;
 
 namespace Carbunql.Orb;
@@ -58,5 +59,33 @@ public static class IDbTableDefinitionExtention
 	public static string GetColumnName(this IDbTableDefinition source, string identifer)
 	{
 		return source.ColumnDefinitions.Where(x => x.Identifer == identifer).Select(x => x.ColumnName).First();
+	}
+
+	public static DbColumnDefinition? GetSequenceOrDefault(this IDbTableDefinition source)
+	{
+		return source.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
+	}
+
+	public static List<DbColumnDefinition> GetPrimaryKeys(this IDbTableDefinition source)
+	{
+		var lst = source.ColumnDefinitions.Where(x => x.IsPrimaryKey && !string.IsNullOrEmpty(x.Identifer)).ToList();
+		if (!lst.Any()) throw new NotSupportedException("Primary key column not found.");
+		return lst;
+	}
+
+	public static SelectQuery ToSelectQuery(this IDbTableDefinition source)
+	{
+		var table = ValueParser.Parse(source.GetTableFullName()).ToText();
+
+		var sq = new SelectQuery();
+		var (_, t) = sq.From(table).As("t");
+
+		foreach (var column in source.ColumnDefinitions)
+		{
+			if (string.IsNullOrEmpty(column.Identifer)) continue;
+			sq.Select(t, column.ColumnName).As(column.Identifer);
+		}
+
+		return sq;
 	}
 }

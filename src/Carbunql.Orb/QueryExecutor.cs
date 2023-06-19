@@ -15,6 +15,14 @@ internal class QueryExecutor
 
 	internal required IDbConnection Connection { private get; set; }
 
+	public IEnumerable<T> Query<T>(IQueryCommandable query, [CallerMemberName] string memberName = "")
+	{
+		Logger?.LogInformation(memberName + "\n" + query.ToText() + ";");
+		var lst = Connection.Query<T>(query, commandTimeout: Timeout);
+		Logger?.LogInformation($"cursor opened");
+		return lst;
+	}
+
 	public T ExecuteScalar<T>(IQueryCommandable query, [CallerMemberName] string memberName = "")
 	{
 		Logger?.LogInformation(memberName + "\n" + query.ToText() + ";");

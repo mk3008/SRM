@@ -1,26 +1,25 @@
 ﻿using Carbunql.Building;
 using Carbunql.Dapper;
 using Carbunql.Values;
-using Dapper;
 using Microsoft.Extensions.Logging;
 using System.Data;
+using System.Threading;
 
 namespace Carbunql.Orb.Extensions;
 
 internal static class IDbConnectionExtension
 {
-	public static void Save<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
+	public static T FindById<T>(this IDbConnection connection, IDbTableDefinition tabledef, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
-		var seq = tabledef.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
-		if (seq == null) throw new NotSupportedException("AutoNumber column not found.");
+		var sq = tabledef.ToSelectQuery();
+		var pkeys = tabledef.GetPrimaryKeys();
+		if (pkeys.Count != 1) throw new NotSupportedException();
 
-		var id = seq.Identifer.ToPropertyInfo<T>().GetValue(instance);
-		if (id == null)
-		{
-			connection.Insert(tabledef, instance, placeholderIdentifer);
-			return;
-		}
-		connection.Update(tabledef, instance, placeholderIdentifer);
+		var pkey = pkeys.First();
+		sq.Where(sq.FromClause!.Root, pkey.ColumnName).Equal(sq.AddParameter(placeholderIdentifer + pkey.Identifer, id));
+
+		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
+		return executor.Query<T>(sq).First();
 	}
 
 	public static void Insert<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
@@ -57,7 +56,7 @@ internal static class IDbConnectionExtension
 
 	private static (InsertQuery Query, DbColumnDefinition? Sequence) GetInsertQuery<T>(IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
 	{
-		var seq = tabledef.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
+		var seq = tabledef.GetSequenceOrDefault();
 
 		var row = new ValueCollection();
 		var cols = new List<string>();
@@ -84,8 +83,7 @@ internal static class IDbConnectionExtension
 
 	private static UpdateQuery CreateUpdateQuery<T>(IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
 	{
-		var pkeys = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey && !string.IsNullOrEmpty(x.Identifer)).ToList();
-		if (!pkeys.Any()) throw new NotSupportedException("Primary key column not found.");
+		var pkeys = tabledef.GetPrimaryKeys();
 
 		var row = new ValueCollection();
 		var cols = new List<string>();
@@ -107,8 +105,7 @@ internal static class IDbConnectionExtension
 
 	private static DeleteQuery CreateDeleteQuery<T>(IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
 	{
-		var pkeys = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey && !string.IsNullOrEmpty(x.Identifer)).ToList();
-		if (!pkeys.Any()) throw new NotSupportedException("Primary key column not found.");
+		var pkeys = tabledef.GetPrimaryKeys();
 
 		var row = new ValueCollection();
 		var cols = new List<string>();

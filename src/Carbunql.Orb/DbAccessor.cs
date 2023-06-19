@@ -13,6 +13,12 @@ public class DbAccessor
 
 	public int Timeout { get; set; } = 60;
 
+	public T Load<T>(IDbConnection connection, IDbTableDefinition tabledef, long? id)
+	{
+		if (!id.HasValue) throw new ArgumentNullException(nameof(id));
+		return connection.FindById<T>(tabledef, id.Value, PlaceholderIdentifer, Logger);
+	}
+
 	public void Save<T>(IDbConnection connection, IDbTableDefinition tabledef, T instance)
 	{
 		var seq = tabledef.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
