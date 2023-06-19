@@ -1,6 +1,6 @@
 ﻿using Carbunql.Orb.Test.Models;
 
-namespace Carbunql.Orb.Test.TypeHandlers;
+namespace Carbunql.Orb.Test;
 
 public class DeleteOptionTypeHandler : JsonTypeHandler<DeleteOption?>
 {

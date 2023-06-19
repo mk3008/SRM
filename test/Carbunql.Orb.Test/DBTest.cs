@@ -1,5 +1,4 @@
 ﻿using Carbunql.Orb.Test.Models;
-using Carbunql.Orb.Test.TypeHandlers;
 using Dapper;
 using Xunit.Abstractions;
 
@@ -20,6 +19,8 @@ public class DBTest
 		var def = DefinitionRepository.GetDestinationTableDefinition();
 
 		using var cn = (new PostgresDB()).ConnectionOpenAsNew();
+		using var trn = cn.BeginTransaction();
+
 		cn.Execute(def.ToCreateTableCommandText());
 		foreach (var item in def.ToCreateIndexCommandTexts()) cn.Execute(item);
 
@@ -94,6 +95,8 @@ public class DBTest
 
 		//var loaddef = cn.Load<Destination>(def, 1);
 
-		//ac.Delete(cn, def, SaleJournalDestination);
+		ac.Delete(cn, def, SaleJournalDestination);
+
+		trn.Commit();
 	}
 }

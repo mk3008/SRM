@@ -59,7 +59,7 @@ internal static class IDbConnectionExtension
 		seq.Identifer.ToPropertyInfo<T>().SetValue(instance, newId);
 	}
 
-	public static void Update<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer)
+	public static void Update<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
 		var pkey = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey).FirstOrDefault();
 		if (pkey == null) throw new NotSupportedException("Primary key column not found.");
@@ -79,5 +79,31 @@ internal static class IDbConnectionExtension
 		var vq = new ValuesQuery(new List<ValueCollection>() { row });
 		var q = vq.ToUpdateQuery(tabledef.GetTableFullName(), new[] { pkey.Identifer });
 		connection.Execute(q);
+	}
+
+	public static void Delete<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
+
+		var pkey = tabledef.ColumnDefinitions.Where(x => x.IsPrimaryKey).FirstOrDefault();
+		if (pkey == null) throw new NotSupportedException("Primary key column not found.");
+
+		var row = new ValueCollection();
+		var cols = new List<string>();
+		foreach (var item in tabledef.ColumnDefinitions)
+		{
+			if (item != pkey) continue;
+
+			var prop = item.Identifer.ToPropertyInfo<T>();
+			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
+
+			if (pv.Value == null) throw new InvalidOperationException($"Primary key is null. Identifer:{item.Identifer}");
+			cols.Add(item.ColumnName);
+			row.Add(pv);
+		}
+
+		var vq = new ValuesQuery(new List<ValueCollection>() { row });
+		var q = vq.ToSelectQuery(cols).ToDeleteQuery(tabledef.GetTableFullName());
+		executor.Execute(q);
 	}
 }

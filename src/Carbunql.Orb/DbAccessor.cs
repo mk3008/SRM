@@ -25,7 +25,12 @@ public class DbAccessor
 			connection.Insert(tabledef, instance, PlaceholderIdentifer, Logger);
 			return;
 		}
-		connection.Update(tabledef, instance, PlaceholderIdentifer);
+		connection.Update(tabledef, instance, PlaceholderIdentifer, Logger);
+	}
+
+	public void Delete<T>(IDbConnection connection, IDbTableDefinition tabledef, T instance)
+	{
+		connection.Delete(tabledef, instance, PlaceholderIdentifer, Logger);
 	}
 
 	//public void Insert<T>(IDbConnection connection, IDbTableDefinition tabledef, T instance)
