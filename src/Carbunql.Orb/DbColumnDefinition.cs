@@ -20,6 +20,10 @@ public class DbColumnDefinition
 
 	public string DefaultValue { get; set; } = string.Empty;
 
+	public string Comment { get; set; } = string.Empty;
+
+	public SpecialColumn SpecialColumn { get; set; } = SpecialColumn.None;
+
 	public string ToCommandText()
 	{
 		var name = ColumnName;
@@ -31,4 +35,12 @@ public class DbColumnDefinition
 
 		return sql;
 	}
+}
+
+public enum SpecialColumn
+{
+	None,
+	CreateTimestamp,
+	UpdateTimestamp,
+	VersionNumber,
 }

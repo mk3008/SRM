@@ -1,14 +1,32 @@
 ﻿using Carbunql.Building;
 using Carbunql.Dapper;
 using Carbunql.Values;
+using Dapper;
 using Microsoft.Extensions.Logging;
 using System.Data;
-using System.Threading;
 
 namespace Carbunql.Orb.Extensions;
 
-internal static class IDbConnectionExtension
+public static class IDbConnectionExtension
 {
+	public static void CreateTableOrDefault<T>(this IDbConnection connection)
+	{
+		var def = ObjectTableMapper.FindFirst<T>();
+		connection.CreateTableOrDefault(def);
+	}
+
+	public static void CreateTableOrDefault(this IDbConnection connection, IDbTableDefinition tabledef)
+	{
+		connection.Execute(tabledef.ToCreateTableCommandText());
+		foreach (var item in tabledef.ToCreateIndexCommandTexts()) connection.Execute(item);
+	}
+
+	public static T FindById<T>(this IDbConnection connection, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var def = ObjectTableMapper.FindFirst<T>();
+		return connection.FindById<T>(def, id, placeholderIdentifer, Logger, timeout);
+	}
+
 	public static T FindById<T>(this IDbConnection connection, IDbTableDefinition tabledef, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
 		var sq = tabledef.ToSelectQuery();
@@ -20,6 +38,12 @@ internal static class IDbConnectionExtension
 
 		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
 		return executor.Query<T>(sq).First();
+	}
+
+	public static void Insert<T>(this IDbConnection connection, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var def = ObjectTableMapper.FindFirst<T>();
+		connection.Insert(def, instance, placeholderIdentifer, Logger, timeout);
 	}
 
 	public static void Insert<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
@@ -38,12 +62,24 @@ internal static class IDbConnectionExtension
 		iq.Sequence.Identifer.ToPropertyInfo<T>().SetValue(instance, newId);
 	}
 
+	public static void Update<T>(this IDbConnection connection, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var def = ObjectTableMapper.FindFirst<T>();
+		connection.Update(def, instance, placeholderIdentifer, Logger, timeout);
+	}
+
 	public static void Update<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
 		var q = CreateUpdateQuery(tabledef, instance, placeholderIdentifer);
 
 		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
 		executor.Execute(q, instance);
+	}
+
+	public static void Delete<T>(this IDbConnection connection, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	{
+		var def = ObjectTableMapper.FindFirst<T>();
+		connection.Delete(def, instance, placeholderIdentifer, Logger, timeout);
 	}
 
 	public static void Delete<T>(this IDbConnection connection, IDbTableDefinition tabledef, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)

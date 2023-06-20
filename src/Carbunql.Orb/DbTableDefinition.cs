@@ -6,7 +6,7 @@ public class DbTableDefinition : IDbTableDefinition
 
 	public required string TableName { get; init; }
 
-	//public required Type Type { get; init; }
+	public string Comment { get; set; } = string.Empty;
 
 	public List<DbColumnDefinition> ColumnDefinitions { get; init; } = new();
 
@@ -15,4 +15,9 @@ public class DbTableDefinition : IDbTableDefinition
 	IEnumerable<DbColumnDefinition> IDbTableDefinition.ColumnDefinitions => ColumnDefinitions;
 
 	public List<DbIndexDefinition> Indexes { get; init; } = new();
+}
+
+public class MappableDbTableDefinition : DbTableDefinition
+{
+	public required Type Type { get; init; }
 }

@@ -1,5 +1,6 @@
 ﻿using Carbunql.Building;
 using Carbunql.Orb.Extensions;
+using Dapper;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -13,28 +14,30 @@ public class DbAccessor
 
 	public int Timeout { get; set; } = 60;
 
-	public T Load<T>(IDbConnection connection, IDbTableDefinition tabledef, long? id)
+	public T Load<T>(IDbConnection connection, long? id)
 	{
 		if (!id.HasValue) throw new ArgumentNullException(nameof(id));
-		return connection.FindById<T>(tabledef, id.Value, PlaceholderIdentifer, Logger);
+		return connection.FindById<T>(id.Value, PlaceholderIdentifer, Logger, Timeout);
 	}
 
-	public void Save<T>(IDbConnection connection, IDbTableDefinition tabledef, T instance)
+	public void Save<T>(IDbConnection connection, T instance)
 	{
-		var seq = tabledef.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
+		var def = ObjectTableMapper.FindFirst<T>();
+
+		var seq = def.GetSequenceOrDefault();
 		if (seq == null) throw new NotSupportedException("AutoNumber column not found.");
 
 		var id = seq.Identifer.ToPropertyInfo<T>().GetValue(instance);
 		if (id == null)
 		{
-			connection.Insert(tabledef, instance, PlaceholderIdentifer, Logger);
+			connection.Insert(def, instance, PlaceholderIdentifer, Logger, Timeout);
 			return;
 		}
-		connection.Update(tabledef, instance, PlaceholderIdentifer, Logger);
+		connection.Update(def, instance, PlaceholderIdentifer, Logger, Timeout);
 	}
 
-	public void Delete<T>(IDbConnection connection, IDbTableDefinition tabledef, T instance)
+	public void Delete<T>(IDbConnection connection, T instance)
 	{
-		connection.Delete(tabledef, instance, PlaceholderIdentifer, Logger);
+		connection.Delete(instance, PlaceholderIdentifer, Logger, Timeout);
 	}
 }

@@ -6,6 +6,8 @@ public class Destination
 
 	public required string DestinationTableName { get; set; }
 
+	public string Description { get; set; } = string.Empty;
+
 	public required DbTable DbTable { get; set; }
 
 	public required Sequence Sequence { get; set; }

@@ -1,21 +1,21 @@
 ﻿using Carbunql.Orb.Test.Models;
-using System.Data.Common;
 
 namespace Carbunql.Orb.Test;
 
 public static class DefinitionRepository
 {
-	public static DbTableDefinition GetDestinationTableDefinition()
+	public static MappableDbTableDefinition GetDestinationTableDefinition()
 	{
-		var t = new DbTableDefinition()
+		var t = new MappableDbTableDefinition()
 		{
 			SchemaName = "public",
 			TableName = "destinations",
-			//Type = typeof(Destination),
+			Type = typeof(Destination),
 			ColumnDefinitions = new()
 			{
 				new () { Identifer = "DestinationId", ColumnName = "destination_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
 				new () { Identifer = "DestinationTableName", ColumnName = "destination_table_name", TypeName = "text" },
+				new () { Identifer = "Description", ColumnName = "description", TypeName = "text" },
 				new () { Identifer = "DbTable", ColumnName = "db_table_text", TypeName = "text" },
 				new () { Identifer = "Sequence", ColumnName = "sequence_text", TypeName = "text" },
 				new () { Identifer = "ValidateOption", AllowNull = true,  ColumnName = "validate_option", TypeName = "text" },
@@ -32,27 +32,28 @@ public static class DefinitionRepository
 		return t;
 	}
 
-	public static DbTableDefinition GetDatasourceTableDefinition()
+	public static MappableDbTableDefinition GetDatasourceTableDefinition()
 	{
-		var t = new DbTableDefinition()
+		var t = new MappableDbTableDefinition()
 		{
 			SchemaName = "public",
 			TableName = "datasources",
-			//Type = typeof(DbDataSource),
+			Type = typeof(Datasource),
 			ColumnDefinitions = new()
 			{
 				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
 				new () { Identifer = "DatasourceName", ColumnName = "datasource_name", TypeName = "text" },
+				new () { Identifer = "Description", ColumnName = "description", TypeName = "text" },
 				new () { Identifer = "DestinationId", ColumnName = "destination_id", TypeName = "int8" },
 				new () { Identifer = "Query", ColumnName = "query", TypeName = "text" },
-				new () { Identifer = "KeyColumns", ColumnName = "key_columns_text", TypeName = "text" },
+				new () { Identifer = "KeyColumnNames", ColumnName = "key_columns_text", TypeName = "text" },
 				new () { Identifer = "KeymapTable", AllowNull = true, ColumnName = "keymap_table", TypeName = "text" },
-				new () { Identifer = "RelationmapTable", AllowNull = true, ColumnName = "relationmap_table", TypeName = "text" },
-				new () { Identifer = "ForwardRequestTable", AllowNull = true, ColumnName = "forward_request_table", TypeName = "text" },
-				new () { Identifer = "ValidateRequestTable", AllowNull = true, ColumnName = "validate_request_table", TypeName = "text" },
+				new () { Identifer = "RelationmapTable", AllowNull = true, ColumnName = "relationmap_table_text", TypeName = "text" },
+				new () { Identifer = "ForwardRequestTable", AllowNull = true, ColumnName = "forward_request_table_text", TypeName = "text" },
+				new () { Identifer = "ValidateRequestTable", AllowNull = true, ColumnName = "validate_request_table_text", TypeName = "text" },
 				new () { Identifer = "IsEnabled", ColumnName = "is_enabled", TypeName = "bool" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
-				new () { ColumnName = "updated_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
+				new () { ColumnName = "updated_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.UpdateTimestamp },
 			},
 			Indexes = new()
 			{
@@ -69,7 +70,6 @@ public static class DefinitionRepository
 		{
 			SchemaName = "public",
 			TableName = "transactions",
-			//Type = typeof(DbTransaction),
 			ColumnDefinitions = new()
 			{
 				new () { Identifer = "TransactionId", ColumnName = "transaction_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
