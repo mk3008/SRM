@@ -14,7 +14,6 @@ public class JsonTypeHandler<T> : TypeHandler<T?>
 
 	public override void SetValue(IDbDataParameter parameter, T? value)
 	{
-		//parameter.DbType = DbType.JSON;
 		if (value == null)
 		{
 			parameter.Value = null;

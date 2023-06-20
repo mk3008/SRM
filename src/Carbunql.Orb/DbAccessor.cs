@@ -1,6 +1,4 @@
-﻿using Carbunql.Building;
-using Carbunql.Orb.Extensions;
-using Dapper;
+﻿using Carbunql.Orb.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -19,6 +17,12 @@ public class DbAccessor
 		if (!id.HasValue) throw new ArgumentNullException(nameof(id));
 		return connection.FindById<T>(id.Value, PlaceholderIdentifer, Logger, Timeout);
 	}
+
+	//public T1 Load<T1, T2>(IDbConnection connection, long? id)
+	//{
+	//	if (!id.HasValue) throw new ArgumentNullException(nameof(id));
+	//	return connection.FindById<T1, T2>(id.Value, PlaceholderIdentifer, Logger, Timeout);
+	//}
 
 	public void Save<T>(IDbConnection connection, T instance)
 	{

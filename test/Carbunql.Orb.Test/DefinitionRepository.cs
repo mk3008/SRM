@@ -26,7 +26,7 @@ public static class DefinitionRepository
 			},
 			Indexes = new()
 			{
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "DestinationTableName"}, IsUnique = true },
+				new DbIndexDefinition() { ColumnIdentifers = new() { "DestinationTableName"}, IsUnique = true },
 			}
 		};
 		return t;
@@ -57,8 +57,8 @@ public static class DefinitionRepository
 			},
 			Indexes = new()
 			{
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "DatasourceName"}, IsUnique = true },
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "DestinationId"}},
+				new DbIndexDefinition() { ColumnIdentifers = new() { "DatasourceName"}, IsUnique = true },
+				new DbIndexDefinition() { ColumnIdentifers = new() { "DestinationId"}},
 			}
 		};
 		return t;
@@ -78,7 +78,7 @@ public static class DefinitionRepository
 			},
 			Indexes = new()
 			{
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "DatasourceId"}},
+				new DbIndexDefinition() { ColumnIdentifers = new() { "DatasourceId"}},
 			}
 		};
 		return t;
@@ -99,8 +99,8 @@ public static class DefinitionRepository
 			},
 			Indexes = new()
 			{
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "TransactionId"}},
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "DatasourceId"}},
+				new DbIndexDefinition() { ColumnIdentifers = new() { "TransactionId"}},
+				new DbIndexDefinition() { ColumnIdentifers = new() { "DatasourceId"}},
 			}
 		};
 		return t;
@@ -124,7 +124,7 @@ public static class DefinitionRepository
 			},
 			Indexes = new()
 			{
-				new DbIndexDefinition() { ColumnDefinitionNames = new() { "ProcessId"}},
+				new DbIndexDefinition() { ColumnIdentifers = new() { "ProcessId"}},
 			}
 		};
 		return t;

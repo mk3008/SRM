@@ -16,11 +16,16 @@ public static class ObjectTableMapper
 
 	public static DbTableDefinition FindFirst<T>()
 	{
-		return Map[typeof(T)];
+		return FindFirst(typeof(T));
 	}
 
 	public static DbTableDefinition FindFirst(Type type)
 	{
+		if (!Map.ContainsKey(type))
+		{
+			throw new ArgumentException(@$"Not registered with ObjectTableMapper.
+Use the 'ObjectTableMapper.Add' method to register type and table conversion definitions.(type:{type.FullName})");
+		}
 		return Map[type];
 	}
 }

@@ -2,7 +2,7 @@
 
 public class Sequence
 {
-	public required string Column { get; set; }
+	public required string ColumnName { get; set; }
 
-	public required string Command { get; set; }
+	public required string CommandText { get; set; }
 }

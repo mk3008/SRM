@@ -6,7 +6,7 @@ public class DbTable : IDbTable
 
 	public required string TableName { get; set; }
 
-	public List<string> Columns { get; init; } = new();
+	public List<string> ColumnNames { get; init; } = new();
 
-	IEnumerable<string> IDbTable.Columns => Columns;
+	IEnumerable<string> IDbTable.ColumnNames => ColumnNames;
 }

@@ -10,7 +10,7 @@ public class DbTableDefinition : IDbTableDefinition
 
 	public List<DbColumnDefinition> ColumnDefinitions { get; init; } = new();
 
-	public IEnumerable<string> Columns => ColumnDefinitions.Select(x => x.ColumnName);
+	public IEnumerable<string> ColumnNames => ColumnDefinitions.Select(x => x.ColumnName);
 
 	IEnumerable<DbColumnDefinition> IDbTableDefinition.ColumnDefinitions => ColumnDefinitions;
 

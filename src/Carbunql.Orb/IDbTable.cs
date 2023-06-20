@@ -6,9 +6,8 @@ public interface IDbTable
 
 	string TableName { get; }
 
-	IEnumerable<string> Columns { get; }
+	IEnumerable<string> ColumnNames { get; }
 }
-
 
 public static class IDbTableExtention
 {

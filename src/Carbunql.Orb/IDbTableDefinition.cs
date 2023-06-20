@@ -88,4 +88,32 @@ public static class IDbTableDefinitionExtention
 
 		return sq;
 	}
+
+	//public static SelectQuery AddInnerJoin(this IDbTableDefinition source, IDbTableDefinition joinFromDefinition, SelectQuery sq)
+	//{
+	//	var joinToTable = source.GetTableFullName();
+	//	if (string.IsNullOrEmpty(joinToTable)) throw new InvalidOperationException();
+
+	//	var pkeys = source.GetPrimaryKeys().Select(x => x.ColumnName);
+	//	if (!pkeys.Any()) throw new InvalidOperationException();
+
+	//	var joinFromTable = joinFromDefinition.GetTableFullName();
+
+	//	var f = sq.FromClause;
+	//	if (f == null) throw new InvalidOperationException();
+
+	//	var joinFrom = f.GetSelectableTables().Reverse().Where(x => x.Table.GetTableFullName() == joinFromTable).FirstOrDefault();
+	//	if (joinFrom == null) throw new InvalidOperationException();
+
+	//	var index = f.GetSelectableTables().Count();
+	//	var t = f.InnerJoin(joinToTable).As("t" + index).On(joinFrom, pkeys);
+
+	//	foreach (var column in source.ColumnDefinitions)
+	//	{
+	//		if (string.IsNullOrEmpty(column.Identifer)) continue;
+	//		sq.Select(t, column.ColumnName).As(column.Identifer);
+	//	}
+
+	//	return sq;
+	//}
 }

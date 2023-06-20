@@ -36,14 +36,14 @@ public class DBTest
 			DestinationTableName = "public.sale_journals",
 			Sequence = new()
 			{
-				Column = "sale_journal_id",
-				Command = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
+				ColumnName = "sale_journal_id",
+				CommandText = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
 			},
 			DbTable = new()
 			{
 				SchemaName = "public",
 				TableName = "sale_journals",
-				Columns = { "sale_journal_id", "sale_date", "journal_closing_date", "shop_id", "price" }
+				ColumnNames = { "sale_journal_id", "sale_date", "journal_closing_date", "shop_id", "price" }
 			},
 			DeleteOption = new()
 			{
@@ -118,7 +118,7 @@ public class DBTest
 				},
 				Indexes = new()
 				{
-					new DbIndexDefinition() { ColumnDefinitionNames = new() { "SaleId" }},
+					new () { ColumnIdentifers = new() { "SaleId" }},
 				}
 			},
 			ForwardRequestTable = new()
@@ -142,7 +142,7 @@ public class DBTest
 				},
 				Indexes = new()
 				{
-					new DbIndexDefinition() { ColumnDefinitionNames = new() { "SaleId" }},
+					new () { ColumnIdentifers = new() { "SaleId" }},
 				}
 			},
 			Query = @"
@@ -160,22 +160,47 @@ from
 	[Fact]
 	public void Execute()
 	{
-		//var destdef = DefinitionRepository.GetDestinationTableDefinition();
-		//var sourcedef = DefinitionRepository.GetDatasourceTableDefinition();
-
-		////Carbunql.Orb
-		//ObjectTableMapper.Add<Destination>(destdef);
-
 		using var cn = (new PostgresDB()).ConnectionOpenAsNew();
 		using var trn = cn.BeginTransaction();
 
-		cn.CreateTableOrDefault<Destination>();// (destdef);
-		cn.CreateTableOrDefault<Datasource>();// (sourcedef);
+		cn.CreateTableOrDefault<Destination>();
+		cn.CreateTableOrDefault<Datasource>();
 
 		var destination = GetDestination();
 		var datasource = GetDatasource();
 
 		var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
+
+		var sql = @"select 
+    ds.datasource_id AS DatasourceId,
+    ds.datasource_name AS DatasourceName,
+    ds.description AS Description,
+    ds.destination_id AS DestinationId,
+    ds.query AS Query,
+    ds.key_columns_text AS KeyColumnNames,
+    ds.keymap_table AS KeymapTable,
+    ds.relationmap_table_text AS RelationmapTable,
+    ds.forward_request_table_text AS ForwardRequestTable,
+    ds.validate_request_table_text AS ValidateRequestTable,
+    ds.is_enabled AS IsEnabled,
+	--split
+    dest.destination_id AS DestinationId,
+    dest.destination_table_name AS DestinationTableName,
+    dest.description AS Description,
+    dest.db_table_text AS DbTable,
+    dest.sequence_text AS Sequence,
+    dest.validate_option AS ValidateOption,
+    dest.flip_option AS FlipOption,
+    dest.delete_option AS DeleteOption
+from 
+	datasources ds 
+	inner join destinations dest on ds.destination_id = dest.destination_id";
+
+		var s = cn.Query<Datasource, Destination, Datasource>(sql, (x, y) =>
+		{
+			x.Destination = y;
+			return x;
+		}, splitOn: "DestinationId");
 
 		//insert
 		ac.Save(cn, destination);
@@ -186,6 +211,9 @@ from
 
 		//select
 		var dest = ac.Load<Destination>(cn, destination.DestinationId);
+
+		//var ds = ac.Load<Datasource>(cn, 1);
+
 
 		//delete
 		ac.Delete(cn, destination);
