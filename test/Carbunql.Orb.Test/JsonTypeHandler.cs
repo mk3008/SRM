@@ -1,4 +1,4 @@
-﻿using Carbunql.Orb.Test.Models;
+﻿using Carbunql.Orb.Test.DBTestModels;
 
 namespace Carbunql.Orb.Test;
 

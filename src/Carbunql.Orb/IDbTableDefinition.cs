@@ -1,5 +1,7 @@
 ﻿using Carbunql.Analysis.Parser;
 using Carbunql.Building;
+using Carbunql.Orb.Extensions;
+using Carbunql.Values;
 using Cysharp.Text;
 
 namespace Carbunql.Orb;
@@ -86,34 +88,77 @@ public static class IDbTableDefinitionExtention
 			sq.Select(t, column.ColumnName).As(column.Identifer);
 		}
 
+		//TODO
+
 		return sq;
 	}
 
-	//public static SelectQuery AddInnerJoin(this IDbTableDefinition source, IDbTableDefinition joinFromDefinition, SelectQuery sq)
-	//{
-	//	var joinToTable = source.GetTableFullName();
-	//	if (string.IsNullOrEmpty(joinToTable)) throw new InvalidOperationException();
+	public static (InsertQuery Query, DbColumnDefinition? Sequence) ToInsertQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)
+	{
+		var seq = source.GetSequenceOrDefault();
 
-	//	var pkeys = source.GetPrimaryKeys().Select(x => x.ColumnName);
-	//	if (!pkeys.Any()) throw new InvalidOperationException();
+		var row = new ValueCollection();
+		var cols = new List<string>();
 
-	//	var joinFromTable = joinFromDefinition.GetTableFullName();
+		foreach (var item in source.ColumnDefinitions)
+		{
+			if (string.IsNullOrEmpty(item.Identifer)) continue;
 
-	//	var f = sq.FromClause;
-	//	if (f == null) throw new InvalidOperationException();
+			var prop = item.Identifer.ToPropertyInfo<T>();
+			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
 
-	//	var joinFrom = f.GetSelectableTables().Reverse().Where(x => x.Table.GetTableFullName() == joinFromTable).FirstOrDefault();
-	//	if (joinFrom == null) throw new InvalidOperationException();
+			if (item == seq && pv.Value == null) continue;
+			row.Add(pv);
+			cols.Add(item.ColumnName);
+		}
 
-	//	var index = f.GetSelectableTables().Count();
-	//	var t = f.InnerJoin(joinToTable).As("t" + index).On(joinFrom, pkeys);
+		var vq = new ValuesQuery(new List<ValueCollection>() { row });
+		var query = vq.ToSelectQuery(cols).ToInsertQuery(source.GetTableFullName());
 
-	//	foreach (var column in source.ColumnDefinitions)
-	//	{
-	//		if (string.IsNullOrEmpty(column.Identifer)) continue;
-	//		sq.Select(t, column.ColumnName).As(column.Identifer);
-	//	}
+		if (seq != null) query.Returning(new ColumnValue(seq.ColumnName));
 
-	//	return sq;
-	//}
+		return (query, seq);
+	}
+
+	public static UpdateQuery ToUpdateQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)
+	{
+		var pkeys = source.GetPrimaryKeys();
+
+		var row = new ValueCollection();
+		var cols = new List<string>();
+
+		foreach (var item in source.ColumnDefinitions)
+		{
+			if (string.IsNullOrEmpty(item.Identifer)) continue;
+
+			var prop = item.Identifer.ToPropertyInfo<T>();
+			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
+
+			row.Add(pv);
+			cols.Add(item.ColumnName);
+		}
+
+		var vq = new ValuesQuery(new List<ValueCollection>() { row });
+		return vq.ToSelectQuery(cols).ToUpdateQuery(source.GetTableFullName(), pkeys.Select(x => x.ColumnName));
+	}
+
+	public static DeleteQuery ToDeleteQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)
+	{
+		var pkeys = source.GetPrimaryKeys();
+
+		var row = new ValueCollection();
+		var cols = new List<string>();
+
+		foreach (var item in pkeys)
+		{
+			var prop = item.Identifer.ToPropertyInfo<T>();
+			var pv = prop.ToParameterValue(instance, placeholderIdentifer);
+
+			row.Add(pv);
+			cols.Add(item.ColumnName);
+		}
+
+		var vq = new ValuesQuery(new List<ValueCollection>() { row });
+		return vq.ToSelectQuery(cols).ToDeleteQuery(source.GetTableFullName());
+	}
 }

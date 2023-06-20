@@ -1,5 +1,5 @@
 ﻿using Carbunql.Orb.Extensions;
-using Carbunql.Orb.Test.Models;
+using Carbunql.Orb.Test.DBTestModels;
 using Dapper;
 using Xunit.Abstractions;
 
@@ -10,21 +10,6 @@ public class DBTest
 	public DBTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger() { Output = output };
-
-		//Dapper
-		SqlMapper.AddTypeHandler(new DbTableTypeHandler());
-		SqlMapper.AddTypeHandler(new SequenceTypeHandler());
-		SqlMapper.AddTypeHandler(new DbTableDefinitionTypeHandler());
-		SqlMapper.AddTypeHandler(new ListStringTypeHandler());
-		SqlMapper.AddTypeHandler(new ValidateOptionTypeHandler());
-		SqlMapper.AddTypeHandler(new FlipOptionTypeHandler());
-		SqlMapper.AddTypeHandler(new DeleteOptionTypeHandler());
-
-		//Carbunql.Orb
-		var destdef = DefinitionRepository.GetDestinationTableDefinition();
-		var sourcedef = DefinitionRepository.GetDatasourceTableDefinition();
-		ObjectTableMapper.Add(destdef);
-		ObjectTableMapper.Add(sourcedef);
 	}
 
 	private readonly UnitTestLogger Logger;

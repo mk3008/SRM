@@ -1,4 +1,4 @@
-﻿namespace Carbunql.Orb.Test.Models;
+﻿namespace Carbunql.Orb.Test.DBTestModels;
 
 public class Datasource
 {
