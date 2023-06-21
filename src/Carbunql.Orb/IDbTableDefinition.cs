@@ -3,7 +3,6 @@ using Carbunql.Building;
 using Carbunql.Orb.Extensions;
 using Carbunql.Values;
 using Cysharp.Text;
-using System.Data.Common;
 
 namespace Carbunql.Orb;
 
@@ -12,6 +11,8 @@ public interface IDbTableDefinition : IDbTable
 	IEnumerable<DbColumnDefinition> ColumnDefinitions { get; }
 
 	List<DbIndexDefinition> Indexes { get; }
+
+	Type? Type { get; }
 }
 
 public static class IDbTableDefinitionExtention
@@ -83,48 +84,59 @@ public static class IDbTableDefinitionExtention
 		return lst;
 	}
 
-	private static SelectQuery CreateSelectQuery<T>(this DbTableDefinition def)
+	private static (SelectQuery, TypeMap) CreateSelectQuery<T>(this DbTableDefinition def)
 	{
+		var map = new TypeMap()
+		{
+			TableAlias = "t0",
+			Type = typeof(T),
+			ColumnMaps = new()
+		};
+
 		var sq = new SelectQuery();
 		var table = ValueParser.Parse(def.GetTableFullName()).ToText();
 		var (_, t) = sq.From(table).As("t0");
 
 		var seq = def.GetSequence();
 		sq.Select(t, seq.ColumnName).As("t0_" + seq.Identifer);
+		map.ColumnMaps.Add(new() { ColumnName = "t0_" + seq.Identifer, PropertyName = seq.Identifer });
 
 		foreach (var column in def.ColumnDefinitions.Where(x => x != seq && x.RelationType == null))
 		{
 			if (string.IsNullOrEmpty(column.Identifer)) continue;
 			sq.Select(t, column.ColumnName).As("t0_" + column.Identifer);
+			map.ColumnMaps.Add(new() { ColumnName = "t0_" + column.Identifer, PropertyName = column.Identifer });
 		}
 
-		return sq;
+		return (sq, map);
 	}
 
-	public static SelectQuery ToSelectQuery<T>(this DbTableDefinition def)
+	public static (SelectQuery Query, List<TypeMap> Maps) ToSelectQuery<T>(this DbTableDefinition def)
 	{
-		var sq = def.CreateSelectQuery<T>();
+		var (sq, map) = def.CreateSelectQuery<T>();
+		var lst = new List<TypeMap>() { map };
 
 		//TODO
 		foreach (var column in def.ColumnDefinitions)
 		{
 			if (column.RelationType == null) continue;
 			var subdef = ObjectRelationMapper.FindFirst(column.RelationType);
-			var subseq = subdef.GetSequence();
-
+			//var subseq = subdef.GetSequence();
 
 			var from = sq.FromClause!.Root;
 			if (!column.AllowNull)
 			{
-				var st = sq.AddInnerJoin(from, subdef);
+				var c = sq.AddInnerJoin(from, subdef, column.RelationType.Name);
+				lst.Add(c.Map);
 			}
 			else
 			{
-				var st = sq.AddLeftJoin(from, subdef);
+				var c = sq.AddLeftJoin(from, subdef, column.RelationType.Name);
+				lst.Add(c.Map);
 			}
 		}
 
-		return sq;
+		return (sq, lst);
 	}
 
 	public static (InsertQuery Query, DbColumnDefinition? Sequence) ToInsertQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)

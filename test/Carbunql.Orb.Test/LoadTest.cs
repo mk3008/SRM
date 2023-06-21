@@ -47,36 +47,7 @@ public class LoadTest
 		cn.CreateTableOrDefault<TextFolder>();
 		//var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
 
-		// TODO : auto generated
-		var typemaps = new List<TypeMap>
-		{
-			new ()
-			{
-				TableAlias = "t0",
-				Type = typeof(TextFile),
-				ColumnMaps = new()
-				{
-					new () {ColumnName = "t0_TextFileId", PropertyName= "TextFileId" },
-					new () {ColumnName = "t0_TextFileName", PropertyName= "TextFileName" },
-				}
-			},
-			new ()
-			{
-				TableAlias = "t1",
-				Type = typeof(TextFolder),
-				RelationMap = new() { OwnerTableAlias = "t0", OwnerPropertyName = "TextFolder" },
-				ColumnMaps = new()
-				{
-					new () {ColumnName = "t1_TextFolderId", PropertyName= "TextFolderId" },
-					new () {ColumnName = "t1_TextFolderName", PropertyName= "TextFolderName" },
-				}
-			}
-		};
-
-		var mapper = new SelectQueryMapper<TextFile>()
-		{
-			TypeMaps = typemaps,
-		};
+		var mapper = new SelectQueryMapper<TextFile>();
 
 		var lst = mapper.Load(cn);
 	}

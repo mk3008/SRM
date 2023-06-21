@@ -10,12 +10,15 @@ public class SelectQueryMapper<T>
 	public SelectQueryMapper()
 	{
 		var def = ObjectRelationMapper.FindFirst<T>();
-		SelectQuery = def.ToSelectQuery<T>();
+		var val = def.ToSelectQuery<T>();
+
+		SelectQuery = val.Query;
+		TypeMaps = val.Maps;
 	}
 
 	private SelectQuery SelectQuery { get; init; }
 
-	public required List<TypeMap> TypeMaps { get; init; }
+	private List<TypeMap> TypeMaps { get; init; }
 
 	public List<T> Load(IDbConnection cn)
 	{
