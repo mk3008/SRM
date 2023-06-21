@@ -23,8 +23,8 @@ public static class ObjectTableMapper
 	{
 		if (!Map.ContainsKey(type))
 		{
-			throw new ArgumentException(@$"Not registered with ObjectTableMapper.
-Use the 'ObjectTableMapper.Add' method to register type and table conversion definitions.(type:{type.FullName})");
+			throw new ArgumentException(@$"'{type.FullName}' class is not registered with ObjectTableMapper..
+Use the 'ObjectTableMapper.Add' method to register type and table conversion definitions.");
 		}
 		return Map[type];
 	}

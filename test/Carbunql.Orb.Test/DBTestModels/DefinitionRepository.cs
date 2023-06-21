@@ -24,7 +24,7 @@ public static class DefinitionRepository
             },
             Indexes = new()
             {
-                new DbIndexDefinition() { ColumnIdentifers = new() { "DestinationTableName"}, IsUnique = true },
+                new DbIndexDefinition() { Identifers = new() { "DestinationTableName"}, IsUnique = true },
             }
         };
         return t;
@@ -55,8 +55,8 @@ public static class DefinitionRepository
             },
             Indexes = new()
             {
-                new DbIndexDefinition() { ColumnIdentifers = new() { "DatasourceName"}, IsUnique = true },
-                new DbIndexDefinition() { ColumnIdentifers = new() { "DestinationId"}},
+                new DbIndexDefinition() { Identifers = new() { "DatasourceName"}, IsUnique = true },
+                new DbIndexDefinition() { Identifers = new() { "DestinationId"}},
             }
         };
         return t;
@@ -76,7 +76,7 @@ public static class DefinitionRepository
             },
             Indexes = new()
             {
-                new DbIndexDefinition() { ColumnIdentifers = new() { "DatasourceId"}},
+                new DbIndexDefinition() { Identifers = new() { "DatasourceId"}},
             }
         };
         return t;
@@ -97,8 +97,8 @@ public static class DefinitionRepository
             },
             Indexes = new()
             {
-                new DbIndexDefinition() { ColumnIdentifers = new() { "TransactionId"}},
-                new DbIndexDefinition() { ColumnIdentifers = new() { "DatasourceId"}},
+                new DbIndexDefinition() { Identifers = new() { "TransactionId"}},
+                new DbIndexDefinition() { Identifers = new() { "DatasourceId"}},
             }
         };
         return t;
@@ -122,7 +122,7 @@ public static class DefinitionRepository
             },
             Indexes = new()
             {
-                new DbIndexDefinition() { ColumnIdentifers = new() { "ProcessId"}},
+                new DbIndexDefinition() { Identifers = new() { "ProcessId"}},
             }
         };
         return t;

@@ -68,10 +68,17 @@ public static class IDbTableDefinitionExtention
 		return source.ColumnDefinitions.Where(x => x.IsAutoNumber).FirstOrDefault();
 	}
 
+	public static DbColumnDefinition GetSequence(this IDbTableDefinition source)
+	{
+		var seq = source.GetSequenceOrDefault();
+		if (seq == null) throw new NotSupportedException($"Sequence column not defined in {source.GetTableFullName()}");
+		return seq;
+	}
+
 	public static List<DbColumnDefinition> GetPrimaryKeys(this IDbTableDefinition source)
 	{
 		var lst = source.ColumnDefinitions.Where(x => x.IsPrimaryKey && !string.IsNullOrEmpty(x.Identifer)).ToList();
-		if (!lst.Any()) throw new NotSupportedException("Primary key column not found.");
+		if (!lst.Any()) throw new NotSupportedException($"Primary key column not defined in {source.GetTableFullName()}");
 		return lst;
 	}
 

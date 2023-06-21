@@ -103,7 +103,7 @@ public class DBTest
 				},
 				Indexes = new()
 				{
-					new () { ColumnIdentifers = new() { "SaleId" }},
+					new () { Identifers = new() { "SaleId" }},
 				}
 			},
 			ForwardRequestTable = new()
@@ -127,7 +127,7 @@ public class DBTest
 				},
 				Indexes = new()
 				{
-					new () { ColumnIdentifers = new() { "SaleId" }},
+					new () { Identifers = new() { "SaleId" }},
 				}
 			},
 			Query = @"
