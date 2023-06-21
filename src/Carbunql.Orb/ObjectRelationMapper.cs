@@ -1,17 +1,15 @@
-﻿namespace Carbunql.Orb;
+﻿using Dapper;
 
-public static class ObjectTableMapper
+namespace Carbunql.Orb;
+
+public static class ObjectRelationMapper
 {
 	private static Dictionary<Type, DbTableDefinition> Map { get; set; } = new();
 
-	public static void Add(MappableDbTableDefinition def)
+	public static void AddTypeHandler<T>(DbTableDefinition<T> def)
 	{
-		Map.Add(def.Type, def);
-	}
-
-	public static void Add(Type type, DbTableDefinition def)
-	{
-		Map.Add(type, def);
+		Map.Add(typeof(T), def);
+		SqlMapper.AddTypeHandler(new ObjectRelationMappableTypeHandler<T>());
 	}
 
 	public static DbTableDefinition FindFirst<T>()

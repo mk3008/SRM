@@ -11,7 +11,7 @@ public static class IDbConnectionExtension
 {
 	public static void CreateTableOrDefault<T>(this IDbConnection connection)
 	{
-		var def = ObjectTableMapper.FindFirst<T>();
+		var def = ObjectRelationMapper.FindFirst<T>();
 		connection.CreateTableOrDefault(def);
 	}
 
@@ -23,7 +23,7 @@ public static class IDbConnectionExtension
 
 	public static T FindById<T>(this IDbConnection connection, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
-		var def = ObjectTableMapper.FindFirst<T>();
+		var def = ObjectRelationMapper.FindFirst<T>();
 		return connection.FindById<T>(def, id, placeholderIdentifer, Logger, timeout);
 	}
 
@@ -53,7 +53,7 @@ public static class IDbConnectionExtension
 
 	public static void Insert<T>(this IDbConnection connection, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
-		var def = ObjectTableMapper.FindFirst<T>();
+		var def = ObjectRelationMapper.FindFirst<T>();
 		connection.Insert(def, instance, placeholderIdentifer, Logger, timeout);
 	}
 
@@ -75,7 +75,7 @@ public static class IDbConnectionExtension
 
 	public static void Update<T>(this IDbConnection connection, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
-		var def = ObjectTableMapper.FindFirst<T>();
+		var def = ObjectRelationMapper.FindFirst<T>();
 		connection.Update(def, instance, placeholderIdentifer, Logger, timeout);
 	}
 
@@ -89,7 +89,7 @@ public static class IDbConnectionExtension
 
 	public static void Delete<T>(this IDbConnection connection, T instance, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	{
-		var def = ObjectTableMapper.FindFirst<T>();
+		var def = ObjectRelationMapper.FindFirst<T>();
 		connection.Delete(def, instance, placeholderIdentifer, Logger, timeout);
 	}
 

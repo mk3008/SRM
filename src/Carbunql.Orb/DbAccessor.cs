@@ -26,7 +26,7 @@ public class DbAccessor
 
 	public void Save<T>(IDbConnection connection, T instance)
 	{
-		var def = ObjectTableMapper.FindFirst<T>();
+		var def = ObjectRelationMapper.FindFirst<T>();
 
 		var seq = def.GetSequenceOrDefault();
 		if (seq == null) throw new NotSupportedException("AutoNumber column not found.");

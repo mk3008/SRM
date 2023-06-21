@@ -13,10 +13,10 @@ internal static class UnitTestInitializer
 		//Carbunql.Orb
 		var destdef = DefinitionRepository.GetDestinationTableDefinition();
 		var sourcedef = DefinitionRepository.GetDatasourceTableDefinition();
-		ObjectTableMapper.Add(destdef);
-		ObjectTableMapper.Add(sourcedef);
-		ObjectTableMapper.Add(LoadTestDefinitions.GetTextFileDefinition());
-		ObjectTableMapper.Add(LoadTestDefinitions.GetTextFolderDefinition());
+		ObjectRelationMapper.AddTypeHandler(destdef);
+		ObjectRelationMapper.AddTypeHandler(sourcedef);
+		ObjectRelationMapper.AddTypeHandler(LoadTestDefinitions.GetTextFileDefinition());
+		ObjectRelationMapper.AddTypeHandler(LoadTestDefinitions.GetTextFolderDefinition());
 
 		//Dapper
 		SqlMapper.AddTypeHandler(new JsonTypeHandler<DbTable>());
@@ -26,7 +26,5 @@ internal static class UnitTestInitializer
 		SqlMapper.AddTypeHandler(new ValidateOptionTypeHandler());
 		SqlMapper.AddTypeHandler(new FlipOptionTypeHandler());
 		SqlMapper.AddTypeHandler(new DeleteOptionTypeHandler());
-		SqlMapper.AddTypeHandler(new ObjectTableMappableTypeHandler<TextFile>());
-		SqlMapper.AddTypeHandler(new ObjectTableMappableTypeHandler<TextFolder>());
 	}
 }

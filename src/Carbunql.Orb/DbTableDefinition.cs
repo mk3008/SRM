@@ -17,7 +17,7 @@ public class DbTableDefinition : IDbTableDefinition
 	public List<DbIndexDefinition> Indexes { get; init; } = new();
 }
 
-public class MappableDbTableDefinition : DbTableDefinition
+public class DbTableDefinition<T> : DbTableDefinition
 {
-	public required Type Type { get; init; }
+	public Type Type { get; } = typeof(T);
 }

@@ -18,12 +18,11 @@ public class TextFolder
 
 public static class LoadTestDefinitions
 {
-	public static MappableDbTableDefinition GetTextFileDefinition()
+	public static DbTableDefinition<TextFile> GetTextFileDefinition()
 	{
-		return new MappableDbTableDefinition()
+		return new DbTableDefinition<TextFile>()
 		{
 			TableName = "text_files",
-			Type = typeof(TextFile),
 			ColumnDefinitions =
 			{
 				new () {Identifer = nameof(TextFile.TextFileId), ColumnName = "text_file_id", TypeName= "serial8", IsPrimaryKey= true, IsAutoNumber = true},
@@ -37,12 +36,11 @@ public static class LoadTestDefinitions
 		};
 	}
 
-	public static MappableDbTableDefinition GetTextFolderDefinition()
+	public static DbTableDefinition<TextFolder> GetTextFolderDefinition()
 	{
-		return new MappableDbTableDefinition()
+		return new DbTableDefinition<TextFolder>()
 		{
 			TableName = "text_folders",
-			Type = typeof(TextFolder),
 			ColumnDefinitions =
 			{
 				new () {Identifer = nameof(TextFolder.TextFolderId), ColumnName = "folder_id", TypeName= "serial8", IsPrimaryKey= true, IsAutoNumber = true},
