@@ -26,23 +26,6 @@ public class JsonTypeHandler<T> : TypeHandler<T?>
 	}
 }
 
-public class DbTableTypeHandler : JsonTypeHandler<DbTable?>
-{
-}
-
-public class SequenceTypeHandler : JsonTypeHandler<Sequence?>
-{
-}
-
-public class DbTableDefinitionTypeHandler : JsonTypeHandler<DbTableDefinition?>
-{
-}
-
-public class ListStringTypeHandler : JsonTypeHandler<List<string>?>
-{
-}
-
-
 public class ObjectTableMappableTypeHandler<T> : TypeHandler<T?>
 {
 	public ObjectTableMappableTypeHandler()

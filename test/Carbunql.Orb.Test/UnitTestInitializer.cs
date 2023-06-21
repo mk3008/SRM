@@ -19,16 +19,14 @@ internal static class UnitTestInitializer
 		ObjectTableMapper.Add(LoadTestDefinitions.GetTextFolderDefinition());
 
 		//Dapper
-		SqlMapper.AddTypeHandler(new DbTableTypeHandler());
-		SqlMapper.AddTypeHandler(new SequenceTypeHandler());
-		SqlMapper.AddTypeHandler(new DbTableDefinitionTypeHandler());
-		SqlMapper.AddTypeHandler(new ListStringTypeHandler());
+		SqlMapper.AddTypeHandler(new JsonTypeHandler<DbTable>());
+		SqlMapper.AddTypeHandler(new JsonTypeHandler<Sequence?>());
+		SqlMapper.AddTypeHandler(new JsonTypeHandler<DbTableDefinition?>());
+		SqlMapper.AddTypeHandler(new JsonTypeHandler<List<string>>());
 		SqlMapper.AddTypeHandler(new ValidateOptionTypeHandler());
 		SqlMapper.AddTypeHandler(new FlipOptionTypeHandler());
 		SqlMapper.AddTypeHandler(new DeleteOptionTypeHandler());
 		SqlMapper.AddTypeHandler(new ObjectTableMappableTypeHandler<TextFile>());
 		SqlMapper.AddTypeHandler(new ObjectTableMappableTypeHandler<TextFolder>());
-
-
 	}
 }
