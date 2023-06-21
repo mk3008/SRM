@@ -47,6 +47,7 @@ public class LoadTest
 		cn.CreateTableOrDefault<TextFolder>();
 		var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
 
+		// TODO : auto generated
 		var sql = @"select 
     t0.text_file_id as t0_TextFileId,
     t0.text_file_name as t0_TextFileName,
@@ -58,6 +59,7 @@ from
 
 		using var r = cn.ExecuteReader(sql);
 
+		// TODO : auto generated
 		var typemaps = new List<TypeMap>
 		{
 			new ()
@@ -83,6 +85,7 @@ from
 			}
 		};
 
+		// TODO: Functionalize
 		var headers = new List<string>();
 		var lst = new List<TextFile>();
 		var cash = new Dictionary<(Type, long), object>();
@@ -99,7 +102,7 @@ from
 				instancemaps.Add(new() { TypeMap = typemap, Item = Activator.CreateInstance(typemap.Type)! });
 			}
 
-			//object mapping
+			// object mapping
 			foreach (var instancemap in instancemaps)
 			{
 				var tp = instancemap.TypeMap.Type;
@@ -110,13 +113,18 @@ from
 				{
 					var prop = tp.GetProperty(columnmap.PropertyName)!;
 					var val = r[columnmap.ColumnName];
+
+					// TODO: Custom mapping
 					prop.SetValue(instancemap.Item, val);
 
+					// Stop mapping if primary key is NULL
 					if (prop == seqProp && val == null)
 					{
 						instancemap.Item = null;
 						break;
 					}
+
+					// Single instance if type and primary key match
 					if (prop == seqProp)
 					{
 						var key = (tp, (long)val);
@@ -133,7 +141,7 @@ from
 				}
 			}
 
-			//relation
+			// Relation mapping
 			foreach (var instancemap in instancemaps)
 			{
 				var rmap = instancemap.TypeMap.RelationMap;
