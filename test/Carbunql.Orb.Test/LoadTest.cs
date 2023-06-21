@@ -48,16 +48,6 @@ public class LoadTest
 		//var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
 
 		// TODO : auto generated
-		var sql = @"select 
-    t0.text_file_id as t0_TextFileId,
-    t0.text_file_name as t0_TextFileName,
-    t1.text_folder_id as t1_TextFolderId,
-    t1.text_folder_name as t1_TextFolderName
-from 
-    text_files t0
-    inner join text_folders t1 on t0.text_folder_id = t1.text_folder_id";
-
-		// TODO : auto generated
 		var typemaps = new List<TypeMap>
 		{
 			new ()
@@ -85,7 +75,6 @@ from
 
 		var mapper = new SelectQueryMapper<TextFile>()
 		{
-			SelectQuery = new(sql),
 			TypeMaps = typemaps,
 		};
 

@@ -83,59 +83,49 @@ public static class IDbTableDefinitionExtention
 		return lst;
 	}
 
-	//private static SelectQueryMapper<T> CreateSelectQueryMapperAsNew<T>(this DbTableDefinition def)
-	//{
-	//	var sq = new SelectQuery();
-	//	var table = ValueParser.Parse(def.GetTableFullName()).ToText();
-	//	var (_, t) = sq.From(table).As("t0");
+	private static SelectQuery CreateSelectQuery<T>(this DbTableDefinition def)
+	{
+		var sq = new SelectQuery();
+		var table = ValueParser.Parse(def.GetTableFullName()).ToText();
+		var (_, t) = sq.From(table).As("t0");
 
-	//	var seq = def.GetSequence();
-	//	sq.Select(t, seq.ColumnName).As("t0_" + seq.Identifer);
+		var seq = def.GetSequence();
+		sq.Select(t, seq.ColumnName).As("t0_" + seq.Identifer);
 
-	//	foreach (var column in def.ColumnDefinitions.Where(x => x != seq && x.RelationType == null))
-	//	{
-	//		if (string.IsNullOrEmpty(column.Identifer)) continue;
-	//		sq.Select(t, column.ColumnName).As(column.Identifer);
-	//	}
+		foreach (var column in def.ColumnDefinitions.Where(x => x != seq && x.RelationType == null))
+		{
+			if (string.IsNullOrEmpty(column.Identifer)) continue;
+			sq.Select(t, column.ColumnName).As("t0_" + column.Identifer);
+		}
 
-	//	var mapper = new SelectQueryMapper<T>() { SelectQuery = sq };
-	//	mapper.Types.Add(def.Type!);
+		return sq;
+	}
 
-	//	return mapper;
-	//}
+	public static SelectQuery ToSelectQuery<T>(this DbTableDefinition def)
+	{
+		var sq = def.CreateSelectQuery<T>();
 
-	//public static SelectQueryMapper<T> ToMapper<T>(this DbTableDefinition<T> def)
-	//{
-	//	return ToSelectMapper<T>((DbTableDefinition)def);
-	//}
+		//TODO
+		foreach (var column in def.ColumnDefinitions)
+		{
+			if (column.RelationType == null) continue;
+			var subdef = ObjectRelationMapper.FindFirst(column.RelationType);
+			var subseq = subdef.GetSequence();
 
-	//public static SelectQueryMapper<T> ToSelectMapper<T>(this DbTableDefinition def)
-	//{
-	//	var mapper = def.CreateSelectQueryMapperAsNew<T>();
 
-	//	//TODO
-	//	foreach (var column in def.ColumnDefinitions)
-	//	{
-	//		if (column.RelationType == null) continue;
-	//		var subdef = ObjectRelationMapper.FindFirst(column.RelationType);
-	//		var subseq = subdef.GetSequence();
+			var from = sq.FromClause!.Root;
+			if (!column.AllowNull)
+			{
+				var st = sq.AddInnerJoin(from, subdef);
+			}
+			else
+			{
+				var st = sq.AddLeftJoin(from, subdef);
+			}
+		}
 
-	//		mapper.Types.Add(subdef.Type!);
-	//		mapper.SplitOn.Add(subseq.Identifer);
-
-	//		var from = mapper.SelectQuery.FromClause!.Root;
-	//		if (!column.AllowNull)
-	//		{
-	//			var st = mapper.SelectQuery.AddInnerJoin(from, subdef);
-	//		}
-	//		else
-	//		{
-	//			var st = mapper.SelectQuery.AddLeftJoin(from, subdef);
-	//		}
-	//	}
-
-	//	return mapper;
-	//}
+		return sq;
+	}
 
 	public static (InsertQuery Query, DbColumnDefinition? Sequence) ToInsertQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)
 	{

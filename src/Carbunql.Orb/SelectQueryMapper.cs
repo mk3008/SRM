@@ -7,7 +7,13 @@ namespace Carbunql.Orb;
 
 public class SelectQueryMapper<T>
 {
-	public required SelectQuery SelectQuery { get; init; }
+	public SelectQueryMapper()
+	{
+		var def = ObjectRelationMapper.FindFirst<T>();
+		SelectQuery = def.ToSelectQuery<T>();
+	}
+
+	private SelectQuery SelectQuery { get; init; }
 
 	public required List<TypeMap> TypeMaps { get; init; }
 
