@@ -45,7 +45,7 @@ public class LoadTest
 
 		cn.CreateTableOrDefault<TextFile>();
 		cn.CreateTableOrDefault<TextFolder>();
-		var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
+		//var ac = new DbAccessor() { PlaceholderIdentifer = ":", Logger = Logger };
 
 		// TODO : auto generated
 		var sql = @"select 
@@ -56,8 +56,6 @@ public class LoadTest
 from 
     text_files t0
     inner join text_folders t1 on t0.text_folder_id = t1.text_folder_id";
-
-		using var r = cn.ExecuteReader(sql);
 
 		// TODO : auto generated
 		var typemaps = new List<TypeMap>
@@ -85,112 +83,12 @@ from
 			}
 		};
 
-		// TODO: Functionalize
-		var headers = new List<string>();
-		var lst = new List<TextFile>();
-		var cash = new Dictionary<(Type, long), object>();
-		while (r.Read())
+		var mapper = new SelectQueryMapper<TextFile>()
 		{
-			if (!headers.Any())
-			{
-				for (int i = 0; i < r.FieldCount - 1; i++) headers.Add(r.GetName(i));
-			}
+			SelectQuery = new(sql),
+			TypeMaps = typemaps,
+		};
 
-			var instancemaps = new List<InstanceMap>();
-			foreach (var typemap in typemaps)
-			{
-				instancemaps.Add(new() { TypeMap = typemap, Item = Activator.CreateInstance(typemap.Type)! });
-			}
-
-			// object mapping
-			foreach (var instancemap in instancemaps)
-			{
-				var tp = instancemap.TypeMap.Type;
-				var seqPropName = ObjectRelationMapper.FindFirst(tp).GetSequence().Identifer;
-				var seqProp = tp.GetProperty(seqPropName)!;
-
-				foreach (var columnmap in instancemap.TypeMap.ColumnMaps)
-				{
-					var prop = tp.GetProperty(columnmap.PropertyName)!;
-					var val = r[columnmap.ColumnName];
-
-					// TODO: Custom mapping
-					prop.SetValue(instancemap.Item, val);
-
-					// Stop mapping if primary key is NULL
-					if (prop == seqProp && val == null)
-					{
-						instancemap.Item = null;
-						break;
-					}
-
-					// Single instance if type and primary key match
-					if (prop == seqProp)
-					{
-						var key = (tp, (long)val);
-						if (cash.ContainsKey(key))
-						{
-							instancemap.Item = cash[key];
-							break;
-						}
-						else
-						{
-							cash[key] = instancemap.Item!;
-						}
-					}
-				}
-			}
-
-			// Relation mapping
-			foreach (var instancemap in instancemaps)
-			{
-				var rmap = instancemap.TypeMap.RelationMap;
-				if (rmap == null) continue;
-
-				var owner = instancemaps.Where(x => x.TypeMap.TableAlias == rmap.OwnerTableAlias).First();
-				if (owner.Item == null) continue;
-
-				var prop = owner.TypeMap.Type.GetProperty(rmap.OwnerPropertyName)!;
-				prop.SetValue(owner.Item, instancemap.Item);
-			}
-
-			var root = instancemaps.Where(x => x.TypeMap.RelationMap == null).Select(x => x.Item).First();
-			if (root == null) continue;
-			lst.Add((TextFile)root);
-		}
+		var lst = mapper.Load(cn);
 	}
-}
-
-public class TypeMap
-{
-	public string TableAlias { get; set; }
-
-	public Type Type { get; set; }
-
-	public RelationMap RelationMap { get; set; }
-
-	public List<ColumnMap> ColumnMaps { get; set; } = new();
-}
-
-public class RelationMap
-{
-	public string OwnerTableAlias { get; set; }
-
-	public string OwnerPropertyName { get; set; }
-}
-
-public class ColumnMap
-{
-	public string PropertyName { get; set; }
-
-	public string ColumnName { get; set; }
-}
-
-public class InstanceMap
-{
-	public TypeMap TypeMap { get; set; }
-
-	public object? Item { get; set; }
-
-	public string TableAlias => TypeMap.TableAlias;
 }
