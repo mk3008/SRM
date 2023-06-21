@@ -3,6 +3,7 @@ using Carbunql.Building;
 using Carbunql.Orb.Extensions;
 using Carbunql.Values;
 using Cysharp.Text;
+using System.Data.Common;
 
 namespace Carbunql.Orb;
 
@@ -82,23 +83,59 @@ public static class IDbTableDefinitionExtention
 		return lst;
 	}
 
-	public static SelectQuery ToSelectQuery(this IDbTableDefinition source)
-	{
-		var table = ValueParser.Parse(source.GetTableFullName()).ToText();
+	//private static SelectQueryMapper<T> CreateSelectQueryMapperAsNew<T>(this DbTableDefinition def)
+	//{
+	//	var sq = new SelectQuery();
+	//	var table = ValueParser.Parse(def.GetTableFullName()).ToText();
+	//	var (_, t) = sq.From(table).As("t0");
 
-		var sq = new SelectQuery();
-		var (_, t) = sq.From(table).As("t");
+	//	var seq = def.GetSequence();
+	//	sq.Select(t, seq.ColumnName).As("t0_" + seq.Identifer);
 
-		foreach (var column in source.ColumnDefinitions)
-		{
-			if (string.IsNullOrEmpty(column.Identifer)) continue;
-			sq.Select(t, column.ColumnName).As(column.Identifer);
-		}
+	//	foreach (var column in def.ColumnDefinitions.Where(x => x != seq && x.RelationType == null))
+	//	{
+	//		if (string.IsNullOrEmpty(column.Identifer)) continue;
+	//		sq.Select(t, column.ColumnName).As(column.Identifer);
+	//	}
 
-		//TODO
+	//	var mapper = new SelectQueryMapper<T>() { SelectQuery = sq };
+	//	mapper.Types.Add(def.Type!);
 
-		return sq;
-	}
+	//	return mapper;
+	//}
+
+	//public static SelectQueryMapper<T> ToMapper<T>(this DbTableDefinition<T> def)
+	//{
+	//	return ToSelectMapper<T>((DbTableDefinition)def);
+	//}
+
+	//public static SelectQueryMapper<T> ToSelectMapper<T>(this DbTableDefinition def)
+	//{
+	//	var mapper = def.CreateSelectQueryMapperAsNew<T>();
+
+	//	//TODO
+	//	foreach (var column in def.ColumnDefinitions)
+	//	{
+	//		if (column.RelationType == null) continue;
+	//		var subdef = ObjectRelationMapper.FindFirst(column.RelationType);
+	//		var subseq = subdef.GetSequence();
+
+	//		mapper.Types.Add(subdef.Type!);
+	//		mapper.SplitOn.Add(subseq.Identifer);
+
+	//		var from = mapper.SelectQuery.FromClause!.Root;
+	//		if (!column.AllowNull)
+	//		{
+	//			var st = mapper.SelectQuery.AddInnerJoin(from, subdef);
+	//		}
+	//		else
+	//		{
+	//			var st = mapper.SelectQuery.AddLeftJoin(from, subdef);
+	//		}
+	//	}
+
+	//	return mapper;
+	//}
 
 	public static (InsertQuery Query, DbColumnDefinition? Sequence) ToInsertQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)
 	{

@@ -12,9 +12,9 @@ public static class ObjectRelationMapper
 		SqlMapper.AddTypeHandler(new ObjectRelationMappableTypeHandler<T>());
 	}
 
-	public static DbTableDefinition FindFirst<T>()
+	public static DbTableDefinition<T> FindFirst<T>()
 	{
-		return FindFirst(typeof(T));
+		return (DbTableDefinition<T>)FindFirst(typeof(T));
 	}
 
 	public static DbTableDefinition FindFirst(Type type)

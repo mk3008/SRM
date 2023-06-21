@@ -19,24 +19,24 @@ public static class IDbConnectionExtension
 		foreach (var item in tabledef.ToCreateIndexCommandTexts()) connection.Execute(item);
 	}
 
-	public static T FindById<T>(this IDbConnection connection, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
-	{
-		var def = ObjectRelationMapper.FindFirst<T>();
-		return connection.FindById<T>(def, id, placeholderIdentifer, Logger, timeout);
-	}
+	//public static T FindById<T>(this IDbConnection connection, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	//{
+	//	var def = ObjectRelationMapper.FindFirst<T>();
+	//	return connection.FindById<T>(def, id, placeholderIdentifer, Logger, timeout);
+	//}
 
-	public static T FindById<T>(this IDbConnection connection, IDbTableDefinition tabledef, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
-	{
-		var sq = tabledef.ToSelectQuery();
-		var pkeys = tabledef.GetPrimaryKeys();
-		if (pkeys.Count != 1) throw new NotSupportedException();
+	//public static T FindById<T>(this IDbConnection connection, IDbTableDefinition tabledef, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
+	//{
+	//	var sq = ((DbTableDefinition<T>)tabledef).ToSelectQuery();
+	//	var pkeys = tabledef.GetPrimaryKeys();
+	//	if (pkeys.Count != 1) throw new NotSupportedException();
 
-		var pkey = pkeys.First();
-		sq.Where(sq.FromClause!.Root, pkey.ColumnName).Equal(sq.AddParameter(placeholderIdentifer + pkey.Identifer, id));
+	//	var pkey = pkeys.First();
+	//	sq.Where(sq.FromClause!.Root, pkey.ColumnName).Equal(sq.AddParameter(placeholderIdentifer + pkey.Identifer, id));
 
-		var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
-		return executor.Query<T>(sq).First();
-	}
+	//	var executor = new QueryExecutor() { Connection = connection, Logger = Logger, Timeout = timeout };
+	//	return executor.Query<T>(sq).First();
+	//}
 
 	//public static T1 FindById<T1, T2>(this IDbConnection connection, IDbTableDefinition tabledef, long id, string placeholderIdentifer, ILogger? Logger = null, int? timeout = null)
 	//{

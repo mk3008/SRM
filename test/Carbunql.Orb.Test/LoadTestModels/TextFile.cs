@@ -27,7 +27,7 @@ public static class LoadTestDefinitions
 			{
 				new () {Identifer = nameof(TextFile.TextFileId), ColumnName = "text_file_id", TypeName= "serial8", IsPrimaryKey= true, IsAutoNumber = true},
 				new () {Identifer = nameof(TextFile.TextFileName), ColumnName = "text_file_name", TypeName= "text"},
-				new () {Identifer =  nameof(TextFile.TextFolder), ColumnName = "text_folder_id", TypeName = "int8"},
+				new () {Identifer = nameof(TextFile.TextFolder), ColumnName = "text_folder_id", TypeName = "int8", RelationType = typeof(TextFolder)},
 			},
 			Indexes =
 			{

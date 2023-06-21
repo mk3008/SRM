@@ -15,9 +15,11 @@ public class DbTableDefinition : IDbTableDefinition
 	IEnumerable<DbColumnDefinition> IDbTableDefinition.ColumnDefinitions => ColumnDefinitions;
 
 	public List<DbIndexDefinition> Indexes { get; init; } = new();
+
+	public virtual Type? Type { get; } = null;
 }
 
 public class DbTableDefinition<T> : DbTableDefinition
 {
-	public Type Type { get; } = typeof(T);
+	public override Type Type { get; } = typeof(T);
 }

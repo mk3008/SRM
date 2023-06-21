@@ -12,11 +12,11 @@ public class DbAccessor
 
 	public int Timeout { get; set; } = 60;
 
-	public T FindById<T>(IDbConnection connection, long? id)
-	{
-		if (!id.HasValue) throw new ArgumentNullException(nameof(id));
-		return connection.FindById<T>(id.Value, PlaceholderIdentifer, Logger, Timeout);
-	}
+	//public T FindById<T>(IDbConnection connection, long? id)
+	//{
+	//	if (!id.HasValue) throw new ArgumentNullException(nameof(id));
+	//	return connection.FindById<T>(id.Value, PlaceholderIdentifer, Logger, Timeout);
+	//}
 
 	//public T1 Load<T1, T2>(IDbConnection connection, long? id)
 	//{

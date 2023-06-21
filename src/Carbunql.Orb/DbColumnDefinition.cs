@@ -22,6 +22,8 @@ public class DbColumnDefinition
 
 	public string Comment { get; set; } = string.Empty;
 
+	public Type? RelationType { get; set; }
+
 	public SpecialColumn SpecialColumn { get; set; } = SpecialColumn.None;
 
 	public string ToCommandText()
