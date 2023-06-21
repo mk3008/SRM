@@ -9,9 +9,12 @@
   <ItemGroup>
     <PackageReference Include="Carbunql" Version="0.2.7" />
     <PackageReference Include="Carbunql.Dapper" Version="0.1.0" />
-    <PackageReference Include="Dapper" Version="2.0.123" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-preview.3.23174.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-preview.5.23280.8" />
     <PackageReference Include="Utf8Json" Version="1.3.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="D:\mssg.mobile2000\Local\Downloads\Dapper-main\Dapper-main\Dapper\Dapper.csproj" />
   </ItemGroup>
 
 </Project>

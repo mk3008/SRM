@@ -43,8 +43,8 @@ public static class LoadTestDefinitions
 			TableName = "text_folders",
 			ColumnDefinitions =
 			{
-				new () {Identifer = nameof(TextFolder.TextFolderId), ColumnName = "folder_id", TypeName= "serial8", IsPrimaryKey= true, IsAutoNumber = true},
-				new () {Identifer = nameof(TextFolder.TextFolderName), ColumnName = "folder_name", TypeName= "text"},
+				new () {Identifer = nameof(TextFolder.TextFolderId), ColumnName = "text_folder_id", TypeName= "serial8", IsPrimaryKey= true, IsAutoNumber = true},
+				new () {Identifer = nameof(TextFolder.TextFolderName), ColumnName = "text_folder_name", TypeName= "text"},
 			},
 			Indexes =
 			{

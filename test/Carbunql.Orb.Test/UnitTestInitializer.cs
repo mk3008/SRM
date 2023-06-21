@@ -15,8 +15,8 @@ internal static class UnitTestInitializer
 		var sourcedef = DefinitionRepository.GetDatasourceTableDefinition();
 		ObjectRelationMapper.AddTypeHandler(destdef);
 		ObjectRelationMapper.AddTypeHandler(sourcedef);
-		ObjectRelationMapper.AddTypeHandler(LoadTestDefinitions.GetTextFileDefinition());
-		ObjectRelationMapper.AddTypeHandler(LoadTestDefinitions.GetTextFolderDefinition());
+		//ObjectRelationMapper.AddTypeHandler(LoadTestDefinitions.GetTextFileDefinition());
+		//ObjectRelationMapper.AddTypeHandler(LoadTestDefinitions.GetTextFolderDefinition());
 
 		//Dapper
 		SqlMapper.AddTypeHandler(new JsonTypeHandler<DbTable>());

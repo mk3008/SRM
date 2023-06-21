@@ -1,6 +1,4 @@
 ﻿using Carbunql.Building;
-using Carbunql.Dapper;
-using Carbunql.Values;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using System.Data;

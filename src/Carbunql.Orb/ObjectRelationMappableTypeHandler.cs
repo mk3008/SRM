@@ -28,8 +28,6 @@ public class ObjectRelationMappableTypeHandler<T> : TypeHandler<T?>
 
 	public override void SetValue(IDbDataParameter parameter, T? value)
 	{
-		var def = ObjectRelationMapper.FindFirst<T>();
-		var seq = def.GetSequence();
 		if (value == null)
 		{
 			parameter.Value = null;
