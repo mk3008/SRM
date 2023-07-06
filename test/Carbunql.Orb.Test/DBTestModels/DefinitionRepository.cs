@@ -10,16 +10,16 @@ public static class DefinitionRepository
 			TableName = "destinations",
 			ColumnDefinitions = new()
 			{
-				new () { Identifer = "DestinationId", ColumnName = "destination_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new () { Identifer = "DestinationTableName", ColumnName = "destination_table_name", TypeName = "text" },
-				new () { Identifer = "Description", ColumnName = "description", TypeName = "text" },
-				new () { Identifer = "DbTable", ColumnName = "db_table_text", TypeName = "text" },
-				new () { Identifer = "Sequence", ColumnName = "sequence_text", TypeName = "text" },
-				new () { Identifer = "ValidateOption", AllowNull = true,  ColumnName = "validate_option", TypeName = "text" },
-				new () { Identifer = "FlipOption", AllowNull = true, ColumnName = "flip_option", TypeName = "text" },
-				new () { Identifer = "DeleteOption", AllowNull = true, ColumnName = "delete_option", TypeName = "text" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
-				new () { ColumnName = "updated_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				new () { Identifer = "DestinationId", ColumnName = "destination_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new () { Identifer = "DestinationTableName", ColumnName = "destination_table_name", ColumnType = "text" },
+				new () { Identifer = "Description", ColumnName = "description", ColumnType = "text" },
+				new () { Identifer = "DbTable", ColumnName = "db_table_text", ColumnType = "text" },
+				new () { Identifer = "Sequence", ColumnName = "sequence_text", ColumnType = "text" },
+				new () { Identifer = "ValidateOption", IsNullable = true,  ColumnName = "validate_option", ColumnType = "text" },
+				new () { Identifer = "FlipOption", IsNullable = true, ColumnName = "flip_option", ColumnType = "text" },
+				new () { Identifer = "DeleteOption", IsNullable = true, ColumnName = "delete_option", ColumnType = "text" },
+				new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
+				new () { ColumnName = "updated_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
 			},
 			Indexes = new()
 			{
@@ -37,19 +37,19 @@ public static class DefinitionRepository
 			TableName = "datasources",
 			ColumnDefinitions = new()
 			{
-				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new () { Identifer = "DatasourceName", ColumnName = "datasource_name", TypeName = "text" },
-				new () { Identifer = "Description", ColumnName = "description", TypeName = "text" },
-				new () { Identifer = "DestinationId", ColumnName = "destination_id", TypeName = "int8" },
-				new () { Identifer = "Query", ColumnName = "query", TypeName = "text" },
-				new () { Identifer = "KeyColumnNames", ColumnName = "key_columns_text", TypeName = "text" },
-				new () { Identifer = "KeymapTable", AllowNull = true, ColumnName = "keymap_table", TypeName = "text" },
-				new () { Identifer = "RelationmapTable", AllowNull = true, ColumnName = "relationmap_table_text", TypeName = "text" },
-				new () { Identifer = "ForwardRequestTable", AllowNull = true, ColumnName = "forward_request_table_text", TypeName = "text" },
-				new () { Identifer = "ValidateRequestTable", AllowNull = true, ColumnName = "validate_request_table_text", TypeName = "text" },
-				new () { Identifer = "IsEnabled", ColumnName = "is_enabled", TypeName = "bool" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
-				new () { ColumnName = "updated_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.UpdateTimestamp },
+				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new () { Identifer = "DatasourceName", ColumnName = "datasource_name", ColumnType = "text" },
+				new () { Identifer = "Description", ColumnName = "description", ColumnType = "text" },
+				new () { Identifer = "DestinationId", ColumnName = "destination_id", ColumnType = "int8" },
+				new () { Identifer = "Query", ColumnName = "query", ColumnType = "text" },
+				new () { Identifer = "KeyColumnNames", ColumnName = "key_columns_text", ColumnType = "text" },
+				new () { Identifer = "KeymapTable", IsNullable = true, ColumnName = "keymap_table", ColumnType = "text" },
+				new () { Identifer = "RelationmapTable", IsNullable = true, ColumnName = "relationmap_table_text", ColumnType = "text" },
+				new () { Identifer = "ForwardRequestTable", IsNullable = true, ColumnName = "forward_request_table_text", ColumnType = "text" },
+				new () { Identifer = "ValidateRequestTable", IsNullable = true, ColumnName = "validate_request_table_text", ColumnType = "text" },
+				new () { Identifer = "IsEnabled", ColumnName = "is_enabled", ColumnType = "bool" },
+				new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
+				new () { ColumnName = "updated_at", ColumnType = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.UpdateTimestamp },
 			},
 			Indexes = new()
 			{
@@ -68,9 +68,9 @@ public static class DefinitionRepository
 			TableName = "transactions",
 			ColumnDefinitions = new()
 			{
-				new () { Identifer = "TransactionId", ColumnName = "transaction_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", TypeName = "int8" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				new () { Identifer = "TransactionId", ColumnName = "transaction_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", ColumnType = "int8" },
+				new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
 			},
 			Indexes = new()
 			{
@@ -88,10 +88,10 @@ public static class DefinitionRepository
 			TableName = "processes",
 			ColumnDefinitions = new()
 			{
-				new () { Identifer = "ProcessId", ColumnName = "process_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new () { Identifer = "TransactionId", ColumnName = "transaction_id", TypeName = "int8" },
-				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", TypeName = "int8" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+				new () { Identifer = "ProcessId", ColumnName = "process_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new () { Identifer = "TransactionId", ColumnName = "transaction_id", ColumnType = "int8" },
+				new () { Identifer = "DatasourceId", ColumnName = "datasource_id", ColumnType = "int8" },
+				new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
 			},
 			Indexes = new()
 			{
@@ -110,13 +110,13 @@ public static class DefinitionRepository
 			TableName = "process_results",
 			ColumnDefinitions = new()
 			{
-				new () { ColumnName = "process_result_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new () { Identifer = "ProcessId", ColumnName = "process_id", TypeName = "int8" },
-				new () { Identifer = "FunctionName", ColumnName = "function_name", TypeName = "text" },
-				new () { Identifer = "TableName", ColumnName = "table_name", TypeName = "text" },
-				new () { Identifer = "Action", ColumnName = "action", TypeName = "text" },
-				new () { Identifer = "ResultCount", ColumnName = "result_count", TypeName = "int8" },
-				new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "clock_timestamp()" },
+				new () { ColumnName = "process_result_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new () { Identifer = "ProcessId", ColumnName = "process_id", ColumnType = "int8" },
+				new () { Identifer = "FunctionName", ColumnName = "function_name", ColumnType = "text" },
+				new () { Identifer = "TableName", ColumnName = "table_name", ColumnType = "text" },
+				new () { Identifer = "Action", ColumnName = "action", ColumnType = "text" },
+				new () { Identifer = "ResultCount", ColumnName = "result_count", ColumnType = "int8" },
+				new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "clock_timestamp()" },
 			},
 			Indexes = new()
 			{

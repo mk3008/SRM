@@ -38,9 +38,9 @@ public class DBTest
 					TableName = "sale_journal_delete_requests",
 					ColumnDefinitions = new()
 					{
-						new() { Identifer = "RequestId", ColumnName = "sale_journal_delete_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-						new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
-						new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+						new() { Identifer = "RequestId", ColumnName = "sale_journal_delete_request_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+						new() { ColumnName = "sale_journal_id", ColumnType = "int8" , IsUniqueKey= true },
+						new() { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
 					},
 				}
 			},
@@ -52,9 +52,9 @@ public class DBTest
 					TableName = "sale_journal_validate_requests",
 					ColumnDefinitions = new()
 					{
-						new() { Identifer = "RequestId", ColumnName = "sale_journal_validate_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-						new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
-						new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+						new() { Identifer = "RequestId", ColumnName = "sale_journal_validate_request_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+						new() { ColumnName = "sale_journal_id", ColumnType = "int8" , IsUniqueKey= true },
+						new() { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
 					},
 				}
 			},
@@ -66,9 +66,9 @@ public class DBTest
 					TableName = "sale_journal_flip_requests",
 					ColumnDefinitions = new()
 					{
-						new() { Identifer = "RequestId", ColumnName = "sale_journal_flip_request_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-						new() { ColumnName = "sale_journal_id", TypeName = "int8" , IsUniqueKey= true },
-						new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
+						new() { Identifer = "RequestId", ColumnName = "sale_journal_flip_request_id", ColumnType = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+						new() { ColumnName = "sale_journal_id", ColumnType = "int8" , IsUniqueKey= true },
+						new() { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp" },
 					},
 				}
 			},
@@ -87,9 +87,9 @@ public class DBTest
 				TableName = "sale_journals__key_sales",
 				ColumnDefinitions = new()
 				{
-					new () { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
-					new () { ColumnName = "sale_id", TypeName = "int8", IsUniqueKey = true },
-					new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
+					new () { ColumnName = "sale_journal_id", ColumnType = "int8", IsPrimaryKey = true },
+					new () { ColumnName = "sale_id", ColumnType = "int8", IsUniqueKey = true },
+					new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
 				},
 			},
 			RelationmapTable = new()
@@ -97,9 +97,9 @@ public class DBTest
 				TableName = "sale_journals__rel_sales",
 				ColumnDefinitions = new()
 				{
-					new () { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
-					new () { Identifer = "SaleId", ColumnName = "sale_id", TypeName = "int8" },
-					new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
+					new () { ColumnName = "sale_journal_id", ColumnType = "int8", IsPrimaryKey = true },
+					new () { Identifer = "SaleId", ColumnName = "sale_id", ColumnType = "int8" },
+					new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
 				},
 				Indexes = new()
 				{
@@ -111,9 +111,9 @@ public class DBTest
 				TableName = "sale_journals__fwd_sales",
 				ColumnDefinitions = new()
 				{
-					new () { ColumnName = "request_id", TypeName = "int8" , IsPrimaryKey = true, IsAutoNumber = true },
-					new () { ColumnName = "sale_id", TypeName = "int8" , IsUniqueKey= true },
-					new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
+					new () { ColumnName = "request_id", ColumnType = "int8" , IsPrimaryKey = true, IsAutoNumber = true },
+					new () { ColumnName = "sale_id", ColumnType = "int8" , IsUniqueKey= true },
+					new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
 				},
 			},
 			ValidateRequestTable = new()
@@ -121,9 +121,9 @@ public class DBTest
 				TableName = "sale_journals__vld_sales",
 				ColumnDefinitions = new()
 				{
-					new () { ColumnName = "sale_journal_id", TypeName = "int8", IsPrimaryKey = true },
-					new () { Identifer = "SaleId", ColumnName = "sale_id", TypeName = "int8" },
-					new () { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
+					new () { ColumnName = "sale_journal_id", ColumnType = "int8", IsPrimaryKey = true },
+					new () { Identifer = "SaleId", ColumnName = "sale_id", ColumnType = "int8" },
+					new () { ColumnName = "created_at", ColumnType = "timestamp", DefaultValue = "current_timestamp", SpecialColumn = SpecialColumn.CreateTimestamp },
 				},
 				Indexes = new()
 				{

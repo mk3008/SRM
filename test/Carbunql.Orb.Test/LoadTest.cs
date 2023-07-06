@@ -1,8 +1,5 @@
-﻿using Carbunql.Dapper;
-using Carbunql.Orb.Extensions;
+﻿using Carbunql.Orb.Extensions;
 using Carbunql.Orb.Test.LoadTestModels;
-using Dapper;
-using System.Data;
 using Xunit.Abstractions;
 
 namespace Carbunql.Orb.Test;
