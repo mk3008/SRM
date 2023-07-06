@@ -8,9 +8,9 @@ public class DbColumnDefinition
 
 	public required string ColumnName { get; set; }
 
-	public required string TypeName { get; set; }
+	public required string ColumnType { get; set; }
 
-	public bool AllowNull { get; set; } = false;
+	public bool IsNullable { get; set; } = false;
 
 	public bool IsPrimaryKey { get; set; } = false;
 
@@ -22,17 +22,17 @@ public class DbColumnDefinition
 
 	public string Comment { get; set; } = string.Empty;
 
-	public Type? RelationType { get; set; }
+	//public Type? RelationType { get; set; }
 
 	public SpecialColumn SpecialColumn { get; set; } = SpecialColumn.None;
 
 	public string ToCommandText()
 	{
 		var name = ColumnName;
-		var type = TypeName;
+		var type = ColumnType;
 		var sql = $"{name} {type}";
 
-		if (!AllowNull) { sql += " not null"; }
+		if (!IsNullable) { sql += " not null"; }
 		if (!string.IsNullOrEmpty(DefaultValue)) { sql += " default " + ValueParser.Parse(DefaultValue).ToText(); }
 
 		return sql;

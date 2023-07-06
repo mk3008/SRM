@@ -28,3 +28,17 @@ public class DbIndexDefinition
 		return sql;
 	}
 }
+
+public class DbParentRelationDefinition
+{
+	public required Type IdentiferType { get; set; }
+
+	public List<string> ColumnNames { get; set; } = new();
+
+	public required string Identifer { get; set; }
+
+	public bool IsNullable { get; set; } = false;
+
+	//public List<string> AlterIdentifers { get; set; } = new();
+}
+

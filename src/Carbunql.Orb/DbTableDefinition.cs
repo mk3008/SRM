@@ -16,6 +16,8 @@ public class DbTableDefinition : IDbTableDefinition
 
 	public List<DbIndexDefinition> Indexes { get; init; } = new();
 
+	public List<DbParentRelationDefinition> ParentRelations { get; init; } = new();
+
 	public virtual Type? Type { get; } = null;
 }
 

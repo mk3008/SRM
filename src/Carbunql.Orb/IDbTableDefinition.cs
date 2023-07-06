@@ -13,6 +13,8 @@ public interface IDbTableDefinition : IDbTable
 	List<DbIndexDefinition> Indexes { get; }
 
 	Type? Type { get; }
+
+	List<DbParentRelationDefinition> ParentRelations { get; }
 }
 
 public static class IDbTableDefinitionExtention
@@ -95,48 +97,28 @@ public static class IDbTableDefinitionExtention
 
 		var sq = new SelectQuery();
 		var table = ValueParser.Parse(def.GetTableFullName()).ToText();
-		var (_, t) = sq.From(table).As("t0");
+		sq.From(table).As(map.TableAlias);
 
-		var seq = def.GetSequence();
-		sq.Select(t, seq.ColumnName).As("t0_" + seq.Identifer);
-		map.ColumnMaps.Add(new() { ColumnName = "t0_" + seq.Identifer, PropertyName = seq.Identifer });
-
-		foreach (var column in def.ColumnDefinitions.Where(x => x != seq && x.RelationType == null))
-		{
-			if (string.IsNullOrEmpty(column.Identifer)) continue;
-			sq.Select(t, column.ColumnName).As("t0_" + column.Identifer);
-			map.ColumnMaps.Add(new() { ColumnName = "t0_" + column.Identifer, PropertyName = column.Identifer });
-		}
+		sq.AddSelectPrimarykeyColumns(def, map);
+		sq.AddSelectColumnsWithoutPrimaryKeys(def, map);
 
 		return (sq, map);
 	}
 
-	public static (SelectQuery Query, List<TypeMap> Maps) ToSelectQuery<T>(this DbTableDefinition def)
+	public static (SelectQuery Query, List<TypeMap> Maps) ToSelectQueryMap<T>(this DbTableDefinition source, ICascadeRule? rule = null)
 	{
-		var (sq, map) = def.CreateSelectQuery<T>();
-		var lst = new List<TypeMap>() { map };
+		var (sq, fromMap) = source.CreateSelectQuery<T>();
+		var maps = new List<TypeMap>() { fromMap };
+		var from = sq.FromClause!.Root;
 
-		//TODO
-		foreach (var column in def.ColumnDefinitions)
+		rule ??= new FullCascadeRule();
+
+		source.ParentRelations.Where(x => rule.DoRelation(source.Type!, x.IdentiferType)).ToList().ForEach(relation =>
 		{
-			if (column.RelationType == null) continue;
-			var subdef = ObjectRelationMapper.FindFirst(column.RelationType);
-			//var subseq = subdef.GetSequence();
+			maps.AddRange(sq.AddJoin(relation, fromMap, rule));
+		});
 
-			var from = sq.FromClause!.Root;
-			if (!column.AllowNull)
-			{
-				var c = sq.AddInnerJoin(from, subdef, column.RelationType.Name);
-				lst.Add(c.Map);
-			}
-			else
-			{
-				var c = sq.AddLeftJoin(from, subdef, column.RelationType.Name);
-				lst.Add(c.Map);
-			}
-		}
-
-		return (sq, lst);
+		return (sq, maps);
 	}
 
 	public static (InsertQuery Query, DbColumnDefinition? Sequence) ToInsertQuery<T>(this IDbTableDefinition source, T instance, string placeholderIdentifer)
@@ -208,3 +190,4 @@ public static class IDbTableDefinitionExtention
 		return vq.ToSelectQuery(cols).ToDeleteQuery(source.GetTableFullName());
 	}
 }
+

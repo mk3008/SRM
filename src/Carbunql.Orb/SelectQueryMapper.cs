@@ -7,10 +7,12 @@ namespace Carbunql.Orb;
 
 public class SelectQueryMapper<T>
 {
-	public SelectQueryMapper()
+	public SelectQueryMapper(ICascadeRule? rule = null)
 	{
 		var def = ObjectRelationMapper.FindFirst<T>();
-		var val = def.ToSelectQuery<T>();
+		var val = def.ToSelectQueryMap<T>();
+
+		rule ??= new FullCascadeRule();
 
 		SelectQuery = val.Query;
 		TypeMaps = val.Maps;
