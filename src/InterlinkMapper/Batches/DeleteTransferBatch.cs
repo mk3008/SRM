@@ -1,15 +1,13 @@
-﻿using Carbunql;
-using Carbunql.Building;
+﻿using InterlinkMapper.Models;
 using InterlinkMapper.Services;
-using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
 namespace InterlinkMapper.Batches;
 
-public class DeleteTransferFromRequestBatch : ITransferBatch
+public class DeleteTransferBatch : ITransferBatch
 {
-	public DeleteTransferFromRequestBatch(SystemEnvironment environment, ILogger? logger = null)
+	public DeleteTransferBatch(SystemEnvironment environment, ILogger? logger = null)
 	{
 		Logger = logger;
 		Environment = environment;
@@ -26,8 +24,8 @@ public class DeleteTransferFromRequestBatch : ITransferBatch
 		using var cn = Environment.DbConnetionConfig.ConnectionOpenAsNew();
 		using var trn = cn.BeginTransaction();
 
-		var tranId = this.GetTranasctionId(cn, ds, ds.DeleteRequestTable.GetTableFullName());
-		var procId = this.GetProcessId(tranId, cn, ds, ds.DeleteRequestTable.GetTableFullName());
+		var tranId = this.GetNewTransactionId(cn, ds, ds.DeleteRequestTable.GetTableFullName());
+		var procId = this.GetNewProcessId(tranId, cn, ds, ds.DeleteRequestTable.GetTableFullName());
 
 		Transfer(ds, cn, procId);
 

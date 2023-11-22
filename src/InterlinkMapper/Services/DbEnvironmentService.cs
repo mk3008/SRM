@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using InterlinkMapper.System;
+using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -42,8 +42,8 @@ public class DbEnvironmentService
 
 	public void CreateTableOrDefault(IDatasource d)
 	{
-		if (d.HasRelationMapTable()) CreateTableOrDefault(d.RelationMapTable);
-		if (d.HasKeyMapTable()) CreateTableOrDefault(d.KeyMapTable);
+		if (d.HasRelationMapTable()) CreateTableOrDefault(d.RelationmapTable);
+		if (d.HasKeyMapTable()) CreateTableOrDefault(d.KeymapTable);
 		if (d.HasForwardRequestTable()) CreateTableOrDefault(d.ForwardRequestTable);
 		if (d.HasValidateRequestTable()) CreateTableOrDefault(d.ValidateRequestTable);
 	}
@@ -51,7 +51,7 @@ public class DbEnvironmentService
 	public void CreateTableOrDefault(IDestination d)
 	{
 		if (d.HasProcessTable()) CreateTableOrDefault(d.ProcessTable.Definition);
-		if (d.HasFlipTable()) CreateTableOrDefault(d.FlipOption.FlipTable);
+		if (d.HasFlipTable()) CreateTableOrDefault(d.ReversalOption.RequestTable);
 		if (d.HasDeleteRequestTable()) CreateTableOrDefault(d.DeleteRequestTable);
 		if (d.HasValidateRequestTable()) CreateTableOrDefault(d.ValidateRequestTable);
 	}

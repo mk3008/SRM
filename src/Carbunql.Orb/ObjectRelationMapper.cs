@@ -1,6 +1,4 @@
-﻿using Dapper;
-
-namespace Carbunql.Orb;
+﻿namespace Carbunql.Orb;
 
 public static class ObjectRelationMapper
 {
@@ -9,7 +7,7 @@ public static class ObjectRelationMapper
 	public static void AddTypeHandler<T>(DbTableDefinition<T> def)
 	{
 		Map.Add(typeof(T), def);
-		SqlMapper.AddTypeHandler(new ObjectRelationMappableTypeHandler<T>());
+		//SqlMapper.AddTypeHandler(new ObjectRelationMappableTypeHandler<T>());
 	}
 
 	public static DbTableDefinition<T> FindFirst<T>()

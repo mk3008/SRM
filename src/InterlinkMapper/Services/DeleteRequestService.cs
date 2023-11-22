@@ -1,9 +1,5 @@
-﻿using Carbunql;
-using Carbunql.Building;
-using Carbunql.Dapper;
-using Carbunql.Values;
-using Dapper;
-using InterlinkMapper.System;
+﻿using Dapper;
+using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -28,7 +24,7 @@ public class DeleteRequestService : IQueryExecuteService
 
 	public SystemEnvironment Environment { get; init; }
 
-	private DbQueryConfig DbQueryConfig => Environment.DbQueryConfig;
+	private DbEnvironment DbQueryConfig => Environment.DbEnvironment;
 
 	private DbTableConfig DbTableConfig => Environment.DbTableConfig;
 

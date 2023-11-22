@@ -4,12 +4,13 @@ using Carbunql.Dapper;
 using Carbunql.Extensions;
 using Carbunql.Values;
 using Cysharp.Text;
+using InterlinkMapper;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace InterlinkMapper.Services;
+namespace InterlinkMapper.Services.escape;
 
 /// <summary>
 /// 検証リクエストのうち削除依頼のもの

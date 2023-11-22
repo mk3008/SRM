@@ -1,6 +1,7 @@
 ﻿using Carbunql.Analysis.Parser;
 using Carbunql.Building;
 using Carbunql.Orb.Extensions;
+using Carbunql.Orb.Mapping;
 using Carbunql.Values;
 using Cysharp.Text;
 

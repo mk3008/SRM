@@ -1,6 +1,6 @@
 ﻿using Carbunql;
+using InterlinkMapper.Models;
 using InterlinkMapper.Services;
-using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -32,8 +32,8 @@ public class ForwardTransferFromRequest : ITransferBatch
 		using var cn = Environment.DbConnetionConfig.ConnectionOpenAsNew();
 		using var trn = cn.BeginTransaction();
 
-		var tranId = this.GetTranasctionId(cn, ds);
-		var procId = this.GetProcessId(tranId, cn, ds);
+		var tranId = this.GetNewTranasctionId(cn, ds);
+		var procId = this.GetNewProcessId(tranId, cn, ds);
 
 		var bridge = GetBridgeAsNew(cn, ds);
 		if (bridge == null)

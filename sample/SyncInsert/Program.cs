@@ -15,8 +15,7 @@ DbTableConfig GetDbTableConfig()
 			ColumnDefinitions = new()
 			{
 				new ColumnDefinition() { ColumnName = "transaction_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
-				new ColumnDefinition() { ColumnName = "destination_table_name", TypeName = "text" },
-				new ColumnDefinition() { ColumnName = "datasource_name", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "datasource_id", TypeName = "int8" },
 				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 			},
 			Indexes = new()
@@ -31,17 +30,13 @@ DbTableConfig GetDbTableConfig()
 			{
 				new ColumnDefinition() { ColumnName = "process_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
 				new ColumnDefinition() { ColumnName = "transaction_id", TypeName = "int8" },
-				new ColumnDefinition() { ColumnName = "destination_table_name", TypeName = "text" },
-				new ColumnDefinition() { ColumnName = "datasource_name", TypeName = "text" },
-				new ColumnDefinition() { ColumnName = "keymap_table_name", TypeName = "text", AllowNull = true },
-				new ColumnDefinition() { ColumnName = "relationmap_table_name", TypeName = "text", AllowNull = true },
+				new ColumnDefinition() { ColumnName = "datasource_id", TypeName = "int8" },
 				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 			},
 			Indexes = new()
 			{
 				new DbIndexDefinition() { IndexNumber = 1, Columns = new() { "transaction_id" }},
-				new DbIndexDefinition() { IndexNumber = 2, Columns = new() { "destination_table_name", "datasource_name" }},
-				new DbIndexDefinition() { IndexNumber = 3, Columns = new() { "keymap_table_name" }}
+				new DbIndexDefinition() { IndexNumber = 2, Columns = new() { "datasource_id" }},
 			}
 		},
 		ProcessResultTable = new()
@@ -62,10 +57,31 @@ DbTableConfig GetDbTableConfig()
 				new DbIndexDefinition() { IndexNumber = 1, Columns = new() { "process_id" }},
 			}
 		},
+		DestinationTable = new()
+		{
+			TableName = "destinations",
+			ColumnDefinitions = new()
+			{
+				new ColumnDefinition() { ColumnName = "destination_id", TypeName = "serial8" , IsPrimaryKey = true, IsAutoNumber = true },
+				new ColumnDefinition() { ColumnName = "table_full_name", TypeName = "int8" },
+				new ColumnDefinition() { ColumnName = "description", TypeName = "int8" },
+				new ColumnDefinition() { ColumnName = "table", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "sequence", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "validate_request_table", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "delete_request_table", TypeName = "int8" },
+				new ColumnDefinition() { ColumnName = "flip_option", TypeName = "text" },
+				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "clock_timestamp()" },
+			},
+			Indexes = new()
+			{
+				new DbIndexDefinition() { IndexNumber = 1, Columns = new() { "process_id" }},
+			}
+		},
 		TransactionIdColumn = "transaction_id",
 		ProcessIdColumn = "process_id",
-		DestinationTableNameColumn = "destination_table_name",
-		DatasourceNameColumn = "datasource_name",
+		DestinationIdColumn = "destination_id",
+		DatasourceIdColumn = "datasource_id",
+
 		KeymapTableNameColumn = "keymap_table_name",
 		RelationmapTableNameColumn = "relationmap_table_name",
 		MemberNameColumn = "function_name",
@@ -110,7 +126,7 @@ DbDestination GetDestination()
 			},
 			RootIdColumnName = "root_sale_journal_id",
 			SourceIdColumnName = "source_sale_journal_id",
-			FlipColumnName = "is_flip",
+			FlipFlagColumnName = "is_flip",
 		},
 		ValidateRequestTable = new()
 		{
@@ -132,7 +148,7 @@ DbDestination GetDestination()
 		},
 		FlipOption = new()
 		{
-			FlipTable = new()
+			RequestTable = new()
 			{
 				TableName = "sale_journal_flip_requests",
 				ColumnDefinitions = new() {
@@ -141,6 +157,7 @@ DbDestination GetDestination()
 					new() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 				}
 			},
+			RequestIdColumn = "sale_journal_flip_request_id",
 			ReversalColumns = new() { "price" },
 			ExcludedColumns = new() { "remarks" }
 		},
@@ -173,7 +190,7 @@ DbDatasource GetDatasource()
 		Destination = GetDestination(),
 		KeyColumns = new() { "sale_id" },
 		IsSupportSequenceTransfer = true,
-		KeyMapTable = new()
+		KeymapTable = new()
 		{
 			TableName = "sale_journals__key_sales",
 			ColumnDefinitions = new() {
@@ -182,7 +199,7 @@ DbDatasource GetDatasource()
 				new ColumnDefinition() { ColumnName = "created_at", TypeName = "timestamp", DefaultValue = "current_timestamp" },
 			},
 		},
-		RelationMapTable = new()
+		RelationmapTable = new()
 		{
 			TableName = "sale_journals__rel_sales",
 			ColumnDefinitions = new() {
@@ -261,7 +278,7 @@ forwardTransfer.Execute(datasource);
 
 ExecuteSql(dbConnectionConfig, "insert into sale_journal_delete_requests(sale_journal_id) select sale_journal_id from sale_journals");
 
-var deleteTransfer = new DeleteTransferFromRequestBatch(environment, logger);
+var deleteTransfer = new DeleteTransferBatch(environment, logger);
 deleteTransfer.Execute(datasource.Destination);
 
 Console.ReadLine();

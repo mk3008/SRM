@@ -1,6 +1,6 @@
 ﻿using Carbunql;
+using InterlinkMapper.Models;
 using InterlinkMapper.Services;
-using InterlinkMapper.System;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -32,8 +32,8 @@ public class ForwardTransferBatch : ITransferBatch
 		using var cn = Environment.DbConnetionConfig.ConnectionOpenAsNew();
 		using var trn = cn.BeginTransaction();
 
-		var tranId = this.GetTranasctionId(cn, ds);
-		var procId = this.GetProcessId(tranId, cn, ds);
+		var tranId = this.GetNewTranasctionId(cn, ds);
+		var procId = this.GetNewProcessId(tranId, cn, ds);
 
 		var bridge = CreateBridgeAsNew(cn, procId, ds);
 		if (bridge == null)
@@ -74,22 +74,14 @@ public class ForwardTransferBatch : ITransferBatch
 		var service = new ForwardTransferService(Environment, cn, processId, Logger);
 		var ds = bridge.Datasource;
 
-		service.TransferToDestination(ds, bridge.Query);
-		if (ds.HasRelationMapTable()) service.TransferToRelationMap(ds, bridge.Query);
-		if (ds.HasKeyMapTable()) service.TransferToKeyMap(ds, bridge.Query);
-		if (ds.HasForwardRequestTable()) service.TransferToRequestAsHold(ds, bridge.Query);
-		if (ds.HasForwardRequestTable()) service.DeleteRequestAsSuccess(ds, bridge.Query);
-	}
-
-	private class Bridge
-	{
-		public Bridge(IDatasource datasource, SelectQuery bridgeQuery)
-		{
-			Datasource = datasource;
-			Query = bridgeQuery;
-		}
-
-		public IDatasource Datasource { get; init; }
-		public SelectQuery Query { get; init; }
+		service.InsertIntoProcessTable(bridge);
+		service.InsertIntoDestinationTable(bridge);
+		if (ds.HasRelationMapTable()) service.InsertIntoRelationMap(bridge);
+		if (ds.HasKeyMapTable()) service.InsertIntoKeymapTable(bridge);
+		//if (ds.HasForwardRequestTable())
+		//{
+		//	service.TransferToRequestAsHold(ds, bridge.Query);
+		//	service.DeleteRequestAsSuccess(ds, bridge.Query);
+		//}
 	}
 }

@@ -1,11 +1,7 @@
-﻿using Carbunql;
-using Carbunql.Building;
-using Carbunql.Dapper;
-using Carbunql.Extensions;
-using Carbunql.Values;
-using Cysharp.Text;
+﻿using Cysharp.Text;
 using Dapper;
 using Microsoft.Extensions.Logging;
+using RedOrb;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,16 +10,13 @@ namespace InterlinkMapper.Services;
 
 public class ForwardRequestBridgeService
 {
-	public ForwardRequestBridgeService(IDbConnection cn, ILogger? logger = null, string placeHolderIdentifer = ":")
+	public ForwardRequestBridgeService(LoggingDbConnection cn, string placeHolderIdentifer = ":")
 	{
 		Connection = cn;
-		Logger = logger;
 		PlaceHolderIdentifer = placeHolderIdentifer;
 	}
 
-	private readonly ILogger? Logger;
-
-	private IDbConnection Connection { get; init; }
+	private LoggingDbConnection Connection { get; init; }
 
 	public int CommandTimeout { get; set; } = 60 * 5;
 

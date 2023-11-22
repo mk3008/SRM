@@ -5,7 +5,13 @@ VisualStudioVersion = 17.4.33403.182
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InterlinkMapper", "InterlinkMapper\InterlinkMapper.csproj", "{368AB533-4829-47E9-9AE6-0909E4A9AD24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncInsert", "..\sample\SyncInsert\SyncInsert.csproj", "{54E2E4BC-CEB2-429D-801E-53D1DD83E6EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncInsert", "..\sample\SyncInsert\SyncInsert.csproj", "{54E2E4BC-CEB2-429D-801E-53D1DD83E6EB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidateTest", "ValidateTest\ValidateTest.csproj", "{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Carbunql.Orb", "Carbunql.Orb\Carbunql.Orb.csproj", "{5DA8F068-97C3-4137-BEC9-7A1F2F5979D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Carbunql.Orb.Test", "..\test\Carbunql.Orb.Test\Carbunql.Orb.Test.csproj", "{C11D7014-CC1D-4DB0-BA80-0B582A77DC84}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +27,18 @@ Global
 		{54E2E4BC-CEB2-429D-801E-53D1DD83E6EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54E2E4BC-CEB2-429D-801E-53D1DD83E6EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54E2E4BC-CEB2-429D-801E-53D1DD83E6EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5DA8F068-97C3-4137-BEC9-7A1F2F5979D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5DA8F068-97C3-4137-BEC9-7A1F2F5979D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DA8F068-97C3-4137-BEC9-7A1F2F5979D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5DA8F068-97C3-4137-BEC9-7A1F2F5979D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C11D7014-CC1D-4DB0-BA80-0B582A77DC84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C11D7014-CC1D-4DB0-BA80-0B582A77DC84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C11D7014-CC1D-4DB0-BA80-0B582A77DC84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C11D7014-CC1D-4DB0-BA80-0B582A77DC84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
