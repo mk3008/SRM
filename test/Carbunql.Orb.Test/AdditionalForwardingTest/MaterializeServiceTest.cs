@@ -7,9 +7,9 @@ using Xunit.Abstractions;
 
 namespace AdditionalForwardingTest;
 
-public class MaterializeServiceTest //: IClassFixture<PostgresDB>
+public class MaterializeServiceTest
 {
-	public MaterializeServiceTest(ITestOutputHelper output)//(PostgresDB postgresDB, ITestOutputHelper output)
+	public MaterializeServiceTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -68,7 +68,7 @@ DELETE FROM
     requests AS d
 WHERE
 	(d.id, d.sub_id) IN (
-		/* Data that has been materialized will be deleted from the original. */
+		/* data that has been materialized will be deleted from the original. */
 		SELECT
 			ot.id,
 			ot.sub_id

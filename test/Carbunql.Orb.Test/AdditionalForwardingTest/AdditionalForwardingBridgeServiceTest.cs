@@ -51,7 +51,7 @@ public class AdditionalForwardingBridgeServiceTest
 		var request = CreateRequestResult(datasource);
 
 		var expect = """
-/* Data source to be added */
+/* data source to be added */
 SELECT
     d.journal_closing_date,
     d.sale_date,
@@ -60,27 +60,19 @@ SELECT
     d.sale_id
 FROM
     (
+        /* raw data source */
         SELECT
-            d.journal_closing_date,
-            d.sale_date,
-            d.shop_id,
-            d.price,
-            d.sale_id
+            s.sale_date AS journal_closing_date,
+            s.sale_date,
+            s.shop_id,
+            s.price,
+            s.sale_id
         FROM
-            (
-                SELECT
-                    s.sale_date AS journal_closing_date,
-                    s.sale_date,
-                    s.shop_id,
-                    s.price,
-                    s.sale_id
-                FROM
-                    sales AS s
-            ) AS d
+            sales AS s
     ) AS d
 WHERE
     EXISTS (
-        /* exists request */
+        /* exists request material */
         SELECT
             *
         FROM

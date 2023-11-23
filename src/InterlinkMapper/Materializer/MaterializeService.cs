@@ -83,7 +83,7 @@ public class MaterializeService
 	{
 		// erase materialized data from oprigin.
 		var sq = new SelectQuery();
-		sq.AddComment("Data that has been materialized will be deleted from the original.");
+		sq.AddComment("data that has been materialized will be deleted from the original.");
 
 		var (f, d) = sq.From(originTable).As("ot");
 

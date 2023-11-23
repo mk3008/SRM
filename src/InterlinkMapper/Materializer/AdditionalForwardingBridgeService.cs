@@ -96,7 +96,7 @@ public class AdditionalForwardingBridgeService
 	private SelectQuery CreateDatasourceSelectQuery(DbDatasource datasource, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
-		sq.AddComment("Data source to be added");
+		sq.AddComment("data source to be added");
 		var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
 
 		//exists (select * from REQUEST x where d.key = x.key)
@@ -105,7 +105,7 @@ public class AdditionalForwardingBridgeService
 			var requestTable = Environment.GetInsertRequestTable(datasource);
 
 			var q = new SelectQuery();
-			q.AddComment("exists request");
+			q.AddComment("exists request material");
 
 			var (_, x) = q.From(request.MaterialName).As("x");
 
@@ -166,7 +166,7 @@ public class AdditionalForwardingBridgeService
 		var keymapTable = Environment.GetKeymapTable(datasource);
 
 		var sq = new SelectQuery();
-		sq.AddComment("Delete transferred keys");
+		sq.AddComment("delete transferred keys");
 		var (f, d) = sq.From(request.MaterialName).As("d");
 
 		sq.Where(() =>

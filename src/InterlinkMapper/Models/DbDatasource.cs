@@ -30,9 +30,8 @@ public class DbDatasource //: IDatasource
 
 	public SelectQuery ToSelectQuery()
 	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(new SelectQuery(Query)).As("d");
-		sq.Select(d);
+		var sq = new SelectQuery(Query);
+		sq.AddComment("raw data source");
 		return sq;
 	}
 }
