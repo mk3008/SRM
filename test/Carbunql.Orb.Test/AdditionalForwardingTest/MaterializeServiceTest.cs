@@ -17,17 +17,20 @@ public class MaterializeServiceTest //: IClassFixture<PostgresDB>
 		{
 			DbConnetionConfig = new DummyDB(),
 		};
+
+		Proxy = new MaterializeService(Environment).AsPrivateProxy();
 	}
 
 	private readonly UnitTestLogger Logger;
 
 	public readonly SystemEnvironment Environment;
 
+	public readonly MaterializeServiceProxy Proxy;
+
 	private MaterializeResult CreateResult()
 	{
 		var sq = new SelectQuery("select a.id, a.sub_id, 'abc' as text, 1 as value from table_a as a");
-		var service = new MaterializeService(Environment);
-		return service.AsPrivateProxy().CreateResult("material", 10, sq);
+		return Proxy.CreateResult("material", 10, sq);
 	}
 
 	[Fact]
@@ -58,8 +61,7 @@ FROM
 	{
 		var result = CreateResult();
 
-		var service = new MaterializeService(Environment);
-		var query = service.AsPrivateProxy().CreateOriginDeleteQuery(result, "requests", ["id", "sub_id"]);
+		var query = Proxy.CreateOriginDeleteQuery(result, "requests", ["id", "sub_id"]);
 
 		var expect = """
 DELETE FROM

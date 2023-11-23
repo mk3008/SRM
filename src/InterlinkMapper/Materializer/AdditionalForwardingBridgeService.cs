@@ -35,7 +35,7 @@ public class AdditionalForwardingBridgeService
 	private string GenerateMaterialName(string name)
 	{
 		var sb = ZString.CreateStringBuilder();
-		sb.Append("_im_");
+		sb.Append("__m_");
 
 		using MD5 md5Hash = MD5.Create();
 		byte[] data = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(name));
