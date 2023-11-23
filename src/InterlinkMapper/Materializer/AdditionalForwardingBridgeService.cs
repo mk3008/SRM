@@ -6,6 +6,7 @@ using RedOrb;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
+using PrivateProxy;
 
 namespace InterlinkMapper.Materializer;
 
@@ -14,14 +15,11 @@ namespace InterlinkMapper.Materializer;
 /// </summary>
 public class AdditionalForwardingBridgeService
 {
-	public AdditionalForwardingBridgeService(SystemEnvironment environment, LoggingDbConnection cn)
+	public AdditionalForwardingBridgeService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Connection = cn;
-		MaterializeService = new MaterializeService(environment, cn);
+		MaterializeService = new MaterializeService(environment);
 	}
-
-	private LoggingDbConnection Connection { get; init; }
 
 	private SystemEnvironment Environment { get; init; }
 
@@ -49,7 +47,7 @@ public class AdditionalForwardingBridgeService
 		return sb.ToString();
 	}
 
-	private MaterializeResult CreateRequestMaterial(DbDatasource datasource)
+	private MaterializeResult CreateRequestMaterial(LoggingDbConnection connection, DbDatasource datasource)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
 		var table = request.Definition.TableFullName;
@@ -60,7 +58,7 @@ public class AdditionalForwardingBridgeService
 		keys.Select(key => sq.Select(key));
 
 		var name = GenerateMaterialName(request.Definition.TableFullName);
-		return MaterializeService.Move(sq, name, table, keys);
+		return MaterializeService.Move(connection, sq, name, table, keys);
 	}
 
 	/// <summary>
@@ -73,29 +71,29 @@ public class AdditionalForwardingBridgeService
 	/// <param name="datasource"></param>
 	/// <returns></returns>
 	/// <exception cref="InvalidOperationException"></exception>
-	public MaterializeResult Create(DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public MaterializeResult Create(LoggingDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var request = CreateRequestMaterial(datasource);
+		var request = CreateRequestMaterial(connection, datasource);
 
-		CleaningRequestMaterial(datasource, request);
+		CleanUpRequestMaterial(connection, datasource, request);
 
-		return Create(datasource, request, injector);
+		return Create(connection, datasource, request, injector);
 	}
 
-	private MaterializeResult Create(DbDatasource datasource, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
+	private MaterializeResult Create(LoggingDbConnection connection, DbDatasource datasource, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
-		var (_, d) = sq.From(CreateDatasourceQuery(datasource, request, injector)).As("d");
+		var (_, d) = sq.From(CreateDatasourceSelectQuery(datasource, request, injector)).As("d");
 
 		sq.Select(d);
 		sq.Select(datasource.Destination.Sequence);
 
 		var bridgeName = GenerateMaterialName(datasource.DatasourceName);
 
-		return MaterializeService.Create(sq, bridgeName);
+		return MaterializeService.Create(connection, sq, bridgeName);
 	}
 
-	private SelectQuery CreateDatasourceQuery(DbDatasource datasource, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
+	private SelectQuery CreateDatasourceSelectQuery(DbDatasource datasource, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
 		sq.AddComment("Data source to be added");
@@ -156,14 +154,20 @@ public class AdditionalForwardingBridgeService
 	/// ex. delete from REQUEST d where exists (select * from KEYMAP x where x.key = d.key)
 	/// </summary>
 	/// <param name="datasource"></param>
-	public void CleaningRequestMaterial(DbDatasource datasource, MaterializeResult resut)
+	public void CleanUpRequestMaterial(LoggingDbConnection connection, DbDatasource datasource, MaterializeResult request)
+	{
+		var deleteQuery = CreateRequestMaterialCleanUpQuery(datasource, request);
+		connection.Execute(deleteQuery, commandTimeout: CommandTimeout);
+	}
+
+	public DeleteQuery CreateRequestMaterialCleanUpQuery(DbDatasource datasource, MaterializeResult request)
 	{
 		var requestTable = Environment.GetInsertRequestTable(datasource);
 		var keymapTable = Environment.GetKeymapTable(datasource);
 
 		var sq = new SelectQuery();
 		sq.AddComment("Delete transferred keys");
-		var (f, d) = sq.From(resut.MaterialName).As("d");
+		var (f, d) = sq.From(request.MaterialName).As("d");
 
 		sq.Where(() =>
 		{
@@ -185,8 +189,9 @@ public class AdditionalForwardingBridgeService
 
 		sq.Select(requestTable.RequestIdColumn);
 
-		var deleteQuery = sq.ToDeleteQuery(resut.MaterialName);
-
-		Connection.Execute(deleteQuery, commandTimeout: CommandTimeout);
+		return sq.ToDeleteQuery(request.MaterialName);
 	}
 }
+
+[GeneratePrivateProxy(typeof(AdditionalForwardingBridgeService))]
+public partial struct AdditionalForwardingBridgeServiceProxy;

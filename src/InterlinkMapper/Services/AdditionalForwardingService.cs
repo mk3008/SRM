@@ -34,8 +34,8 @@ public class AdditionalForwardingService
 
 	private MaterializeResult GetBridge(DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var service = new AdditionalForwardingBridgeService(Environment, Connection);
-		return service.Create(datasource, injector);
+		var service = new AdditionalForwardingBridgeService(Environment);
+		return service.Create(Connection, datasource, injector);
 	}
 
 	private TransactionRow GetTransaction(DbDatasource datasource)
