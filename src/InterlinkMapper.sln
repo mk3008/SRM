@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncInsert", "..\sample\Syn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidateTest", "ValidateTest\ValidateTest.csproj", "{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdditionalForwardingTest", "..\test\Carbunql.Orb.Test\AdditionalForwardingTest\AdditionalForwardingTest.csproj", "{51EC6886-3E77-40CF-A9EF-6B9130B807F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04BB8CAF-AB94-4CD4-B5D5-B15B561ED7EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51EC6886-3E77-40CF-A9EF-6B9130B807F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51EC6886-3E77-40CF-A9EF-6B9130B807F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51EC6886-3E77-40CF-A9EF-6B9130B807F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51EC6886-3E77-40CF-A9EF-6B9130B807F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

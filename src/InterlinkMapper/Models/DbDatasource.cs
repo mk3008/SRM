@@ -12,7 +12,7 @@ public class DbDatasource //: IDatasource
 
 	public string Query { get; set; } = string.Empty;
 
-	public string KeymapName { get; set; } = string.Empty;
+	public string KeyName { get; set; } = string.Empty;
 
 	//public DbTableDefinition KeymapTable { get; set; } = new();
 

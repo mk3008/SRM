@@ -1,9 +1,4 @@
-﻿using Carbunql.Dapper;
-using Dapper;
-using InterlinkMapper;
-using InterlinkMapper.Batches;
-using InterlinkMapper.System;
-using SyncInsert;
+﻿using SyncInsert;
 
 DbTableConfig GetDbTableConfig()
 {

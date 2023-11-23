@@ -2,11 +2,11 @@
 
 public class SystemEnvironment
 {
-	public DbConnetionSetting DbConnetionConfig { get; set; } = null!;
+	public IDbConnetionSetting DbConnetionConfig { get; set; } = null!;
 
-	public DbTableConfig DbTableConfig { get; set; } = null!;
+	public DbTableConfig DbTableConfig { get; set; } = new();
 
-	public DbEnvironment DbEnvironment { get; set; } = null!;
+	public DbEnvironment DbEnvironment { get; set; } = new();
 
 	public TransactionTable GetTansactionTable()
 	{
@@ -228,7 +228,7 @@ public class SystemEnvironment
 			Definition = new()
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = string.Format(DbTableConfig.KeymapTableNameFormat, d.Destination.Table.TableName, d.KeymapName),
+				TableName = string.Format(DbTableConfig.KeymapTableNameFormat, d.Destination.Table.TableName, d.KeyName),
 				ColumnDefinitions = columndefs,
 				Indexes = new()
 				{
@@ -378,7 +378,7 @@ public class SystemEnvironment
 
 	public InsertRequestTable GetInsertRequestTable(DbDatasource d)
 	{
-		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table, d.KeymapName);
+		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
 		var columndefs = new List<ColumnDefinition>

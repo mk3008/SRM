@@ -2,7 +2,7 @@
 
 namespace InterlinkMapper.Models;
 
-public interface DbConnetionSetting
+public interface IDbConnetionSetting
 {
 	LoggingDbConnection ConnectionOpenAsNew();
 }

@@ -1,12 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace Carbunql.Orb.Test;
+namespace PostgresSample;
 
-public class UnitTestLogger : ILogger
+public class UnitTestLogger(ITestOutputHelper Output) : ILogger
 {
-	public required ITestOutputHelper Output { get; init; }
-
 	public IDisposable? BeginScope<TState>(TState state) where TState : notnull
 	{
 		return null;

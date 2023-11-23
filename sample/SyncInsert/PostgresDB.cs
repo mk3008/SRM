@@ -1,8 +1,4 @@
-﻿using InterlinkMapper.System;
-using Npgsql;
-using System.Data;
-
-namespace SyncInsert;
+﻿namespace SyncInsert;
 
 internal class PostgresDB : IDbConnetionConfig
 {

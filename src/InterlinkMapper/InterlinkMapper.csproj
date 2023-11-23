@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -45,16 +45,14 @@
 	<ItemGroup>
 		<PackageReference Include="Carbunql" Version="0.5.1" />
 		<PackageReference Include="Carbunql.Dapper" Version="0.2.0" />
-		<PackageReference Include="Carbunql.Postgres" Version="0.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
 		<PackageReference Include="RedOrb" Version="0.1.0" />
-		<PackageReference Include="Utf8Json" Version="1.3.7" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Actions\" />
-	  <Folder Include="Batches\espace\" />
-	  <Folder Include="Services\escape\" />
+		<Folder Include="Actions\" />
+		<Folder Include="Batches\espace\" />
+		<Folder Include="Services\escape\" />
 	</ItemGroup>
 
 </Project>
