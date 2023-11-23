@@ -1,30 +1,14 @@
 ﻿using Cysharp.Text;
+using InterlinkMapper;
 
-namespace InterlinkMapper;
-
-public interface IDbTable
-{
-	string SchemaName { get; set; }
-
-	string TableName { get; set; }
-
-	IEnumerable<string> Columns { get; }
-}
+namespace InterlinkMapper.Models;
 
 public interface IDbTableDefinition : IDbTable
 {
 	IEnumerable<ColumnDefinition> ColumnDefinitions { get; }
 }
 
-public static class ITableExtention
-{
-	public static string GetTableFullName(this IDbTable source)
-	{
-		return string.IsNullOrEmpty(source.SchemaName) ? source.TableName : source.SchemaName + "." + source.TableName;
-	}
-}
-
-public static class ITableDefinitionExtention
+public static class IDbTableDefinitionExtention
 {
 	public static string ToCreateCommandText(this IDbTableDefinition source)
 	{

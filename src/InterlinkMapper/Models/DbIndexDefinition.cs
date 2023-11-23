@@ -1,6 +1,6 @@
 ﻿using Cysharp.Text;
 
-namespace InterlinkMapper;
+namespace InterlinkMapper.Models;
 
 public class DbIndexDefinition
 {
@@ -16,7 +16,7 @@ public static class DbIndexDefinitionExtension
 	public static string ToCreateCommandText(this DbIndexDefinition source, IDbTable table)
 	{
 		var name = $"i{source.IndexNumber}_{table.TableName}";
-		var indextype = (source.IsUnique) ? "unique index" : "index";
+		var indextype = source.IsUnique ? "unique index" : "index";
 		var sb = ZString.CreateStringBuilder();
 		foreach (var column in source.Columns)
 		{

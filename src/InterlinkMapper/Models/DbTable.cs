@@ -1,4 +1,4 @@
-﻿namespace InterlinkMapper;
+﻿namespace InterlinkMapper.Models;
 
 public class DbTable : IDbTable
 {
