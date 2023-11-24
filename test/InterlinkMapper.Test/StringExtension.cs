@@ -1,4 +1,4 @@
-﻿namespace AdditionalForwardingTest;
+﻿namespace InterlinkMapper.Test;
 
 public static class StringExtensions
 {

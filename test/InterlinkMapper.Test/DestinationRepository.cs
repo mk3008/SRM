@@ -1,6 +1,6 @@
 ﻿using InterlinkMapper.Models;
 
-namespace AdditionalForwardingTest;
+namespace InterlinkMapper.Test;
 
 internal static class DestinationRepository
 {

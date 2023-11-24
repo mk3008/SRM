@@ -4,7 +4,7 @@ using Npgsql;
 using RedOrb;
 using Testcontainers.PostgreSql;
 
-namespace AdditionalForwardingTest;
+namespace InterlinkMapper.Test;
 
 public class PostgresDB : IAsyncLifetime, IDbConnetionSetting
 {

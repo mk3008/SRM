@@ -2,10 +2,9 @@
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
-using PostgresSample;
 using Xunit.Abstractions;
 
-namespace AdditionalForwardingTest;
+namespace InterlinkMapper.Test;
 
 public class AdditionalForwardingBridgeServiceTest
 {

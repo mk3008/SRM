@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using RedOrb;
 
-namespace AdditionalForwardingTest;
+namespace InterlinkMapper.Test;
 
 internal class Postgres(ILogger Logger) : IDbConnetionSetting
 {

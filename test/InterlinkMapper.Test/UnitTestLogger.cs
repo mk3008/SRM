@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace PostgresSample;
+namespace InterlinkMapper.Test;
 
 public class UnitTestLogger(ITestOutputHelper Output) : ILogger
 {

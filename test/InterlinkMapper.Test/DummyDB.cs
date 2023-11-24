@@ -1,7 +1,7 @@
 ﻿using InterlinkMapper.Models;
 using RedOrb;
 
-namespace AdditionalForwardingTest;
+namespace InterlinkMapper.Test;
 
 public class DummyDB : IDbConnetionSetting
 {
