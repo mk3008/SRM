@@ -256,7 +256,7 @@ public class SystemEnvironment
 			Definition = new()
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = string.Format(DbTableConfig.ReversalTableNameFormat, d.Table),
+				TableName = string.Format(DbTableConfig.ReversalTableNameFormat, d.Table.TableName),
 				ColumnDefinitions = new()
 				{
 					new ColumnDefinition()
@@ -292,7 +292,7 @@ public class SystemEnvironment
 	{
 		if (d.ReversalOption == null) throw new NotSupportedException();
 
-		var tablename = string.Format(DbTableConfig.ReversalRequestTableNameFormat, d.Table);
+		var tablename = string.Format(DbTableConfig.ReversalRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
 		var t = new ReversalRequestTable()
@@ -336,7 +336,7 @@ public class SystemEnvironment
 	{
 		if (d.ReversalOption == null) throw new NotSupportedException();
 
-		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Table);
+		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
 		var t = new ValidateRequestTable()
@@ -378,7 +378,7 @@ public class SystemEnvironment
 
 	public InsertRequestTable GetInsertRequestTable(DbDatasource d)
 	{
-		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table, d.KeyName);
+		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
 		var columndefs = new List<ColumnDefinition>

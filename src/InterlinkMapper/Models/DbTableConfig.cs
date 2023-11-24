@@ -24,7 +24,7 @@ public class DbTableConfig
 
 	public string ReversalTableNameFormat { get; set; } = "{0}__reversal";
 
-	public string InsertRequestTableNameFormat { get; set; } = "{0}__i_{1}";
+	public string InsertRequestTableNameFormat { get; set; } = "{0}__r_{1}";
 
 	public string ValidateRequestTableNameFormat { get; set; } = "{0}__request_validate";
 

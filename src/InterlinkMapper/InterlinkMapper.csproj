@@ -25,6 +25,7 @@
 		<Compile Remove="DatasourceTableDefinition.cs" />
 		<Compile Remove="DbCommonTableExtension.cs" />
 		<Compile Remove="DestinationTableDefinition.cs" />
+		<Compile Remove="Materializer\AdditionalForwardingBridgeService.cs" />
 		<Compile Remove="Materializer\FlipRequestBridgeService.cs" />
 		<Compile Remove="Database.cs" />
 		<Compile Remove="DictionaryExtension.cs" />
@@ -37,9 +38,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Include="Services\AdditionalForwardingService.cs" />
 		<Compile Include="Services\BatchProcessService.cs" />
 		<Compile Include="Services\BatchTransactionService.cs" />
-		<Compile Include="Services\AdditionalForwardingService.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

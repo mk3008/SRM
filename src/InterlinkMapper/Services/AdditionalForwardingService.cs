@@ -6,51 +6,51 @@ namespace InterlinkMapper.Services;
 
 public class AdditionalForwardingService
 {
-	public AdditionalForwardingService(SystemEnvironment environment, LoggingDbConnection cn)
+	public AdditionalForwardingService(SystemEnvironment environment) //, LoggingDbConnection cn)
 	{
 		Environment = environment;
-		Connection = cn;
+		//Connection = cn;
 	}
 
-	private LoggingDbConnection Connection { get; init; }
+	//private LoggingDbConnection Connection { get; init; }
 
 	private SystemEnvironment Environment { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public void Execute(DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public void Execute(LoggingDbConnection cn, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var bridge = GetBridge(datasource, injector);
+		var transaction = GetTransaction(cn, datasource);
 
-		var transaction = GetTransaction(datasource);
-		var process = GetProcess(transaction, datasource, bridge.Count);
+		var bridge = CreateBridge(cn, datasource, injector);
+		if (bridge == null || bridge.Count == 0) return;
 
-		if (bridge.Count == 0) return;
+		var process = GetProcess(cn, transaction, datasource, bridge.Count);
 
-		InsertToDestination(datasource, bridge);
-		InsertToKeymap(datasource, bridge);
-		InsertToRelation(datasource, process, bridge);
+		InsertToDestination(cn, datasource, bridge);
+		InsertToKeymap(cn, datasource, bridge);
+		InsertToRelation(cn, datasource, process, bridge);
 	}
 
-	private MaterializeResult GetBridge(DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	private MaterializeResult? CreateBridge(LoggingDbConnection cn, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var service = new AdditionalForwardingBridgeService(Environment);
-		return service.Create(Connection, datasource, injector);
+		var service = new AdditionalForwardingMaterializer(Environment);
+		return service.Create(cn, datasource, injector);
 	}
 
-	private TransactionRow GetTransaction(DbDatasource datasource)
+	private TransactionRow GetTransaction(LoggingDbConnection cn, DbDatasource datasource)
 	{
-		var service = new BatchTransactionService(Environment, Connection);
+		var service = new BatchTransactionService(Environment, cn);
 		return service.Regist(datasource);
 	}
 
-	private ProcessRow GetProcess(TransactionRow transaction, DbDatasource datasource, int rows)
+	private ProcessRow GetProcess(LoggingDbConnection cn, TransactionRow transaction, DbDatasource datasource, int rows)
 	{
-		var service = new BatchProcessService(Environment, Connection);
+		var service = new BatchProcessService(Environment, cn);
 		return service.Regist(transaction, datasource, nameof(AdditionalForwardingService), rows);
 	}
 
-	private int InsertToDestination(DbDatasource datasource, MaterializeResult bridge)
+	private int InsertToDestination(LoggingDbConnection cn, DbDatasource datasource, MaterializeResult bridge)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(bridge.SelectQuery).As("d");
@@ -64,10 +64,10 @@ public class AdditionalForwardingService
 			sq.SelectClause!.Remove(item);
 		}
 
-		return Connection.Execute(sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName()));
+		return cn.Execute(sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName()));
 	}
 
-	private int InsertToRelation(DbDatasource datasource, ProcessRow process, MaterializeResult bridge)
+	private int InsertToRelation(LoggingDbConnection cn, DbDatasource datasource, ProcessRow process, MaterializeResult bridge)
 	{
 		var relation = Environment.GetRelationTable(datasource.Destination);
 
@@ -77,10 +77,10 @@ public class AdditionalForwardingService
 		sq.Select(relation.DestinationSequenceColumn);
 		sq.Select(Environment.DbEnvironment, relation.ProcessIdColumn, process.ProcessId);
 
-		return Connection.Execute(sq.ToInsertQuery(relation.Definition.TableFullName));
+		return cn.Execute(sq.ToInsertQuery(relation.Definition.TableFullName));
 	}
 
-	private int InsertToKeymap(DbDatasource datasource, MaterializeResult bridge)
+	private int InsertToKeymap(LoggingDbConnection cn, DbDatasource datasource, MaterializeResult bridge)
 	{
 		var keymap = Environment.GetKeymapTable(datasource);
 
@@ -90,6 +90,6 @@ public class AdditionalForwardingService
 		sq.Select(keymap.DestinationSequenceColumn);
 		keymap.DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
 
-		return Connection.Execute(sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName()));
+		return cn.Execute(sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName()));
 	}
 }

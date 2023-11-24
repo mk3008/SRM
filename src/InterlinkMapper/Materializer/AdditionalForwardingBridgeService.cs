@@ -18,47 +18,20 @@ public class AdditionalForwardingBridgeService
 	public AdditionalForwardingBridgeService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		MaterializeService = new MaterializeService(environment);
+		MaterializeService = new AdditionalForwardingMaterializer(environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private MaterializeService MaterializeService { get; init; }
+	private AdditionalForwardingMaterializer MaterializeService { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	/// <summary>
-	/// Generate a bridge name.
-	/// </summary>
-	/// <param name="datasource"></param>
-	/// <returns></returns>
-	private string GenerateMaterialName(string name)
-	{
-		var sb = ZString.CreateStringBuilder();
-		sb.Append("__m_");
 
-		using MD5 md5Hash = MD5.Create();
-		byte[] data = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(name));
-
-		for (int i = 0; i < 4; i++)
-		{
-			sb.Append(data[i].ToString("x2"));
-		}
-		return sb.ToString();
-	}
 
 	private MaterializeResult CreateRequestMaterial(LoggingDbConnection connection, DbDatasource datasource)
 	{
-		var request = Environment.GetInsertRequestTable(datasource);
-		var table = request.Definition.TableFullName;
-		var keys = request.Definition.Columns.ToList();
-
-		var sq = new SelectQuery();
-		sq.From(table);
-		keys.Select(key => sq.Select(key));
-
-		var name = GenerateMaterialName(request.Definition.TableFullName);
-		return MaterializeService.Move(connection, sq, name, table, keys);
+		return MaterializeService.Create(connection, datasource);
 	}
 
 	/// <summary>

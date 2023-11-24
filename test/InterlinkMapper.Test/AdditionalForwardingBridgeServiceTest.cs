@@ -29,7 +29,7 @@ public class AdditionalForwardingBridgeServiceTest
 	private MaterializeResult CreateRequestResult(DbDatasource d)
 	{
 		var sq = new SelectQuery(d.Query);
-		var proxy = new MaterializeService(Environment).AsPrivateProxy();
+		var proxy = new AdditionalForwardingMaterializer(Environment).AsPrivateProxy();
 		return proxy.CreateResult("material", 10, sq);
 	}
 
