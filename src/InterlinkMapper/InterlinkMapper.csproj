@@ -39,8 +39,6 @@
 
 	<ItemGroup>
 		<Compile Include="Services\AdditionalForwardingService.cs" />
-		<Compile Include="Services\BatchProcessService.cs" />
-		<Compile Include="Services\BatchTransactionService.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

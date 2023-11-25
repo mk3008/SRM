@@ -1,4 +1,7 @@
-﻿namespace InterlinkMapper.Models;
+﻿using InterlinkMapper.Materializer;
+using System.Data;
+
+namespace InterlinkMapper.Models;
 
 public class DbDatasource //: IDatasource
 {
@@ -33,6 +36,20 @@ public class DbDatasource //: IDatasource
 		var sq = new SelectQuery(Query);
 		sq.AddComment("raw data source");
 		return sq;
+	}
+
+	public InsertQuery ToDestinationInsertQuery(MaterializeResult datasourceMaterial)
+	{
+		var sq = (SelectQuery)datasourceMaterial.SelectQuery.DeepCopy();
+
+		// Exclude from selection if it does not exist in the destination column
+		var columns = sq.GetSelectableItems().ToList();
+		foreach (var item in columns.Where(x => !Destination.Table.Columns.Contains(x.Alias, StringComparer.OrdinalIgnoreCase)))
+		{
+			sq.SelectClause!.Remove(item);
+		}
+
+		return sq.ToInsertQuery(Destination.Table.GetTableFullName());
 	}
 }
 

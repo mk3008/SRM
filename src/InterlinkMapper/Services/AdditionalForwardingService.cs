@@ -1,95 +1,77 @@
-﻿using InterlinkMapper.Materializer;
+﻿using Dapper;
+using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
-using RedOrb;
+using PrivateProxy;
+using System.Data;
 
 namespace InterlinkMapper.Services;
 
 public class AdditionalForwardingService
 {
-	public AdditionalForwardingService(SystemEnvironment environment) //, LoggingDbConnection cn)
+	public AdditionalForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		//Connection = cn;
+		Materializer = new AdditionalForwardingMaterializer(Environment);
 	}
-
-	//private LoggingDbConnection Connection { get; init; }
 
 	private SystemEnvironment Environment { get; init; }
 
+	private AdditionalForwardingMaterializer Materializer { get; init; }
+
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public void Execute(LoggingDbConnection cn, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public void Execute(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var transaction = GetTransaction(cn, datasource);
+		var transaction = CreateTransactionRow(datasource);
+		transaction.TransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
 
-		var bridge = CreateBridge(cn, datasource, injector);
-		if (bridge == null || bridge.Count == 0) return;
+		var datasourceMaterial = Materializer.Create(connection, datasource, injector);
+		if (datasourceMaterial == null || datasourceMaterial.Count == 0) return;
 
-		var process = GetProcess(cn, transaction, datasource, bridge.Count);
+		var process = CreateProcessRow(datasource, transaction.TransactionId, datasourceMaterial.Count);
+		process.ProcessId = connection.Execute(Environment.CreateProceeInsertQuery(process));
 
-		InsertToDestination(cn, datasource, bridge);
-		InsertToKeymap(cn, datasource, bridge);
-		InsertToRelation(cn, datasource, process, bridge);
+		connection.Execute(datasource.ToDestinationInsertQuery(datasourceMaterial), commandTimeout: CommandTimeout);
+		connection.Execute(Environment.CreateKeymapInsertQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
+		connection.Execute(Environment.CreateRelationInsertQuery(datasource, datasourceMaterial, process.ProcessId), commandTimeout: CommandTimeout);
 	}
 
-	private MaterializeResult? CreateBridge(LoggingDbConnection cn, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")
 	{
-		var service = new AdditionalForwardingMaterializer(Environment);
-		return service.Create(cn, datasource, injector);
-	}
-
-	private TransactionRow GetTransaction(LoggingDbConnection cn, DbDatasource datasource)
-	{
-		var service = new BatchTransactionService(Environment, cn);
-		return service.Regist(datasource);
-	}
-
-	private ProcessRow GetProcess(LoggingDbConnection cn, TransactionRow transaction, DbDatasource datasource, int rows)
-	{
-		var service = new BatchProcessService(Environment, cn);
-		return service.Regist(transaction, datasource, nameof(AdditionalForwardingService), rows);
-	}
-
-	private int InsertToDestination(LoggingDbConnection cn, DbDatasource datasource, MaterializeResult bridge)
-	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(bridge.SelectQuery).As("d");
-
-		sq.Select(d);
-
-		// Exclude from selection if it does not exist in the destination column
-		var columns = sq.GetSelectableItems().ToList();
-		foreach (var item in columns.Where(x => !datasource.Destination.Table.Columns.Contains(x.Alias, StringComparer.OrdinalIgnoreCase)))
+		var row = new TransactionRow()
 		{
-			sq.SelectClause!.Remove(item);
-		}
-
-		return cn.Execute(sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName()));
+			DestinationId = datasource.Destination.DestinationId,
+			DatasourceId = datasource.DatasourceId,
+			Argument = argument
+		};
+		return row;
 	}
 
-	private int InsertToRelation(LoggingDbConnection cn, DbDatasource datasource, ProcessRow process, MaterializeResult bridge)
-	{
-		var relation = Environment.GetRelationTable(datasource.Destination);
-
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(bridge.SelectQuery).As("d");
-
-		sq.Select(relation.DestinationSequenceColumn);
-		sq.Select(Environment.DbEnvironment, relation.ProcessIdColumn, process.ProcessId);
-
-		return cn.Execute(sq.ToInsertQuery(relation.Definition.TableFullName));
-	}
-
-	private int InsertToKeymap(LoggingDbConnection cn, DbDatasource datasource, MaterializeResult bridge)
+	private ProcessRow CreateProcessRow(DbDatasource datasource, long transactionId, int insertCount)
 	{
 		var keymap = Environment.GetKeymapTable(datasource);
-
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(bridge.SelectQuery).As("d");
-
-		sq.Select(keymap.DestinationSequenceColumn);
-		keymap.DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
-
-		return cn.Execute(sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName()));
+		var row = new ProcessRow()
+		{
+			ActionName = nameof(AdditionalForwardingService),
+			TransactionId = transactionId,
+			InsertCount = insertCount,
+			KeymapTableName = keymap.Definition.TableFullName,
+		};
+		return row;
 	}
+
+	//private TransactionRow GetTransaction(IDbConnection cn, DbDatasource datasource)
+	//{
+	//	var service = new BatchTransactionService(Environment, cn);
+	//	return service.Regist(datasource);
+	//}
+
+	//private ProcessRow GetProcess(IDbConnection cn, TransactionRow transaction, DbDatasource datasource, int rows)
+	//{
+	//	var service = new BatchProcessService(Environment, cn);
+	//	return service.Regist(transaction, datasource, nameof(AdditionalForwardingService), rows);
+	//}
 }
+
+[GeneratePrivateProxy(typeof(AdditionalForwardingService))]
+public partial struct AdditionalForwardingServiceProxy;

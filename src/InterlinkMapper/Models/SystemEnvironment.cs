@@ -1,4 +1,6 @@
-﻿namespace InterlinkMapper.Models;
+﻿using InterlinkMapper.Materializer;
+
+namespace InterlinkMapper.Models;
 
 public class SystemEnvironment
 {
@@ -421,5 +423,68 @@ public class SystemEnvironment
 			DatasourceKeyColumns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
 		};
 		return t;
+	}
+
+	public InsertQuery CreateKeymapInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
+	{
+		var table = GetKeymapTable(datasource);
+
+		var sq = new SelectQuery();
+		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
+
+		sq.Select(table.DestinationSequenceColumn);
+		table.DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
+
+		return sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName());
+	}
+
+	public InsertQuery CreateRelationInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial, long processId)
+	{
+		var table = GetRelationTable(datasource.Destination);
+
+		var sq = new SelectQuery();
+		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
+
+		sq.Select(table.DestinationSequenceColumn);
+		sq.Select(DbEnvironment, table.ProcessIdColumn, processId);
+
+		return sq.ToInsertQuery(table.Definition.TableFullName);
+	}
+
+	public InsertQuery CreateTransactionInsertQuery(TransactionRow row)
+	{
+		var table = GetTansactionTable();
+
+		//select :destination_name, :datasoruce_name
+		var sq = new SelectQuery();
+		sq.Select(DbEnvironment, table.DestinationIdColumn, row.DestinationId);
+		sq.Select(DbEnvironment, table.DatasourceIdColumn, row.DatasourceId);
+		sq.Select(DbEnvironment, table.ArgumentColumn, row.Argument);
+
+		//insert into transaction_table returning transaction_id
+		var iq = sq.ToInsertQuery(table.Definition.TableFullName);
+		iq.Returning(table.TransactionIdColumn);
+
+		return iq;
+	}
+
+	public InsertQuery CreateProceeInsertQuery(ProcessRow row)
+	{
+		var table = GetProcessTable();
+
+		//select :transaction_id, :destination_name, :datasoruce_name, :keymap_table, :relationmap_table
+		var sq = new SelectQuery();
+		sq.Select(DbEnvironment, table.TransactionIdColumn, row.TransactionId);
+		sq.Select(DbEnvironment, table.DatasourceIdColumn, row.DatasourceId);
+		sq.Select(DbEnvironment, table.DestinationIdColumn, row.DestinationId);
+		sq.Select(DbEnvironment, table.KeymapTableNameColumn, row.KeymapTableName);
+		sq.Select(DbEnvironment, table.ActionColumn, row.ActionName);
+		sq.Select(DbEnvironment, table.InsertCountColumn, row.InsertCount);
+
+		//insert into process_table returning process_id
+		var iq = sq.ToInsertQuery(table.Definition.GetTableFullName());
+		iq.Returning(table.ProcessIdColumn);
+
+		return iq;
 	}
 }

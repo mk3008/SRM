@@ -7,10 +7,9 @@ namespace InterlinkMapper.Services;
 
 public class BatchTransactionService
 {
-	public BatchTransactionService(SystemEnvironment environment, IDbConnection connection, ILogger? logger = null)
+	public BatchTransactionService(SystemEnvironment environment, ILogger? logger = null)
 	{
 		Environment = environment;
-		Connection = connection;
 		Logger = logger;
 	}
 
@@ -18,16 +17,16 @@ public class BatchTransactionService
 
 	private DbEnvironment DbEnvironment => Environment.DbEnvironment;
 
-	private IDbConnection Connection { get; init; }
+	///private IDbConnection Connection { get; init; }
 
 	private readonly ILogger? Logger;
 
-	public TransactionRow Regist(DbDatasource datasource)
+	public TransactionRow Regist(IDbConnection connection, DbDatasource datasource)
 	{
-		return Regist(datasource, string.Empty);
+		return Regist(connection, datasource, string.Empty);
 	}
 
-	public TransactionRow Regist(DbDatasource datasource, string argument)
+	public TransactionRow Regist(IDbConnection connection, DbDatasource datasource, string argument)
 	{
 		var row = new TransactionRow()
 		{
@@ -35,10 +34,10 @@ public class BatchTransactionService
 			DestinationId = datasource.Destination.DestinationId,
 			Argument = argument
 		};
-		return Regist(row);
+		return Regist(connection, row);
 	}
 
-	private TransactionRow Regist(TransactionRow row)
+	private TransactionRow Regist(IDbConnection connection, TransactionRow row)
 	{
 		var table = Environment.GetTansactionTable();
 
@@ -54,9 +53,26 @@ public class BatchTransactionService
 
 		Logger?.LogInformation(iq.ToText() + ";");
 
-		row.TransactionId = Connection.ExecuteScalar<int>(iq);
+		row.TransactionId = connection.ExecuteScalar<long>(iq);
 
 		Logger?.LogInformation($"TransactionId = {row.TransactionId}");
 		return row;
+	}
+
+	private InsertQuery CreateTransactionInsertQuery(TransactionRow row)
+	{
+		var table = Environment.GetTansactionTable();
+
+		//select :destination_name, :datasoruce_name
+		var sq = new SelectQuery();
+		sq.Select(DbEnvironment, table.DestinationIdColumn, row.DestinationId);
+		sq.Select(DbEnvironment, table.DatasourceIdColumn, row.DatasourceId);
+		sq.Select(DbEnvironment, table.ArgumentColumn, row.Argument);
+
+		//insert into transaction_table returning transaction_id
+		var iq = sq.ToInsertQuery(table.Definition.TableFullName);
+		iq.Returning(table.TransactionIdColumn);
+
+		return iq;
 	}
 }
