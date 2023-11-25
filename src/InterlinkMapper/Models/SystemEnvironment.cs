@@ -249,12 +249,12 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public ReversalTable GetReversalTable(DbDestination d)
+	public ReverseTable GetReverseTable(DbDestination d)
 	{
-		if (d.ReversalOption == null) throw new NotSupportedException();
+		if (d.ReverseOption == null) throw new NotSupportedException();
 
-		var reversalColumn = string.Format(DbTableConfig.ReversalIdColumnFormat, d.Sequence.Column);
-		var t = new ReversalTable()
+		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
+		var t = new ReverseTable()
 		{
 			Definition = new()
 			{
@@ -271,7 +271,7 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = reversalColumn,
+						ColumnName = originColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull = false,
 						IsUniqueKey = true,
@@ -285,20 +285,20 @@ public class SystemEnvironment
 					},
 				}
 			},
-			OriginIdColumn = d.Sequence.Column,
-			ReversalIdColumn = reversalColumn
+			OriginIdColumn = originColumn,
+			ReverseIdColumn = d.Sequence.Column,
 		};
 		return t;
 	}
 
-	public ReversalRequestTable GetReversalRequestTable(DbDestination d)
+	public ReverseRequestTable GetReversalRequestTable(DbDestination d)
 	{
-		if (d.ReversalOption == null) throw new NotSupportedException();
+		if (d.ReverseOption == null) throw new NotSupportedException();
 
-		var tablename = string.Format(DbTableConfig.ReversalRequestTableNameFormat, d.Table.TableName);
+		var tablename = string.Format(DbTableConfig.ReverseRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
-		var t = new ReversalRequestTable()
+		var t = new ReverseRequestTable()
 		{
 			Definition = new()
 			{
@@ -337,7 +337,7 @@ public class SystemEnvironment
 
 	public ValidateRequestTable GetValidateRequestTable(DbDestination d)
 	{
-		if (d.ReversalOption == null) throw new NotSupportedException();
+		if (d.ReverseOption == null) throw new NotSupportedException();
 
 		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);

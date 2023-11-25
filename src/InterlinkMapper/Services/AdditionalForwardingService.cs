@@ -31,7 +31,7 @@ public class AdditionalForwardingService
 		var process = CreateProcessRow(datasource, transaction.TransactionId, datasourceMaterial.Count);
 		process.ProcessId = connection.Execute(Environment.CreateProceeInsertQuery(process));
 
-		connection.Execute(datasource.ToDestinationInsertQuery(datasourceMaterial), commandTimeout: CommandTimeout);
+		connection.Execute(datasource.Destination.CreateInsertQueryFrom(datasourceMaterial), commandTimeout: CommandTimeout);
 		connection.Execute(Environment.CreateKeymapInsertQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
 		connection.Execute(Environment.CreateRelationInsertQuery(datasource, datasourceMaterial, process.ProcessId), commandTimeout: CommandTimeout);
 	}

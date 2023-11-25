@@ -1,11 +1,11 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class ReversalTable
+public class ReverseTable
 {
 	public DbTableDefinition Definition { get; set; } = new();
 
 	public string OriginIdColumn { get; set; } = string.Empty;
 
-	public string ReversalIdColumn { get; set; } = string.Empty;
+	public string ReverseIdColumn { get; set; } = string.Empty;
 }
 

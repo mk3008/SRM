@@ -24,6 +24,11 @@ internal static class DestinationRepository
 			Column = "sale_journal_id",
 			Command = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
 		},
-		ReversalOption = null
+		ReverseOption = new()
+		{
+			ExcludedColumns = ["remarks"],
+			ReverseColumns = ["price"]
+		}
+
 	};
 }

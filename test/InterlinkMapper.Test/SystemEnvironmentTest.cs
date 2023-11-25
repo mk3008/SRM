@@ -40,7 +40,7 @@ public class SystemEnvironmentTest
 		var requestMaterial = GetDummyRequestMeterial();
 
 		var service = new AdditionalForwardingMaterializer(Environment);
-		var query = service.AsPrivateProxy().CreateDatasourceMaterialQuery(requestMaterial, GetTestDatasouce(), (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(requestMaterial, GetTestDatasouce(), (SelectQuery x) => x);
 
 		return new MaterializeResult()
 		{

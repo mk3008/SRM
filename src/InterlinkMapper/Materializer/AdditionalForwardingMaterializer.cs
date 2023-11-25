@@ -26,12 +26,12 @@ public class AdditionalForwardingMaterializer
 		if (requestMaterial.Count == 0) return null;
 
 		ExecuteDeleteOriginRequest(connection, requestMaterial, datasource);
-		var rows = ExecuteCleanUpMaterialRequest(connection, requestMaterial, datasource);
+		var deleteRows = ExecuteCleanUpMaterialRequest(connection, requestMaterial, datasource);
 
 		// If all requests are deleted, there are no processing targets.
-		if (requestMaterial.Count == rows) return null;
+		if (requestMaterial.Count == deleteRows) return null;
 
-		var datasourceMaterialQuery = CreateDatasourceMaterialQuery(requestMaterial, datasource, injector);
+		var datasourceMaterialQuery = CreateAdditionalDatasourceMaterialQuery(requestMaterial, datasource, injector);
 		return ExecuteMaterialQuery(connection, datasourceMaterialQuery);
 	}
 
@@ -66,7 +66,7 @@ public class AdditionalForwardingMaterializer
 	private CreateTableQuery CreateRequestMaterialTableQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
-		var name = "__request";
+		var name = "__additional_request";
 		return request.ToSelectQuery().ToCreateTableQuery(name);
 	}
 
@@ -125,7 +125,7 @@ public class AdditionalForwardingMaterializer
 		return sq.ToDeleteQuery(result.MaterialName);
 	}
 
-	private SelectQuery CreateDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateAdditionalDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");
@@ -156,10 +156,10 @@ public class AdditionalForwardingMaterializer
 		return sq;
 	}
 
-	private CreateTableQuery CreateDatasourceMaterialQuery(MaterializeResult request, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	private CreateTableQuery CreateAdditionalDatasourceMaterialQuery(MaterializeResult request, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
-		var _datasource = sq.With(CreateDatasourceSelectQuery(request, datasource)).As("_target_datasource");
+		var _datasource = sq.With(CreateAdditionalDatasourceSelectQuery(request, datasource)).As("_target_datasource");
 
 		var (f, d) = sq.From(_datasource).As("d");
 		sq.Select(datasource.Destination.Sequence);
@@ -172,26 +172,6 @@ public class AdditionalForwardingMaterializer
 
 		return sq.ToCreateTableQuery("__datasource");
 	}
-
-	///// <summary>
-	///// Generate a bridge name.
-	///// </summary>
-	///// <param name="datasource"></param>
-	///// <returns></returns>
-	//private string GenerateMaterialName(string name)
-	//{
-	//	var sb = ZString.CreateStringBuilder();
-	//	sb.Append("__m_");
-
-	//	using MD5 md5Hash = MD5.Create();
-	//	byte[] data = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(name));
-
-	//	for (int i = 0; i < 4; i++)
-	//	{
-	//		sb.Append(data[i].ToString("x2"));
-	//	}
-	//	return sb.ToString();
-	//}
 }
 
 [GeneratePrivateProxy(typeof(AdditionalForwardingMaterializer))]

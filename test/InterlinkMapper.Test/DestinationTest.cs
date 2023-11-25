@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class DatasourceTest
+public class DestinationTest
 {
-	public DatasourceTest(ITestOutputHelper output)
+	public DestinationTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -21,6 +21,11 @@ public class DatasourceTest
 	private readonly UnitTestLogger Logger;
 
 	public readonly SystemEnvironment Environment;
+
+	private DbDestination GetTestDestination()
+	{
+		return DestinationRepository.sale_journals;
+	}
 
 	private DbDatasource GetTestDatasouce()
 	{
@@ -40,7 +45,7 @@ public class DatasourceTest
 		var requestMaterial = GetDummyRequestMeterial();
 
 		var service = new AdditionalForwardingMaterializer(Environment);
-		var query = service.AsPrivateProxy().CreateDatasourceMaterialQuery(requestMaterial, GetTestDatasouce(), (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(requestMaterial, GetTestDatasouce(), (SelectQuery x) => x);
 
 		return new MaterializeResult()
 		{
@@ -50,9 +55,9 @@ public class DatasourceTest
 	}
 
 	[Fact]
-	public void ToDestinationInsertQuery()
+	public void CreateInsertQueryFrom()
 	{
-		var query = GetTestDatasouce().ToDestinationInsertQuery(GetDummyDatasourceMeterial());
+		var query = GetTestDestination().CreateInsertQueryFrom(GetDummyDatasourceMeterial());
 
 		var expect = """
 INSERT INTO
@@ -60,13 +65,23 @@ INSERT INTO
         sale_journal_id, journal_closing_date, sale_date, shop_id, price
     )
 SELECT
-    t.sale_journal_id,
-    t.journal_closing_date,
-    t.sale_date,
-    t.shop_id,
-    t.price
+    d.sale_journal_id,
+    d.journal_closing_date,
+    d.sale_date,
+    d.shop_id,
+    d.price
 FROM
-    __datasource AS t
+    (
+        SELECT
+            t.sale_journal_id,
+            t.journal_closing_date,
+            t.sale_date,
+            t.shop_id,
+            t.price,
+            t.sale_id
+        FROM
+            __datasource AS t
+    ) AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

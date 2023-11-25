@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class AdditionalForwardingMaterializerTest
+public class ReverseForwardingMaterializerTest
 {
-	public AdditionalForwardingMaterializerTest(ITestOutputHelper output)
+	public ReverseForwardingMaterializerTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -17,44 +17,44 @@ public class AdditionalForwardingMaterializerTest
 			DbConnetionConfig = new DummyDB(),
 		};
 
-		Proxy = new AdditionalForwardingMaterializer(Environment).AsPrivateProxy();
+		Proxy = new ReverseForwardingMaterializer(Environment).AsPrivateProxy();
 	}
 
 	private readonly UnitTestLogger Logger;
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly MaterializeServiceProxy Proxy;
+	public readonly ReverseForwardingMaterializerProxy Proxy;
 
-	private DbDatasource GetTestDatasouce()
+	private DbDestination GetTestDestination()
 	{
-		return DatasourceRepository.sales;
+		return DestinationRepository.sale_journals;
 	}
 
 	private MaterializeResult GetDummyRequestMeterial()
 	{
 		return new MaterializeResult()
 		{
-			MaterialName = "__additional_request",
+			MaterialName = "__reverse_request",
 		};
 	}
 
 	[Fact]
 	public void TestCreateRequestMaterialTableQuery()
 	{
-		var datasource = GetTestDatasouce();
-		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
+		var destination = GetTestDestination();
+		var query = Proxy.CreateRequestMaterialTableQuery(destination);
 
 		var expect = """
 CREATE TEMPORARY TABLE
-    __additional_request
+    __reverse_request
 AS
 SELECT
-    r.sale_journals__r_sales_id,
-    r.sale_id,
+    r.sale_journals__request_reverse_id,
+    r.sale_journal_id,
     r.created_at
 FROM
-    sale_journals__r_sales AS r
+    sale_journals__request_reverse AS r
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -65,28 +65,28 @@ FROM
 	[Fact]
 	public void TestCreateOriginDeleteQuery()
 	{
-		var datasource = GetTestDatasouce();
+		var destination = GetTestDestination();
 		var requestMaterial = GetDummyRequestMeterial();
-		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, datasource);
+		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, destination);
 
 		var expect = """
 DELETE FROM
-    sale_journals__r_sales AS d
+    sale_journals__request_reverse AS d
 WHERE
-    (d.sale_journals__r_sales_id) IN (
+    (d.sale_journals__request_reverse_id) IN (
         /* data that has been materialized will be deleted from the original. */
         SELECT
-            r.sale_journals__r_sales_id
+            r.sale_journals__request_reverse_id
         FROM
-            sale_journals__r_sales AS r
+            sale_journals__request_reverse AS r
         WHERE
             EXISTS (
                 SELECT
                     *
                 FROM
-                    __additional_request AS x
+                    __reverse_request AS x
                 WHERE
-                    x.sale_journals__r_sales_id = r.sale_journals__r_sales_id
+                    x.sale_journals__request_reverse_id = r.sale_journals__request_reverse_id
             )
     )
 """;
@@ -99,28 +99,28 @@ WHERE
 	[Fact]
 	public void TestCleanUpMaterialRequestQuery()
 	{
-		var datasource = GetTestDatasouce();
+		var destination = GetTestDestination();
 		var requestMaterial = GetDummyRequestMeterial();
-		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, datasource);
+		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, destination);
 
 		var expect = """
 DELETE FROM
-    __additional_request AS d
+    __reverse_request AS d
 WHERE
-    (d.sale_id) IN (
-        /* exclude requests that exist in the keymap from forwarding */
+    (d.sale_journal_id) IN (
+        /* If it does not exist in the relation table, remove it from the target */
         SELECT
-            r.sale_id
+            r.sale_journal_id
         FROM
-            __additional_request AS r
+            __reverse_request AS r
         WHERE
-            EXISTS (
+            NOT EXISTS (
                 SELECT
                     *
                 FROM
-                    sale_journals__m_sales AS x
+                    sale_journals__relation AS x
                 WHERE
-                    x.sale_id = r.sale_id
+                    x.sale_journal_id = r.sale_journal_id
             )
     )
 """;
@@ -133,54 +133,61 @@ WHERE
 	[Fact]
 	public void TestCreateDatasourceMaterialQuery()
 	{
-		var datasource = DatasourceRepository.sales;
+		var destination = GetTestDestination();
 
 		var requestMaterial = GetDummyRequestMeterial();
-		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
+		var query = Proxy.CreateReverseDatasourceMaterialQuery(requestMaterial, destination, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
-    __datasource
+    __reverse_datasource
 AS
 WITH
     _target_datasource AS (
         /* data source to be added */
         SELECT
+            d.sale_journal_id AS origin_sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
-            d.price,
-            d.sale_id
+            d.price * -1 AS price,
+            d.remarks,
+            p.keymap_name
         FROM
             (
-                /* raw data source */
+                /* destination */
                 SELECT
-                    s.sale_date AS journal_closing_date,
-                    s.sale_date,
-                    s.shop_id,
-                    s.price,
-                    s.sale_id
+                    d.sale_journal_id,
+                    d.journal_closing_date,
+                    d.sale_date,
+                    d.shop_id,
+                    d.price,
+                    d.remarks
                 FROM
-                    sales AS s
+                    sale_journals AS d
             ) AS d
+            INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
+            INNER JOIN interlink_process AS p ON r.interlink_process_id = p.interlink_process_id
         WHERE
             EXISTS (
                 /* exists request material */
                 SELECT
                     *
                 FROM
-                    __additional_request AS x
+                    __reverse_request AS x
                 WHERE
-                    x.sale_id = d.sale_id
+                    x.sale_journal_id = d.sale_journal_id
             )
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
+    d.origin_sale_journal_id,
     d.journal_closing_date,
     d.sale_date,
     d.shop_id,
     d.price,
-    d.sale_id
+    d.remarks,
+    d.keymap_name
 FROM
     _target_datasource AS d
 """;

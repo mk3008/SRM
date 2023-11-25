@@ -28,7 +28,7 @@ public class DbTableConfig
 
 	public string ValidateRequestTableNameFormat { get; set; } = "{0}__request_validate";
 
-	public string ReversalRequestTableNameFormat { get; set; } = "{0}__request_reversal";
+	public string ReverseRequestTableNameFormat { get; set; } = "{0}__request_reverse";
 
 	public string TransactionIdColumn { get; set; } = "interlink_transaction_id";
 
@@ -61,7 +61,7 @@ public class DbTableConfig
 
 	public string KeymapTableNameColumn { get; set; } = "keymap_name";
 
-	public string ReversalIdColumnFormat { get; set; } = "reversal_{0}";
+	public string OriginIdColumnFormat { get; set; } = "origin_{0}";
 
 	public string RequestIdColumnFormat { get; set; } = "{0}_id";
 
