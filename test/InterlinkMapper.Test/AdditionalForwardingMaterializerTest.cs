@@ -26,80 +26,48 @@ public class AdditionalForwardingMaterializerTest
 
 	public readonly MaterializeServiceProxy Proxy;
 
-	private MaterializeResult CreateDatasourceMeterial()
+	private DbDatasource GetTestDatasouce()
 	{
-		var datasource = DatasourceRepository.sales;
-		var sq = new SelectQuery(datasource.Query);
-		return Proxy.CreateResult("__datasource", 10, sq);
+		return DatasourceRepository.sales;
 	}
 
-	private MaterializeResult CreateRequestMeterial()
+	private MaterializeResult GetDummyRequestMeterial()
 	{
-		var datasource = DatasourceRepository.sales;
-		var request = Environment.GetInsertRequestTable(datasource);
-		return Proxy.CreateResult("__request", 10, request.ToSelectQuery());
-	}
-
-	[Fact]
-	public void TestCreateResult_Request()
-	{
-		var request = CreateRequestMeterial();
-
-		var expect = """
-/* select material table */
-SELECT
-    d.sale_journals__r_sales_id,
-    d.sale_id,
-    d.created_at
-FROM
-    __request AS d
-""";
-		var actual = request.SelectQuery.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(10, request.Count);
-		Assert.Equal("__request", request.MaterialName);
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+		return new MaterializeResult()
+		{
+			MaterialName = "__request",
+		};
 	}
 
 	[Fact]
-	public void TestCreateResult_Datasource()
+	public void TestCreateRequestMaterialTableQuery()
 	{
-		var result = CreateDatasourceMeterial();
+		var datasource = GetTestDatasouce();
+		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
 
 		var expect = """
-/* select material table */
+CREATE TEMPORARY TABLE
+    __request
+AS
 SELECT
-    d.journal_closing_date,
-    d.sale_date,
-    d.shop_id,
-    d.price,
-    d.sale_id
+    r.sale_journals__r_sales_id,
+    r.sale_id,
+    r.created_at
 FROM
-    __datasource AS d
+    sale_journals__r_sales AS r
 """;
-		var actual = result.SelectQuery.ToText();
+		var actual = query.ToText();
 		Logger.LogInformation(actual);
 
-		Assert.Equal(10, result.Count);
-		Assert.Equal("__datasource", result.MaterialName);
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
-
-	//[Fact]
-	//public void TestCreateMaterialSelelectQuery()
-	//{
-	//	var datasource = DatasourceRepository.sales;
-	//	Proxy.CreateMaterialSelelectQuery("material", )
-	//}
 
 	[Fact]
 	public void TestCreateOriginDeleteQuery()
 	{
-		var datasource = DatasourceRepository.sales;
-
-		var request = CreateRequestMeterial();
-		var query = Proxy.CreateOriginDeleteQuery(request, datasource);
+		var datasource = GetTestDatasouce();
+		var requestMaterial = GetDummyRequestMeterial();
+		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, datasource);
 
 		var expect = """
 DELETE FROM
@@ -131,9 +99,8 @@ WHERE
 	[Fact]
 	public void TestCleanUpMaterialRequestQuery()
 	{
-		var datasource = DatasourceRepository.sales;
-
-		var requestMaterial = CreateRequestMeterial();
+		var datasource = GetTestDatasouce();
+		var requestMaterial = GetDummyRequestMeterial();
 		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, datasource);
 
 		var expect = """
@@ -164,43 +131,58 @@ WHERE
 	}
 
 	[Fact]
-	public void TestCreateDatasourceSelectQuery()
+	public void TestCreateDatasourceMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 
-		var request = CreateRequestMeterial();
-		var query = Proxy.CreateDatasourceSelectQuery(request, datasource, (SelectQuery x) => x);
+		var requestMaterial = GetDummyRequestMeterial();
+		var query = Proxy.CreateDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
 
 		var expect = """
-/* data source to be added */
+CREATE TEMPORARY TABLE
+    __datasource
+AS
+WITH
+    _target_datasource AS (
+        /* data source to be added */
+        SELECT
+            d.journal_closing_date,
+            d.sale_date,
+            d.shop_id,
+            d.price,
+            d.sale_id
+        FROM
+            (
+                /* raw data source */
+                SELECT
+                    s.sale_date AS journal_closing_date,
+                    s.sale_date,
+                    s.shop_id,
+                    s.price,
+                    s.sale_id
+                FROM
+                    sales AS s
+            ) AS d
+        WHERE
+            EXISTS (
+                /* exists request material */
+                SELECT
+                    *
+                FROM
+                    __request AS x
+                WHERE
+                    x.sale_id = d.sale_id
+            )
+    )
 SELECT
+    NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
     d.journal_closing_date,
     d.sale_date,
     d.shop_id,
     d.price,
     d.sale_id
 FROM
-    (
-        /* raw data source */
-        SELECT
-            s.sale_date AS journal_closing_date,
-            s.sale_date,
-            s.shop_id,
-            s.price,
-            s.sale_id
-        FROM
-            sales AS s
-    ) AS d
-WHERE
-    EXISTS (
-        /* exists request material */
-        SELECT
-            *
-        FROM
-            __request AS x
-        WHERE
-            x.sale_id = d.sale_id
-    )
+    _target_datasource AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
