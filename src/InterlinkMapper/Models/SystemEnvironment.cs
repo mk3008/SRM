@@ -1,4 +1,5 @@
-﻿using InterlinkMapper.Materializer;
+﻿using Carbunql.Building;
+using InterlinkMapper.Materializer;
 
 namespace InterlinkMapper.Models;
 
@@ -432,10 +433,10 @@ public class SystemEnvironment
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
 
-		sq.Select(table.DestinationSequenceColumn);
+		sq.Select(d, table.DestinationSequenceColumn);
 		table.DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
 
-		return sq.ToInsertQuery(datasource.Destination.Table.GetTableFullName());
+		return sq.ToInsertQuery(table.Definition.TableFullName);
 	}
 
 	public InsertQuery CreateRelationInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial, long processId)
@@ -445,7 +446,7 @@ public class SystemEnvironment
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
 
-		sq.Select(table.DestinationSequenceColumn);
+		sq.Select(d, table.DestinationSequenceColumn);
 		sq.Select(DbEnvironment, table.ProcessIdColumn, processId);
 
 		return sq.ToInsertQuery(table.Definition.TableFullName);
