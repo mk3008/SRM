@@ -42,7 +42,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Carbunql" Version="0.5.4" />
+		<PackageReference Include="Carbunql" Version="0.5.5" />
 		<PackageReference Include="Carbunql.Dapper" Version="0.2.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
 		<PackageReference Include="PrivateProxy" Version="1.0.1">

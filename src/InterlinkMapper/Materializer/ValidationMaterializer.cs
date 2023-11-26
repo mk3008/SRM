@@ -1,6 +1,6 @@
 ﻿using InterlinkMapper.Models;
-using System.Data;
 using PrivateProxy;
+using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
@@ -101,11 +101,10 @@ public class ValidationMaterializer
 
 	private DeleteQuery CleanUpMaterialRequestQuery(MaterializeResult result, DbDatasource datasource)
 	{
-		var relation = Environment.GetRelationTable(datasource.Destination);
-		var relationTable = relation.Definition.TableFullName;
+		var keymap = Environment.GetKeymapTable(datasource);
 
 		var sq = new SelectQuery();
-		sq.AddComment("If it does not exist in the relation table, remove it from the target");
+		sq.AddComment("If it does not exist in the keymap table, remove it from the target");
 
 		var (f, r) = sq.From(result.MaterialName).As("r");
 
@@ -113,7 +112,7 @@ public class ValidationMaterializer
 		{
 			// not exists (select * from RELATION x where d.id = x.id)
 			var q = new SelectQuery();
-			var (_, x) = q.From(relationTable).As("x");
+			var (_, x) = q.From(keymap.Definition.TableFullName).As("x");
 			q.Where(x, datasource.Destination.Sequence.Column).Equal(r, datasource.Destination.Sequence.Column);
 			q.SelectAll();
 			return q.ToNotExists();
@@ -122,6 +121,145 @@ public class ValidationMaterializer
 		sq.Select(r, datasource.Destination.Sequence.Column);
 
 		return sq.ToDeleteQuery(result.MaterialName);
+	}
+
+	private SelectQuery CreateExpectValueSelectQuery(MaterializeResult request, DbDatasource datasource)
+	{
+		var validation = Environment.GetValidationRequestTable(datasource);
+		var keymap = Environment.GetKeymapTable(datasource);
+
+		var sq = new SelectQuery();
+		sq.AddComment("expected value");
+		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
+		var m = f.InnerJoin(keymap.Definition.TableFullName).As("m").On(x => new ColumnValue(d, datasource.Destination.Sequence.Column).Equal(x.Table, datasource.Destination.Sequence.Column));
+
+		sq.Select(d);
+
+		keymap.DatasourceKeyColumns.ForEach(x => sq.Select(m, x));
+
+		//exists (select * from REQUEST x where d.id = x.id)
+		sq.Where(() =>
+		{
+			var q = new SelectQuery();
+			q.AddComment("exists request material");
+
+			var (_, x) = q.From(request.MaterialName).As("x");
+
+			keymap.DatasourceKeyColumns.ForEach(key =>
+			{
+				q.Where(x, key).Equal(m, key);
+			});
+			q.SelectAll();
+
+			return q.ToExists();
+		});
+
+		return sq;
+	}
+
+	private SelectQuery CreateActualValueSelectQuery(MaterializeResult request, DbDatasource datasource)
+	{
+		var validation = Environment.GetValidationRequestTable(datasource);
+		var keymap = Environment.GetKeymapTable(datasource);
+
+		var sq = new SelectQuery();
+		sq.AddComment("actual value");
+		var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
+
+		sq.Select(d);
+
+		//exists (select * from REQUEST x where d.id = x.id)
+		sq.Where(() =>
+		{
+			var q = new SelectQuery();
+			q.AddComment("exists request material");
+
+			var (_, x) = q.From(request.MaterialName).As("x");
+
+			keymap.DatasourceKeyColumns.ForEach(key =>
+			{
+				q.Where(x, key).Equal(d, key);
+			});
+			q.SelectAll();
+
+			return q.ToExists();
+		});
+
+		return sq;
+	}
+
+	private SelectQuery CreateDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
+	{
+		var op = datasource.Destination.ReverseOption!;
+
+		var sq = new SelectQuery();
+		var expect = sq.With(CreateExpectValueSelectQuery(request, datasource)).As("_expect");
+		var actual = sq.With(CreateActualValueSelectQuery(request, datasource)).As("_actual");
+
+		var key = datasource.KeyColumns.First().ColumnName;
+
+		var (f, e) = sq.From(expect).As("e");
+		var a = f.LeftJoin(actual).As("a").On(x =>
+		{
+			datasource.KeyColumns.ForEach(key =>
+			{
+				x.Condition(e, key.ColumnName).Equal(x.Table, key.ColumnName);
+			});
+		});
+
+		var validationColumns = e.GetColumnNames()
+			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.Where(x => datasource.Destination.Table.Columns.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.ToList();
+
+		sq.Where(() =>
+		{
+			//removed
+			var condition = new ColumnValue(a, key).IsNull();
+
+			//value changed
+			validationColumns.ForEach(column =>
+			{
+				condition.Or(new ColumnValue(e, column).NotEqual(a, column));
+				condition.Or((new ColumnValue(e, column).IsNotNull()).And(new ColumnValue(a, column).IsNull).ToGroup());
+				condition.Or((new ColumnValue(e, column).IsNull()).And(new ColumnValue(a, column).IsNotNull).ToGroup());
+			});
+
+			return condition;
+		});
+
+		sq.Select(e, datasource.Destination.Sequence.Column);
+		datasource.KeyColumns.ForEach(key => sq.Select(a, key.ColumnName));
+
+		//diff info
+		sq.Select(() =>
+		{
+			//value changed			
+			var arg = new ValueCollection();
+			arg.Add("'{\"changed\":['");
+
+			validationColumns.ForEach(column =>
+			{
+				var changecase = new CaseExpression();
+
+				var condition = new ColumnValue(e, column).NotEqual(a, column);
+				condition.Or((new ColumnValue(e, column).IsNotNull()).And(new ColumnValue(a, column).IsNull).ToGroup());
+				condition.Or((new ColumnValue(e, column).IsNull()).And(new ColumnValue(a, column).IsNotNull).ToGroup());
+
+				changecase.When(condition).Then($"'\"{column}\",'");
+
+				arg.Add(changecase);
+			});
+			arg.Add("']}'");
+
+			var exp = new CaseExpression();
+			exp.When(new ColumnValue(a, key).IsNull()).Then("""'{"deleted":true}'""");
+			exp.Else(new FunctionValue("concat", arg));
+
+			return exp;
+		}).As("remarks");
+
+		return sq;
 	}
 
 	private SelectQuery CreateValidationDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
