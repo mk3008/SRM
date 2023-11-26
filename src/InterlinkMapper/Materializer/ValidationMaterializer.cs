@@ -1,5 +1,6 @@
 ﻿using InterlinkMapper.Models;
 using System.Data;
+using PrivateProxy;
 
 namespace InterlinkMapper.Materializer;
 
@@ -174,3 +175,6 @@ public class ValidationMaterializer
 		return sq.ToCreateTableQuery(DatasourceMaterialName);
 	}
 }
+
+[GeneratePrivateProxy(typeof(ValidationMaterializer))]
+public partial struct ValidationMaterializerProxy;

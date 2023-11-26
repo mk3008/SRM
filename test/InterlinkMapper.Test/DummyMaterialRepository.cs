@@ -18,6 +18,12 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			MaterialName = "__reverse_request",
 		};
 
+	public MaterializeResult ValidationRequestMeterial =>
+		new MaterializeResult()
+		{
+			MaterialName = "__validation_request",
+		};
+
 	public MaterializeResult AdditinalDatasourceMeterial => CreateAdditionalDatasourceMeterial();
 
 	public MaterializeResult ReverseDatasourceMeterial => CreateReverseDatasourceMeterial();
