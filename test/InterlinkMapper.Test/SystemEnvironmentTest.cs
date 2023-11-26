@@ -94,7 +94,7 @@ SELECT
     :datasource_id AS datasource_id,
     :argument AS argument
 RETURNING
-    interlink_transaction_id
+    interlink__transaction_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -109,7 +109,7 @@ RETURNING
 
 		var expect = """
 /*
-  :interlink_transaction_id = 30
+  :interlink__transaction_id = 30
   :datasource_id = 10
   :destination_id = 20
   :keymap_name = 'sale_journals__m_sales'
@@ -118,17 +118,17 @@ RETURNING
 */
 INSERT INTO
     interlink_process (
-        interlink_transaction_id, datasource_id, destination_id, keymap_name, action, insert_count
+        interlink__transaction_id, datasource_id, destination_id, keymap_name, action, insert_count
     )
 SELECT
-    :interlink_transaction_id AS interlink_transaction_id,
+    :interlink__transaction_id AS interlink__transaction_id,
     :datasource_id AS datasource_id,
     :destination_id AS destination_id,
     :keymap_name AS keymap_name,
     :action AS action,
     :insert_count AS insert_count
 RETURNING
-    interlink_process_id
+    interlink__process_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -176,15 +176,15 @@ FROM
 
 		var expect = """
 /*
-  :interlink_process_id = 40
+  :interlink__process_id = 40
 */
 INSERT INTO
     sale_journals__relation (
-        sale_journal_id, interlink_process_id
+        sale_journal_id, interlink__process_id
     )
 SELECT
     d.sale_journal_id,
-    :interlink_process_id AS interlink_process_id
+    :interlink__process_id AS interlink__process_id
 FROM
     (
         SELECT

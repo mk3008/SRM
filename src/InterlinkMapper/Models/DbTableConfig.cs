@@ -26,13 +26,13 @@ public class DbTableConfig
 
 	public string InsertRequestTableNameFormat { get; set; } = "{0}__r_{1}";
 
-	public string ValidateRequestTableNameFormat { get; set; } = "{0}__request_validate";
+	public string ValidateRequestTableNameFormat { get; set; } = "{0}__r__validation";
 
-	public string ReverseRequestTableNameFormat { get; set; } = "{0}__request_reverse";
+	public string ReverseRequestTableNameFormat { get; set; } = "{0}__r__reverse";
 
-	public string TransactionIdColumn { get; set; } = "interlink_transaction_id";
+	public string TransactionIdColumn { get; set; } = "interlink__transaction_id";
 
-	public string ProcessIdColumn { get; set; } = "interlink_process_id";
+	public string ProcessIdColumn { get; set; } = "interlink__process_id";
 
 	public string DestinationIdColumn { get; set; } = "destination_id";
 
@@ -61,7 +61,7 @@ public class DbTableConfig
 
 	public string KeymapTableNameColumn { get; set; } = "keymap_name";
 
-	public string OriginIdColumnFormat { get; set; } = "origin_{0}";
+	public string OriginIdColumnFormat { get; set; } = "origin__{0}";
 
 	public string RequestIdColumnFormat { get; set; } = "{0}_id";
 

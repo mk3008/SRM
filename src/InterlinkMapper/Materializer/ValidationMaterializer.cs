@@ -1,12 +1,11 @@
 ﻿using InterlinkMapper.Models;
-using PrivateProxy;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class ReverseForwardingMaterializer
+public class ValidationMaterializer
 {
-	public ReverseForwardingMaterializer(SystemEnvironment environment)
+	public ValidationMaterializer(SystemEnvironment environment)
 	{
 		Environment = environment;
 	}
@@ -189,6 +188,3 @@ public class ReverseForwardingMaterializer
 		return sq.ToCreateTableQuery("__reverse_datasource");
 	}
 }
-
-[GeneratePrivateProxy(typeof(ReverseForwardingMaterializer))]
-public partial struct ReverseForwardingMaterializerProxy;

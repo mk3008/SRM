@@ -1,6 +1,6 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class ValidateRequestTable
+public class ValidationRequestTable
 {
 	public DbTableDefinition Definition { get; set; } = new();
 

@@ -291,7 +291,7 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public ReverseRequestTable GetReversalRequestTable(DbDestination d)
+	public ReverseRequestTable GetReverseRequestTable(DbDestination d)
 	{
 		if (d.ReverseOption == null) throw new NotSupportedException();
 
@@ -335,14 +335,14 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public ValidateRequestTable GetValidateRequestTable(DbDestination d)
+	public ValidationRequestTable GetValidationRequestTable(DbDestination d)
 	{
 		if (d.ReverseOption == null) throw new NotSupportedException();
 
 		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
-		var t = new ValidateRequestTable()
+		var t = new ValidationRequestTable()
 		{
 			Definition = new()
 			{

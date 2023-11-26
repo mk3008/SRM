@@ -41,11 +41,11 @@ CREATE TEMPORARY TABLE
     __reverse_request
 AS
 SELECT
-    r.sale_journals__request_reverse_id,
+    r.sale_journals__r__reverse_id,
     r.sale_journal_id,
     r.created_at
 FROM
-    sale_journals__request_reverse AS r
+    sale_journals__r__reverse AS r
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -63,14 +63,14 @@ FROM
 
 		var expect = """
 DELETE FROM
-    sale_journals__request_reverse AS d
+    sale_journals__r__reverse AS d
 WHERE
-    (d.sale_journals__request_reverse_id) IN (
+    (d.sale_journals__r__reverse_id) IN (
         /* data that has been materialized will be deleted from the original. */
         SELECT
-            r.sale_journals__request_reverse_id
+            r.sale_journals__r__reverse_id
         FROM
-            sale_journals__request_reverse AS r
+            sale_journals__r__reverse AS r
         WHERE
             EXISTS (
                 SELECT
@@ -78,7 +78,7 @@ WHERE
                 FROM
                     __reverse_request AS x
                 WHERE
-                    x.sale_journals__request_reverse_id = r.sale_journals__request_reverse_id
+                    x.sale_journals__r__reverse_id = r.sale_journals__r__reverse_id
             )
     )
 """;
@@ -139,7 +139,7 @@ WITH
     _target_datasource AS (
         /* data source to be added */
         SELECT
-            d.sale_journal_id AS origin_sale_journal_id,
+            d.sale_journal_id AS origin__sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
@@ -160,7 +160,7 @@ WITH
                     sale_journals AS d
             ) AS d
             INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
-            INNER JOIN interlink_process AS p ON r.interlink_process_id = p.interlink_process_id
+            INNER JOIN interlink_process AS p ON r.interlink__process_id = p.interlink__process_id
         WHERE
             EXISTS (
                 /* exists request material */
@@ -174,7 +174,7 @@ WITH
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
-    d.origin_sale_journal_id,
+    d.origin__sale_journal_id,
     d.journal_closing_date,
     d.sale_date,
     d.shop_id,
