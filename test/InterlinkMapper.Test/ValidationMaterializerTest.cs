@@ -215,12 +215,12 @@ WHERE
 	}
 
 	[Fact]
-	public void TestCreateDiffSelectQuery()
+	public void TestCreateValidationDatasourceSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateDiffSelectQuery(requestMaterial, datasource);
+		var query = Proxy.CreateValidationDatasourceSelectQuery(requestMaterial, datasource);
 
 		var expect = """
 WITH
@@ -293,25 +293,39 @@ WITH
 SELECT
     e.sale_journal_id,
     a.sale_id,
-    CASE
-        WHEN a.sale_id IS null THEN '{"deleted":true}'
-        ELSE CONCAT('{"changed":[', CASE
-            WHEN e.sale_journal_id <> a.sale_journal_id OR (e.sale_journal_id IS NOT null AND a.sale_journal_id IS null) OR (e.sale_journal_id IS null AND a.sale_journal_id IS NOT null) THEN '"sale_journal_id",'
-        END, CASE
-            WHEN e.journal_closing_date <> a.journal_closing_date OR (e.journal_closing_date IS NOT null AND a.journal_closing_date IS null) OR (e.journal_closing_date IS null AND a.journal_closing_date IS NOT null) THEN '"journal_closing_date",'
-        END, CASE
-            WHEN e.sale_date <> a.sale_date OR (e.sale_date IS NOT null AND a.sale_date IS null) OR (e.sale_date IS null AND a.sale_date IS NOT null) THEN '"sale_date",'
-        END, CASE
-            WHEN e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) THEN '"shop_id",'
-        END, CASE
-            WHEN e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null) THEN '"price",'
-        END, ']}')
-    END AS remarks
+    '{"deleted":true}' AS remarks
 FROM
     _expect AS e
     LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
 WHERE
-    a.sale_id IS null OR e.sale_journal_id <> a.sale_journal_id OR (e.sale_journal_id IS NOT null AND a.sale_journal_id IS null) OR (e.sale_journal_id IS null AND a.sale_journal_id IS NOT null) OR e.journal_closing_date <> a.journal_closing_date OR (e.journal_closing_date IS NOT null AND a.journal_closing_date IS null) OR (e.journal_closing_date IS null AND a.journal_closing_date IS NOT null) OR e.sale_date <> a.sale_date OR (e.sale_date IS NOT null AND a.sale_date IS null) OR (e.sale_date IS null AND a.sale_date IS NOT null) OR e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) OR e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null)
+    a.sale_id IS null
+UNION ALL
+SELECT
+    d.sale_journal_id,
+    d.sale_id,
+    CONCAT('{"changed":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+FROM
+    (
+        SELECT
+            e.sale_journal_id,
+            a.sale_id,
+            CONCAT(CASE
+                WHEN e.sale_journal_id <> a.sale_journal_id OR (e.sale_journal_id IS NOT null AND a.sale_journal_id IS null) OR (e.sale_journal_id IS null AND a.sale_journal_id IS NOT null) THEN '"sale_journal_id",'
+            END, CASE
+                WHEN e.journal_closing_date <> a.journal_closing_date OR (e.journal_closing_date IS NOT null AND a.journal_closing_date IS null) OR (e.journal_closing_date IS null AND a.journal_closing_date IS NOT null) THEN '"journal_closing_date",'
+            END, CASE
+                WHEN e.sale_date <> a.sale_date OR (e.sale_date IS NOT null AND a.sale_date IS null) OR (e.sale_date IS null AND a.sale_date IS NOT null) THEN '"sale_date",'
+            END, CASE
+                WHEN e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) THEN '"shop_id",'
+            END, CASE
+                WHEN e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null) THEN '"price",'
+            END) AS remarks
+        FROM
+            _expect AS e
+            INNER JOIN _actual AS a ON e.sale_id = a.sale_id
+        WHERE
+            false OR e.sale_journal_id <> a.sale_journal_id OR (e.sale_journal_id IS NOT null AND a.sale_journal_id IS null) OR (e.sale_journal_id IS null AND a.sale_journal_id IS NOT null) OR e.journal_closing_date <> a.journal_closing_date OR (e.journal_closing_date IS NOT null AND a.journal_closing_date IS null) OR (e.journal_closing_date IS null AND a.journal_closing_date IS NOT null) OR e.sale_date <> a.sale_date OR (e.sale_date IS NOT null AND a.sale_date IS null) OR (e.sale_date IS null AND a.sale_date IS NOT null) OR e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) OR e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null)
+    ) AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

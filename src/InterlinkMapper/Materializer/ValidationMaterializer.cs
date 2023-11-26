@@ -1,4 +1,5 @@
-﻿using InterlinkMapper.Models;
+﻿using Carbunql.Building;
+using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
 
@@ -188,7 +189,7 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateDeletedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
 		var op = datasource.Destination.ReverseOption!;
 
@@ -212,10 +213,44 @@ public class ValidationMaterializer
 			.Where(x => datasource.Destination.Table.Columns.Contains(x, StringComparer.OrdinalIgnoreCase))
 			.ToList();
 
+		sq.Where(a, key).IsNull();
+
+		sq.Select(e, datasource.Destination.Sequence.Column);
+		datasource.KeyColumns.ForEach(key => sq.Select(a, key.ColumnName));
+
+		sq.Select("'{\"deleted\":true}'").As("remarks");
+
+		return sq;
+	}
+
+	private SelectQuery CreateChangedDiffSubQuery(MaterializeResult request, DbDatasource datasource)
+	{
+		var op = datasource.Destination.ReverseOption!;
+
+		var sq = new SelectQuery();
+		var expect = sq.With(CreateExpectValueSelectQuery(request, datasource)).As("_expect");
+		var actual = sq.With(CreateActualValueSelectQuery(request, datasource)).As("_actual");
+
+		var key = datasource.KeyColumns.First().ColumnName;
+
+		var (f, e) = sq.From(expect).As("e");
+		var a = f.InnerJoin(actual).As("a").On(x =>
+		{
+			datasource.KeyColumns.ForEach(key =>
+			{
+				x.Condition(e, key.ColumnName).Equal(x.Table, key.ColumnName);
+			});
+		});
+
+		var validationColumns = e.GetColumnNames()
+			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.Where(x => datasource.Destination.Table.Columns.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.ToList();
+
 		sq.Where(() =>
 		{
 			//removed
-			var condition = new ColumnValue(a, key).IsNull();
+			var condition = new LiteralValue("false");
 
 			//value changed
 			validationColumns.ForEach(column =>
@@ -236,7 +271,6 @@ public class ValidationMaterializer
 		{
 			//value changed			
 			var arg = new ValueCollection();
-			arg.Add("'{\"changed\":['");
 
 			validationColumns.ForEach(column =>
 			{
@@ -250,49 +284,56 @@ public class ValidationMaterializer
 
 				arg.Add(changecase);
 			});
-			arg.Add("']}'");
 
-			var exp = new CaseExpression();
-			exp.When(new ColumnValue(a, key).IsNull()).Then("""'{"deleted":true}'""");
-			exp.Else(new FunctionValue("concat", arg));
-
-			return exp;
+			return new FunctionValue("concat", arg);
 		}).As("remarks");
+
+		return sq;
+	}
+
+	private SelectQuery CreateChangedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
+	{
+		var sq = new SelectQuery();
+		var (f, d) = sq.From(CreateChangedDiffSubQuery(request, datasource)).As("d");
+
+		sq.Select(d);
+		var remarks = sq.GetSelectableItems().Where(x => x.Alias == "remarks").First();
+		sq.SelectClause!.Remove(remarks);
+
+		var length_arg = new ValueCollection
+		{
+			new ColumnValue(d, "remarks")
+		};
+
+		var length_value = new FunctionValue("length", length_arg);
+		length_value.AddOperatableValue("-", "1");
+
+		var substring_arg = new ValueCollection
+		{
+			new ColumnValue(d, "remarks"),
+			"1",
+			length_value
+		};
+
+		var concat_arg = new ValueCollection
+		{
+			"'{\"changed\":['",
+			new FunctionValue("substring", substring_arg),
+			"']}'"
+		};
+
+		sq.Select(new FunctionValue("concat", concat_arg)).As("remarks");
 
 		return sq;
 	}
 
 	private SelectQuery CreateValidationDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
-		var validation = Environment.GetValidationRequestTable(datasource);
-		var relation = Environment.GetRelationTable(datasource.Destination);
-		var process = Environment.GetProcessTable();
-		var op = datasource.Destination.ReverseOption!;
+		var deletedsq = CreateDeletedDiffSelectQuery(request, datasource);
 
-		var sq = new SelectQuery();
-		sq.AddComment("data source to be reverse");
-		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
-		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(x => new ColumnValue(d, datasource.Destination.Sequence.Column).Equal(x.Table, datasource.Destination.Sequence.Column));
-		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(x => new ColumnValue(r, process.ProcessIdColumn).Equal(x.Table, process.ProcessIdColumn));
+		deletedsq.UnionAll(CreateChangedDiffSelectQuery(request, datasource));
 
-		sq.Select(d);
-
-		sq.Select(p, process.KeymapTableNameColumn);
-
-		//exists (select * from REQUEST x where d.id = x.id)
-		sq.Where(() =>
-		{
-			var q = new SelectQuery();
-			q.AddComment("exists request material");
-
-			var (_, x) = q.From(request.MaterialName).As("x");
-			q.Where(x, datasource.Destination.Sequence.Column).Equal(d, datasource.Destination.Sequence.Column);
-			q.SelectAll();
-
-			return q.ToExists();
-		});
-
-		return sq;
+		return deletedsq;
 	}
 
 	private CreateTableQuery CreateValidationDatasourceMaterialQuery(MaterializeResult request, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
