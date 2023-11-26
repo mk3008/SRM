@@ -1,8 +1,6 @@
-﻿using InterlinkMapper.Materializer;
+﻿namespace InterlinkMapper.Models;
 
-namespace InterlinkMapper.Models;
-
-public class RelationTable : IMaterialInsertable
+public class RelationTable
 {
 	public DbTableDefinition Definition { get; set; } = new();
 

@@ -18,14 +18,30 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			MaterialName = "__reverse_request",
 		};
 
-	public MaterializeResult DatasourceMeterial => GetDatasourceMeterial();
+	public MaterializeResult AdditinalDatasourceMeterial => CreateAdditionalDatasourceMeterial();
 
-	private MaterializeResult GetDatasourceMeterial()
+	public MaterializeResult ReverseDatasourceMeterial => CreateReverseDatasourceMeterial();
+
+	private MaterializeResult CreateAdditionalDatasourceMeterial()
 	{
 		var requestMaterial = AdditionalRequestMeterial;
 
 		var service = new AdditionalForwardingMaterializer(environment);
 		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(requestMaterial, DatasourceRepository.sales, (SelectQuery x) => x);
+
+		return new MaterializeResult()
+		{
+			MaterialName = query.TableFullName,
+			SelectQuery = query.ToSelectQuery()
+		};
+	}
+
+	private MaterializeResult CreateReverseDatasourceMeterial()
+	{
+		var requestMaterial = ReverseRequestMeterial;
+
+		var service = new ReverseForwardingMaterializer(environment);
+		var query = service.AsPrivateProxy().CreateReverseDatasourceMaterialQuery(requestMaterial, DestinationRepository.sale_journals, (SelectQuery x) => x);
 
 		return new MaterializeResult()
 		{

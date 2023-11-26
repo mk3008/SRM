@@ -30,7 +30,7 @@ public class DestinationTest
 	public void CreateInsertQueryFrom()
 	{
 		var destination = DestinationRepository.sale_journals;
-		var datasourceMaterial = MaterialRepository.DatasourceMeterial;
+		var datasourceMaterial = MaterialRepository.AdditinalDatasourceMeterial;
 
 		var query = destination.CreateInsertQueryFrom(datasourceMaterial);
 

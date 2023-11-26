@@ -105,7 +105,7 @@ RETURNING
 	[Fact]
 	public void CreateProceeInsertQuery()
 	{
-		var query = Environment.CreateProceeInsertQuery(GetDummyProcessRow());
+		var query = Environment.CreateProcessInsertQuery(GetDummyProcessRow());
 
 		var expect = """
 /*
