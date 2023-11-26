@@ -343,7 +343,6 @@ public class ValidationMaterializer
 
 		var (f, d) = sq.From(_datasource).As("d");
 
-		sq.Select(datasource.Destination.Sequence);
 		sq.Select(d);
 
 		if (injector != null)
