@@ -18,6 +18,7 @@ public class AdditionalForwardingMaterializerTest
 		};
 
 		Proxy = new AdditionalForwardingMaterializer(Environment).AsPrivateProxy();
+		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
 	private readonly UnitTestLogger Logger;
@@ -26,23 +27,25 @@ public class AdditionalForwardingMaterializerTest
 
 	public readonly MaterializeServiceProxy Proxy;
 
-	private DbDatasource GetTestDatasouce()
-	{
-		return DatasourceRepository.sales;
-	}
+	public readonly DummyMaterialRepository MaterialRepository;
 
-	private MaterializeResult GetDummyRequestMeterial()
-	{
-		return new MaterializeResult()
-		{
-			MaterialName = "__additional_request",
-		};
-	}
+	//private DbDatasource GetTestDatasouce()
+	//{
+	//	return DatasourceRepository.sales;
+	//}
+
+	//private MaterializeResult GetDummyRequestMeterial()
+	//{
+	//	return new MaterializeResult()
+	//	{
+	//		MaterialName = "__additional_request",
+	//	};
+	//}
 
 	[Fact]
 	public void TestCreateRequestMaterialTableQuery()
 	{
-		var datasource = GetTestDatasouce();
+		var datasource = DatasourceRepository.sales;
 		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
 
 		var expect = """
@@ -65,8 +68,8 @@ FROM
 	[Fact]
 	public void TestCreateOriginDeleteQuery()
 	{
-		var datasource = GetTestDatasouce();
-		var requestMaterial = GetDummyRequestMeterial();
+		var datasource = DatasourceRepository.sales;
+		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, datasource);
 
 		var expect = """
@@ -99,8 +102,8 @@ WHERE
 	[Fact]
 	public void TestCleanUpMaterialRequestQuery()
 	{
-		var datasource = GetTestDatasouce();
-		var requestMaterial = GetDummyRequestMeterial();
+		var datasource = DatasourceRepository.sales;
+		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, datasource);
 
 		var expect = """
@@ -134,8 +137,8 @@ WHERE
 	public void TestCreateDatasourceMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
+		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
-		var requestMaterial = GetDummyRequestMeterial();
 		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
 
 		var expect = """

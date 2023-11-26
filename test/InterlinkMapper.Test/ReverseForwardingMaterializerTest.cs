@@ -18,31 +18,22 @@ public class ReverseForwardingMaterializerTest
 		};
 
 		Proxy = new ReverseForwardingMaterializer(Environment).AsPrivateProxy();
+		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
 	private readonly UnitTestLogger Logger;
 
 	public readonly SystemEnvironment Environment;
 
+	public readonly DummyMaterialRepository MaterialRepository;
+
 	public readonly ReverseForwardingMaterializerProxy Proxy;
-
-	private DbDestination GetTestDestination()
-	{
-		return DestinationRepository.sale_journals;
-	}
-
-	private MaterializeResult GetDummyRequestMeterial()
-	{
-		return new MaterializeResult()
-		{
-			MaterialName = "__reverse_request",
-		};
-	}
 
 	[Fact]
 	public void TestCreateRequestMaterialTableQuery()
 	{
-		var destination = GetTestDestination();
+		var destination = DestinationRepository.sale_journals;
+
 		var query = Proxy.CreateRequestMaterialTableQuery(destination);
 
 		var expect = """
@@ -65,8 +56,9 @@ FROM
 	[Fact]
 	public void TestCreateOriginDeleteQuery()
 	{
-		var destination = GetTestDestination();
-		var requestMaterial = GetDummyRequestMeterial();
+		var destination = DestinationRepository.sale_journals;
+		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
+
 		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, destination);
 
 		var expect = """
@@ -99,8 +91,9 @@ WHERE
 	[Fact]
 	public void TestCleanUpMaterialRequestQuery()
 	{
-		var destination = GetTestDestination();
-		var requestMaterial = GetDummyRequestMeterial();
+		var destination = DestinationRepository.sale_journals;
+		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
+
 		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, destination);
 
 		var expect = """
@@ -133,9 +126,9 @@ WHERE
 	[Fact]
 	public void TestCreateDatasourceMaterialQuery()
 	{
-		var destination = GetTestDestination();
+		var destination = DestinationRepository.sale_journals;
+		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
 
-		var requestMaterial = GetDummyRequestMeterial();
 		var query = Proxy.CreateReverseDatasourceMaterialQuery(requestMaterial, destination, (SelectQuery x) => x);
 
 		var expect = """

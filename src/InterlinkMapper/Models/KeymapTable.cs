@@ -1,6 +1,6 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class KeymapTable
+public class KeymapTable : IMaterialInsertable
 {
 	public DbTableDefinition Definition { get; set; } = new();
 

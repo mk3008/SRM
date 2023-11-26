@@ -1,6 +1,6 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class ReverseTable
+public class ReverseTable : IMaterialInsertable
 {
 	public DbTableDefinition Definition { get; set; } = new();
 
@@ -8,4 +8,3 @@ public class ReverseTable
 
 	public string ReverseIdColumn { get; set; } = string.Empty;
 }
-
