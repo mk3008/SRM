@@ -53,11 +53,11 @@ CREATE TEMPORARY TABLE
     __additional_request
 AS
 SELECT
-    r.sale_journals__r_sales_id,
+    r.sale_journals__ri_sales_id,
     r.sale_id,
     r.created_at
 FROM
-    sale_journals__r_sales AS r
+    sale_journals__ri_sales AS r
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -74,14 +74,14 @@ FROM
 
 		var expect = """
 DELETE FROM
-    sale_journals__r_sales AS d
+    sale_journals__ri_sales AS d
 WHERE
-    (d.sale_journals__r_sales_id) IN (
+    (d.sale_journals__ri_sales_id) IN (
         /* data that has been materialized will be deleted from the original. */
         SELECT
-            r.sale_journals__r_sales_id
+            r.sale_journals__ri_sales_id
         FROM
-            sale_journals__r_sales AS r
+            sale_journals__ri_sales AS r
         WHERE
             EXISTS (
                 SELECT
@@ -89,7 +89,7 @@ WHERE
                 FROM
                     __additional_request AS x
                 WHERE
-                    x.sale_journals__r_sales_id = r.sale_journals__r_sales_id
+                    x.sale_journals__ri_sales_id = r.sale_journals__ri_sales_id
             )
     )
 """;

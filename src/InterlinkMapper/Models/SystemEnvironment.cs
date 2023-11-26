@@ -259,7 +259,7 @@ public class SystemEnvironment
 			Definition = new()
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = string.Format(DbTableConfig.ReversalTableNameFormat, d.Table.TableName),
+				TableName = string.Format(DbTableConfig.ReverseTableNameFormat, d.Table.TableName),
 				ColumnDefinitions = new()
 				{
 					new ColumnDefinition()
@@ -335,12 +335,40 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public ValidationRequestTable GetValidationRequestTable(DbDestination d)
+	public ValidationRequestTable GetValidationRequestTable(DbDatasource d)
 	{
-		if (d.ReverseOption == null) throw new NotSupportedException();
+		if (d.Destination.ReverseOption == null) throw new NotSupportedException();
 
-		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Table.TableName);
+		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Destination.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
+
+		var columndefs = new List<ColumnDefinition>
+		{
+			new ColumnDefinition()
+			{
+				ColumnName = idcolumn,
+				TypeName = DbEnvironment.NumericTypeName,
+				AllowNull = false,
+				IsPrimaryKey = true,
+				IsAutoNumber = true,
+			}
+		};
+		d.KeyColumns.ForEach(x =>
+		{
+			columndefs.Add(new ColumnDefinition()
+			{
+				ColumnName = x.ColumnName,
+				TypeName = x.TypeName,
+				AllowNull = false,
+			});
+		});
+		columndefs.Add(new ColumnDefinition()
+		{
+			ColumnName = DbTableConfig.TimestampColumn,
+			TypeName = DbEnvironment.TimestampTypeName,
+			AllowNull = false,
+			DefaultValue = DbEnvironment.TimestampDefaultValue,
+		});
 
 		var t = new ValidationRequestTable()
 		{
@@ -348,33 +376,10 @@ public class SystemEnvironment
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
 				TableName = tablename,
-				ColumnDefinitions = new()
-				{
-					new ColumnDefinition()
-					{
-						ColumnName = idcolumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
-						IsPrimaryKey = true,
-						IsAutoNumber = true,
-					},
-					new ColumnDefinition()
-					{
-						ColumnName = d.Sequence.Column,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
-					},
-					new ColumnDefinition()
-					{
-						ColumnName = DbTableConfig.TimestampColumn,
-						TypeName = DbEnvironment.TimestampTypeName,
-						AllowNull= false,
-						DefaultValue = DbEnvironment.TimestampDefaultValue,
-					},
-				}
+				ColumnDefinitions = columndefs
 			},
 			RequestIdColumn = idcolumn,
-			DestinationSequenceColumn = d.Sequence.Column,
+			DatasourceKeyColumns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
 		};
 		return t;
 	}

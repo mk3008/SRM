@@ -22,11 +22,11 @@ public class DbTableConfig
 
 	public string KeymapTableNameFormat { get; set; } = "{0}__m_{1}";
 
-	public string ReversalTableNameFormat { get; set; } = "{0}__reversal";
+	public string ReverseTableNameFormat { get; set; } = "{0}__reverse";
 
-	public string InsertRequestTableNameFormat { get; set; } = "{0}__r_{1}";
+	public string InsertRequestTableNameFormat { get; set; } = "{0}__ri_{1}";
 
-	public string ValidateRequestTableNameFormat { get; set; } = "{0}__r__validation";
+	public string ValidateRequestTableNameFormat { get; set; } = "{0}__rv_{1}";
 
 	public string ReverseRequestTableNameFormat { get; set; } = "{0}__r__reverse";
 

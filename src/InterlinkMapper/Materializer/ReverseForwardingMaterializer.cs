@@ -17,7 +17,7 @@ public class ReverseForwardingMaterializer
 
 	public MaterializeResult? Create(IDbConnection connection, DbDestination destination, Func<SelectQuery, SelectQuery>? injector)
 	{
-		if (destination.ReverseOption == null) return null;
+		if (destination.ReverseOption == null) throw new NotSupportedException();
 
 		var requestMaterialQuery = CreateRequestMaterialTableQuery(destination);
 

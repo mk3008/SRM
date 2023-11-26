@@ -76,7 +76,7 @@ FROM
 
 		var expect = """
 INSERT INTO
-    sale_journals__reversal (
+    sale_journals__reverse (
         sale_journal_id, origin__sale_journal_id
     )
 SELECT
@@ -96,6 +96,7 @@ FROM
         FROM
             __reverse_datasource AS t
     ) AS d
+
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
