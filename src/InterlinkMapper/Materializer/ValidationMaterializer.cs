@@ -2,6 +2,7 @@
 using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
+using Utf8Json;
 
 namespace InterlinkMapper.Materializer;
 
@@ -23,6 +24,7 @@ public class ValidationMaterializer
 	public MaterializeResult? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (datasource.Destination.ReverseOption == null) throw new NotSupportedException();
+		if (string.IsNullOrEmpty(Environment.DbEnvironment.LengthFunction)) throw new NullReferenceException(nameof(Environment.DbEnvironment.LengthFunction));
 
 		var requestMaterialQuery = CreateRequestMaterialTableQuery(datasource);
 
@@ -255,9 +257,7 @@ public class ValidationMaterializer
 			//value changed
 			validationColumns.ForEach(column =>
 			{
-				condition.Or(new ColumnValue(e, column).NotEqual(a, column));
-				condition.Or((new ColumnValue(e, column).IsNotNull()).And(new ColumnValue(a, column).IsNull).ToGroup());
-				condition.Or((new ColumnValue(e, column).IsNull()).And(new ColumnValue(a, column).IsNotNull).ToGroup());
+				condition.Or(CreateNullSafeEqualityValue(e, column, a, column));
 			});
 
 			return condition;
@@ -275,11 +275,7 @@ public class ValidationMaterializer
 			validationColumns.ForEach(column =>
 			{
 				var changecase = new CaseExpression();
-
-				var condition = new ColumnValue(e, column).NotEqual(a, column);
-				condition.Or((new ColumnValue(e, column).IsNotNull()).And(new ColumnValue(a, column).IsNull).ToGroup());
-				condition.Or((new ColumnValue(e, column).IsNull()).And(new ColumnValue(a, column).IsNotNull).ToGroup());
-
+				var condition = CreateNullSafeEqualityValue(e, column, a, column);
 				changecase.When(condition).Then($"'\"{column}\",'");
 
 				arg.Add(changecase);
@@ -305,7 +301,7 @@ public class ValidationMaterializer
 			new ColumnValue(d, "remarks")
 		};
 
-		var length_value = new FunctionValue("length", length_arg);
+		var length_value = new FunctionValue(Environment.DbEnvironment.LengthFunction, length_arg);
 		length_value.AddOperatableValue("-", "1");
 
 		var substring_arg = new ValueCollection
@@ -351,6 +347,22 @@ public class ValidationMaterializer
 		}
 
 		return sq.ToCreateTableQuery(DatasourceMaterialName);
+	}
+
+	private ValueBase CreateNullSafeEqualityValue(SelectableTable leftTable, string leftColumn, SelectableTable rightTable, string rightColumn)
+	{
+		var op = Environment.DbEnvironment.NullSafeEqualityOperator;
+		if (string.IsNullOrEmpty(op))
+		{
+			var condition = new ColumnValue(leftTable, leftColumn).NotEqual(rightTable, rightColumn);
+			condition.Or((new ColumnValue(leftTable, leftColumn).IsNotNull()).And(new ColumnValue(rightTable, rightColumn).IsNull).ToGroup());
+			condition.Or((new ColumnValue(leftTable, leftColumn).IsNull()).And(new ColumnValue(rightTable, rightColumn).IsNotNull).ToGroup());
+			return condition;
+		}
+		else
+		{
+			return ValueParser.Parse($"{leftTable.Alias}.{leftColumn} {op} {rightTable.Alias}.{rightColumn}");
+		}
 	}
 }
 
