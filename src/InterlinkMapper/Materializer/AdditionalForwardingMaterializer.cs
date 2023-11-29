@@ -1,4 +1,5 @@
-﻿using InterlinkMapper;
+﻿using Carbunql.Tables;
+using InterlinkMapper;
 using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
@@ -126,10 +127,29 @@ public class AdditionalForwardingMaterializer
 
 	private SelectQuery CreateAdditionalDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
-		var sq = new SelectQuery();
-		sq.AddComment("data source to be added");
-		var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
+		var ds = datasource.ToSelectQuery();
+		var raw = ds.GetCommonTables().Where(x => x.Alias == "__raw").FirstOrDefault();
 
+		if (raw != null && raw.Table is VirtualTable vt && vt.Query is SelectQuery cte)
+		{
+			cte.AddComment("keymap filter is injected");
+			InjectKeymapFilter(cte, request, datasource);
+			return ds;
+		}
+		else
+		{
+			var sq = new SelectQuery();
+			sq.AddComment("keymap filter is injected");
+			var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
+			sq = InjectKeymapFilter(sq, request, datasource);
+			sq.Select(d);
+			return sq;
+		}
+	}
+
+	private SelectQuery InjectKeymapFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
+	{
+		var d = sq.FromClause!.Root.Alias;
 		//exists (select * from REQUEST x where d.key = x.key)
 		sq.Where(() =>
 		{
@@ -149,8 +169,6 @@ public class AdditionalForwardingMaterializer
 
 			return q.ToExists();
 		});
-
-		sq.Select(d);
 
 		return sq;
 	}

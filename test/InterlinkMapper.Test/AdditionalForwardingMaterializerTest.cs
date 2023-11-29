@@ -147,7 +147,7 @@ CREATE TEMPORARY TABLE
 AS
 WITH
     _target_datasource AS (
-        /* data source to be added */
+        /* keymap filter is injected */
         SELECT
             d.journal_closing_date,
             d.sale_date,
@@ -176,6 +176,73 @@ WITH
                 WHERE
                     x.sale_id = d.sale_id
             )
+    )
+SELECT
+    NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
+    d.journal_closing_date,
+    d.sale_date,
+    d.shop_id,
+    d.price,
+    d.sale_id
+FROM
+    _target_datasource AS d
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void TestCreateDatasourceMaterialQuery_Has_raw_CTE()
+	{
+		var datasource = DatasourceRepository.cte_sales;
+		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
+
+		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
+
+		var expect = """
+CREATE TEMPORARY TABLE
+    __datasource
+AS
+WITH
+    __raw AS (
+        /* keymap filter is injected */
+        SELECT
+            s.sale_date AS journal_closing_date,
+            s.sale_date,
+            s.shop_id,
+            s.price,
+            s.sale_id,
+            s.sale_detail_id
+        FROM
+            sale_detail AS s
+        WHERE
+            EXISTS (
+                /* exists request material */
+                SELECT
+                    *
+                FROM
+                    __additional_request AS x
+                WHERE
+                    x.sale_id = s.sale_id
+            )
+    ),
+    _target_datasource AS (
+        /* raw data source */
+        SELECT
+            d.journal_closing_date,
+            d.sale_date,
+            d.shop_id,
+            SUM(d.price) AS price,
+            d.sale_id
+        FROM
+            __raw AS d
+        GROUP BY
+            d.journal_closing_date,
+            d.sale_date,
+            d.shop_id,
+            d.sale_id
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,

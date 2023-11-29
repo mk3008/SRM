@@ -178,7 +178,7 @@ WHERE
 		var query = Proxy.CreateActualValueSelectQuery(requestMaterial, datasource);
 
 		var expect = """
- /* actual value */
+/* actual value */
 SELECT
     d.journal_closing_date,
     d.sale_date,

@@ -1,7 +1,4 @@
-﻿using InterlinkMapper.Materializer;
-using System.Data;
-
-namespace InterlinkMapper.Models;
+﻿namespace InterlinkMapper.Models;
 
 public class DbDatasource //: IDatasource
 {
