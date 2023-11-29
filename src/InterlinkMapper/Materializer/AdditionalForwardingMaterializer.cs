@@ -149,12 +149,12 @@ public class AdditionalForwardingMaterializer
 
 	private SelectQuery InjectKeymapFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
 	{
+		var requestTable = Environment.GetInsertRequestTable(datasource);
 		var d = sq.FromClause!.Root.Alias;
+
 		//exists (select * from REQUEST x where d.key = x.key)
 		sq.Where(() =>
 		{
-			var requestTable = Environment.GetInsertRequestTable(datasource);
-
 			var q = new SelectQuery();
 			q.AddComment("exists request material");
 

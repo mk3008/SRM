@@ -1,8 +1,7 @@
-﻿using Carbunql.Building;
+﻿using Carbunql.Tables;
 using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
-using Utf8Json;
 
 namespace InterlinkMapper.Materializer;
 
@@ -73,7 +72,30 @@ public class ValidationMaterializer
 	private CreateTableQuery CreateRequestMaterialTableQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
-		return request.ToSelectQuery().ToCreateTableQuery(RequestMaterialName);
+		var keymap = Environment.GetKeymapTable(datasource);
+
+		var sq = request.ToSelectQuery();
+		var f = sq.FromClause!;
+		var r = f.Root;
+		var m = f.InnerJoin(keymap.Definition.TableFullName).As("m").On((x) =>
+		{
+			keymap.DatasourceKeyColumns.ForEach(key =>
+			{
+				x.Condition(f, key).Equal(x.Table, key);
+			});
+		});
+
+		sq.Select(m, datasource.Destination.Sequence.Column);
+
+		//row_number() over(order by m.sale_journal_id) as row_num
+		sq.Select(new FunctionValue("row_number", () =>
+		{
+			var over = new OverClause();
+			over.AddPartition(new ColumnValue(m, datasource.Destination.Sequence.Column));
+			return over;
+		})).As("row_num");
+
+		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(MaterializeResult result, DbDatasource datasource)
@@ -104,24 +126,17 @@ public class ValidationMaterializer
 
 	private DeleteQuery CleanUpMaterialRequestQuery(MaterializeResult result, DbDatasource datasource)
 	{
+		var request = Environment.GetValidationRequestTable(datasource);
 		var keymap = Environment.GetKeymapTable(datasource);
 
 		var sq = new SelectQuery();
-		sq.AddComment("If it does not exist in the keymap table, remove it from the target");
+		sq.AddComment("Delete duplicate rows so that the destination ID is unique");
 
 		var (f, r) = sq.From(result.MaterialName).As("r");
 
-		sq.Where(() =>
-		{
-			// not exists (select * from RELATION x where d.id = x.id)
-			var q = new SelectQuery();
-			var (_, x) = q.From(keymap.Definition.TableFullName).As("x");
-			q.Where(x, datasource.Destination.Sequence.Column).Equal(r, datasource.Destination.Sequence.Column);
-			q.SelectAll();
-			return q.ToNotExists();
-		});
+		sq.Where(r, "row_num").NotEqual("1");
 
-		sq.Select(r, datasource.Destination.Sequence.Column);
+		sq.Select(r, request.RequestIdColumn);
 
 		return sq.ToDeleteQuery(result.MaterialName);
 	}
@@ -165,13 +180,33 @@ public class ValidationMaterializer
 		var validation = Environment.GetValidationRequestTable(datasource);
 		var keymap = Environment.GetKeymapTable(datasource);
 
-		var sq = new SelectQuery();
-		sq.AddComment("actual value");
-		var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
+		var ds = datasource.ToSelectQuery();
+		var raw = ds.GetCommonTables().Where(x => x.Alias == "__raw").FirstOrDefault();
 
-		sq.Select(d);
+		if (raw != null && raw.Table is VirtualTable vt && vt.Query is SelectQuery cte)
+		{
+			cte.AddComment("request filter is injected");
+			InjectRequestFilter(cte, request, datasource);
+			return ds;
+		}
+		else
+		{
+			var sq = new SelectQuery();
+			sq.AddComment("actual value");
+			var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
+			sq.Select(d);
+			sq = InjectRequestFilter(sq, request, datasource);
 
-		//exists (select * from REQUEST x where d.id = x.id)
+			return sq;
+		}
+	}
+
+	private SelectQuery InjectRequestFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
+	{
+		var keymap = Environment.GetKeymapTable(datasource);
+		var d = sq.FromClause!.Root.Alias;
+
+		//exists (select * from REQUEST x where d.key = x.key)
 		sq.Where(() =>
 		{
 			var q = new SelectQuery();
