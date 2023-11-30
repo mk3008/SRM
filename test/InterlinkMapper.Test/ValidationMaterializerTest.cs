@@ -138,8 +138,7 @@ SELECT
     d.sale_date,
     d.shop_id,
     d.price,
-    d.remarks,
-    m.sale_id
+    d.remarks
 FROM
     (
         /* destination */
@@ -153,17 +152,7 @@ FROM
         FROM
             sale_journals AS d
     ) AS d
-    INNER JOIN sale_journals__m_sales AS m ON d.sale_journal_id = m.sale_journal_id
-WHERE
-    EXISTS (
-        /* exists request material */
-        SELECT
-            *
-        FROM
-            __validation_request AS x
-        WHERE
-            x.sale_id = m.sale_id
-    )
+    INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -186,7 +175,8 @@ SELECT
     d.sale_date,
     d.shop_id,
     d.price,
-    d.sale_id
+    d.sale_id,
+    r.sale_journal_id
 FROM
     (
         /* raw data source */
@@ -199,16 +189,7 @@ FROM
         FROM
             sales AS s
     ) AS d
-WHERE
-    EXISTS (
-        /* exists request material */
-        SELECT
-            *
-        FROM
-            __validation_request AS x
-        WHERE
-            x.sale_id = d.sale_id
-    )
+    INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -234,8 +215,7 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.remarks,
-            m.sale_id
+            d.remarks
         FROM
             (
                 /* destination */
@@ -249,17 +229,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN sale_journals__m_sales AS m ON d.sale_journal_id = m.sale_journal_id
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = m.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
     ),
     _actual AS (
         /* actual value */
@@ -268,7 +238,8 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id
+            d.sale_id,
+            r.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -281,16 +252,7 @@ WITH
                 FROM
                     sales AS s
             ) AS d
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = d.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
     )
 SELECT
     e.sale_journal_id,
@@ -356,8 +318,7 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.remarks,
-            m.sale_id
+            d.remarks
         FROM
             (
                 /* destination */
@@ -371,17 +332,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN sale_journals__m_sales AS m ON d.sale_journal_id = m.sale_journal_id
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = m.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
     ),
     _actual AS (
         /* actual value */
@@ -390,7 +341,8 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id
+            d.sale_id,
+            r.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -403,16 +355,7 @@ WITH
                 FROM
                     sales AS s
             ) AS d
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = d.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
     ),
     _target_datasource AS (
         SELECT
@@ -487,8 +430,7 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.remarks,
-            m.sale_id
+            d.remarks
         FROM
             (
                 /* destination */
@@ -502,17 +444,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN sale_journals__m_sales AS m ON d.sale_journal_id = m.sale_journal_id
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = m.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
     ),
     _actual AS (
         /* actual value */
@@ -521,7 +453,8 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id
+            d.sale_id,
+            r.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -534,16 +467,7 @@ WITH
                 FROM
                     sales AS s
             ) AS d
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = d.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
     )
 SELECT
     e.sale_journal_id,
@@ -609,8 +533,7 @@ WITH
             d.sale_date,
             d.shop_id,
             d.price,
-            d.remarks,
-            m.sale_id
+            d.remarks
         FROM
             (
                 /* destination */
@@ -624,17 +547,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN sale_journals__m_sales AS m ON d.sale_journal_id = m.sale_journal_id
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = m.sale_id
-            )
+            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
     ),
     __raw AS (
         /* request filter is injected */
@@ -644,19 +557,11 @@ WITH
             s.shop_id,
             s.price,
             s.sale_id,
-            s.sale_detail_id
+            s.sale_detail_id,
+            r.sale_journal_id
         FROM
             sale_detail AS s
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __validation_request AS x
-                WHERE
-                    x.sale_id = s.sale_id
-            )
+            INNER JOIN __validation_request AS r ON s.sale_id = r.sale_id
     ),
     _actual AS (
         /* raw data source */

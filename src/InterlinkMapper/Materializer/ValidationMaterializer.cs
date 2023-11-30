@@ -150,28 +150,8 @@ public class ValidationMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("expected value");
 		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
-		var m = f.InnerJoin(keymap.Definition.TableFullName).As("m").On(x => new ColumnValue(d, datasource.Destination.Sequence.Column).Equal(x.Table, datasource.Destination.Sequence.Column));
-
+		f.InnerJoin(request.MaterialName).As("r").On(d, datasource.Destination.Sequence.Column);
 		sq.Select(d);
-
-		keymap.DatasourceKeyColumns.ForEach(x => sq.Select(m, x));
-
-		//exists (select * from REQUEST x where d.id = x.id)
-		sq.Where(() =>
-		{
-			var q = new SelectQuery();
-			q.AddComment("exists request material");
-
-			var (_, x) = q.From(request.MaterialName).As("x");
-
-			keymap.DatasourceKeyColumns.ForEach(key =>
-			{
-				q.Where(x, key).Equal(m, key);
-			});
-			q.SelectAll();
-
-			return q.ToExists();
-		});
 
 		return sq;
 	}
@@ -205,24 +185,17 @@ public class ValidationMaterializer
 	private SelectQuery InjectRequestFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
 	{
 		var keymap = Environment.GetKeymapTable(datasource);
-		var d = sq.FromClause!.Root.Alias;
-
-		//exists (select * from REQUEST x where d.key = x.key)
-		sq.Where(() =>
+		var f = sq.FromClause!;
+		var d = f.Root;
+		var r = f.InnerJoin(request.MaterialName).As("r").On(x =>
 		{
-			var q = new SelectQuery();
-			q.AddComment("exists request material");
-
-			var (_, x) = q.From(request.MaterialName).As("x");
-
-			keymap.DatasourceKeyColumns.ForEach(key =>
+			datasource.KeyColumns.ForEach(key =>
 			{
-				q.Where(x, key).Equal(d, key);
+				x.Condition(d, key.ColumnName).Equal(x.Table, key.ColumnName);
 			});
-			q.SelectAll();
-
-			return q.ToExists();
 		});
+
+		sq.Select(r, datasource.Destination.Sequence.Column);
 
 		return sq;
 	}
