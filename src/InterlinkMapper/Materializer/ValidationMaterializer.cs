@@ -20,6 +20,8 @@ public class ValidationMaterializer
 
 	public string DatasourceMaterialName { get; set; } = "__validation_datasource";
 
+	public string RowNumberColumnName { get; set; } = "row_num";
+
 	public MaterializeResult? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (datasource.Destination.ReverseOption == null) throw new NotSupportedException();
@@ -94,7 +96,7 @@ public class ValidationMaterializer
 			over.AddPartition(new ColumnValue(m, datasource.Destination.Sequence.Column));
 			over.AddOrder(new SortableItem(new ColumnValue(r, request.RequestIdColumn)));
 			return over;
-		})).As("row_num");
+		})).As(RowNumberColumnName);
 
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
@@ -135,7 +137,7 @@ public class ValidationMaterializer
 
 		var (f, rm) = sq.From(result.MaterialName).As("rm");
 
-		sq.Where(rm, "row_num").NotEqual("1");
+		sq.Where(rm, RowNumberColumnName).NotEqual("1");
 
 		sq.Select(rm, request.RequestIdColumn);
 
