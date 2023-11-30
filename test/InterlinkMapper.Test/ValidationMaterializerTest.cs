@@ -109,11 +109,11 @@ WHERE
     (d.sale_journals__rv_sales_id) IN (
         /* Delete duplicate rows so that the destination ID is unique */
         SELECT
-            r.sale_journals__rv_sales_id
+            rm.sale_journals__rv_sales_id
         FROM
-            __validation_request AS r
+            __validation_request AS rm
         WHERE
-            r.row_num <> 1
+            rm.row_num <> 1
     )
 """;
 		var actual = query.ToText();
@@ -152,7 +152,7 @@ FROM
         FROM
             sale_journals AS d
     ) AS d
-    INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
+    INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -176,7 +176,7 @@ SELECT
     d.shop_id,
     d.price,
     d.sale_id,
-    r.sale_journal_id
+    rm.sale_journal_id
 FROM
     (
         /* raw data source */
@@ -189,7 +189,7 @@ FROM
         FROM
             sales AS s
     ) AS d
-    INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
+    INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -229,7 +229,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
+            INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     _actual AS (
         /* actual value */
@@ -239,7 +239,7 @@ WITH
             d.shop_id,
             d.price,
             d.sale_id,
-            r.sale_journal_id
+            rm.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -252,12 +252,12 @@ WITH
                 FROM
                     sales AS s
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
+            INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     )
 SELECT
     e.sale_journal_id,
     a.sale_id,
-    '{"deleted":true}' AS remarks
+    '{"deleted":true}' AS interlink__remarks
 FROM
     _expect AS e
     LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -267,7 +267,7 @@ UNION ALL
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+    CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
 FROM
     (
         SELECT
@@ -283,7 +283,7 @@ FROM
                 WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
             END, CASE
                 WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
-            END) AS remarks
+            END) AS interlink__remarks
         FROM
             _expect AS e
             INNER JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -332,7 +332,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
+            INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     _actual AS (
         /* actual value */
@@ -342,7 +342,7 @@ WITH
             d.shop_id,
             d.price,
             d.sale_id,
-            r.sale_journal_id
+            rm.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -355,13 +355,13 @@ WITH
                 FROM
                     sales AS s
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
+            INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     ),
     _target_datasource AS (
         SELECT
             e.sale_journal_id,
             a.sale_id,
-            '{"deleted":true}' AS remarks
+            '{"deleted":true}' AS interlink__remarks
         FROM
             _expect AS e
             LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -371,7 +371,7 @@ WITH
         SELECT
             d.sale_journal_id,
             d.sale_id,
-            CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+            CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
         FROM
             (
                 SELECT
@@ -387,7 +387,7 @@ WITH
                         WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
                     END, CASE
                         WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
-                    END) AS remarks
+                    END) AS interlink__remarks
                 FROM
                     _expect AS e
                     INNER JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -398,7 +398,7 @@ WITH
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    d.remarks
+    d.interlink__remarks
 FROM
     _target_datasource AS d
 """;
@@ -444,7 +444,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
+            INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     _actual AS (
         /* actual value */
@@ -454,7 +454,7 @@ WITH
             d.shop_id,
             d.price,
             d.sale_id,
-            r.sale_journal_id
+            rm.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -467,12 +467,12 @@ WITH
                 FROM
                     sales AS s
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
+            INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     )
 SELECT
     e.sale_journal_id,
     a.sale_id,
-    '{"deleted":true}' AS remarks
+    '{"deleted":true}' AS interlink__remarks
 FROM
     _expect AS e
     LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -482,7 +482,7 @@ UNION ALL
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+    CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
 FROM
     (
         SELECT
@@ -498,7 +498,7 @@ FROM
                 WHEN e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) THEN '"shop_id",'
             END, CASE
                 WHEN e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null) THEN '"price",'
-            END) AS remarks
+            END) AS interlink__remarks
         FROM
             _expect AS e
             INNER JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -547,7 +547,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_journal_id = r.sale_journal_id
+            INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     __raw AS (
         /* request filter is injected */
@@ -558,10 +558,10 @@ WITH
             s.price,
             s.sale_id,
             s.sale_detail_id,
-            r.sale_journal_id
+            rm.sale_journal_id
         FROM
             sale_detail AS s
-            INNER JOIN __validation_request AS r ON s.sale_id = r.sale_id
+            INNER JOIN __validation_request AS rm ON s.sale_id = rm.sale_id
     ),
     _actual AS (
         /* actual value */
@@ -571,7 +571,7 @@ WITH
             d.shop_id,
             d.price,
             d.sale_id,
-            r.sale_journal_id
+            rm.sale_journal_id
         FROM
             (
                 /* raw data source */
@@ -589,13 +589,13 @@ WITH
                     d.shop_id,
                     d.sale_id
             ) AS d
-            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
+            INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     ),
     _target_datasource AS (
         SELECT
             e.sale_journal_id,
             a.sale_id,
-            '{"deleted":true}' AS remarks
+            '{"deleted":true}' AS interlink__remarks
         FROM
             _expect AS e
             LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -605,7 +605,7 @@ WITH
         SELECT
             d.sale_journal_id,
             d.sale_id,
-            CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+            CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
         FROM
             (
                 SELECT
@@ -621,7 +621,7 @@ WITH
                         WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
                     END, CASE
                         WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
-                    END) AS remarks
+                    END) AS interlink__remarks
                 FROM
                     _expect AS e
                     INNER JOIN _actual AS a ON e.sale_id = a.sale_id
@@ -632,7 +632,7 @@ WITH
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    d.remarks
+    d.interlink__remarks
 FROM
     _target_datasource AS d
 """;

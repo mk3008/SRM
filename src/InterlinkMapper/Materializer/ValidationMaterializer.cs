@@ -133,11 +133,11 @@ public class ValidationMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("Delete duplicate rows so that the destination ID is unique");
 
-		var (f, r) = sq.From(result.MaterialName).As("r");
+		var (f, rm) = sq.From(result.MaterialName).As("rm");
 
-		sq.Where(r, "row_num").NotEqual("1");
+		sq.Where(rm, "row_num").NotEqual("1");
 
-		sq.Select(r, request.RequestIdColumn);
+		sq.Select(rm, request.RequestIdColumn);
 
 		return sq.ToDeleteQuery(result.MaterialName);
 	}
@@ -150,7 +150,7 @@ public class ValidationMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("expected value");
 		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
-		f.InnerJoin(request.MaterialName).As("r").On(d, datasource.Destination.Sequence.Column);
+		f.InnerJoin(request.MaterialName).As("rm").On(d, datasource.Destination.Sequence.Column);
 		sq.Select(d);
 
 		return sq;
@@ -184,7 +184,7 @@ public class ValidationMaterializer
 		var keymap = Environment.GetKeymapTable(datasource);
 		var f = sq.FromClause!;
 		var d = f.Root;
-		var r = f.InnerJoin(request.MaterialName).As("r").On(x =>
+		var rm = f.InnerJoin(request.MaterialName).As("rm").On(x =>
 		{
 			datasource.KeyColumns.ForEach(key =>
 			{
@@ -192,13 +192,15 @@ public class ValidationMaterializer
 			});
 		});
 
-		sq.Select(r, datasource.Destination.Sequence.Column);
+		sq.Select(rm, datasource.Destination.Sequence.Column);
 
 		return sq;
 	}
 
 	private SelectQuery CreateDeletedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
+		var reverse = Environment.GetReverseTable(datasource.Destination);
+
 		var op = datasource.Destination.ReverseOption!;
 
 		var sq = new SelectQuery();
@@ -226,13 +228,14 @@ public class ValidationMaterializer
 		sq.Select(e, datasource.Destination.Sequence.Column);
 		datasource.KeyColumns.ForEach(key => sq.Select(a, key.ColumnName));
 
-		sq.Select("'{\"deleted\":true}'").As("remarks");
+		sq.Select("'{\"deleted\":true}'").As(reverse.RemarksColumn);
 
 		return sq;
 	}
 
 	private SelectQuery CreateUpdatedDiffSubQuery(MaterializeResult request, DbDatasource datasource)
 	{
+		var reverse = Environment.GetReverseTable(datasource.Destination);
 		var op = datasource.Destination.ReverseOption!;
 
 		var sq = new SelectQuery();
@@ -288,23 +291,25 @@ public class ValidationMaterializer
 			});
 
 			return new FunctionValue("concat", arg);
-		}).As("remarks");
+		}).As(reverse.RemarksColumn);
 
 		return sq;
 	}
 
 	private SelectQuery CreateUpdatedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
+		var reverse = Environment.GetReverseTable(datasource.Destination);
+
 		var sq = new SelectQuery();
 		var (f, d) = sq.From(CreateUpdatedDiffSubQuery(request, datasource)).As("d");
 
 		sq.Select(d);
-		var remarks = sq.GetSelectableItems().Where(x => x.Alias == "remarks").First();
+		var remarks = sq.GetSelectableItems().Where(x => x.Alias == reverse.RemarksColumn).First();
 		sq.SelectClause!.Remove(remarks);
 
 		var length_arg = new ValueCollection
 		{
-			new ColumnValue(d, "remarks")
+			new ColumnValue(d, reverse.RemarksColumn)
 		};
 
 		var length_value = new FunctionValue(Environment.DbEnvironment.LengthFunction, length_arg);
@@ -312,7 +317,7 @@ public class ValidationMaterializer
 
 		var substring_arg = new ValueCollection
 		{
-			new ColumnValue(d, "remarks"),
+			new ColumnValue(d, reverse.RemarksColumn),
 			"1",
 			length_value
 		};
@@ -324,7 +329,7 @@ public class ValidationMaterializer
 			"']}'"
 		};
 
-		sq.Select(new FunctionValue("concat", concat_arg)).As("remarks");
+		sq.Select(new FunctionValue("concat", concat_arg)).As(reverse.RemarksColumn);
 
 		return sq;
 	}

@@ -278,6 +278,13 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
+						ColumnName = DbTableConfig.RemarksColumn,
+						TypeName = DbEnvironment.TextTypeName,
+						AllowNull = false,
+						IsUniqueKey = false,
+					},
+					new ColumnDefinition()
+					{
 						ColumnName = DbTableConfig.TimestampColumn,
 						TypeName = DbEnvironment.TimestampTypeName,
 						AllowNull= false,
@@ -287,6 +294,7 @@ public class SystemEnvironment
 			},
 			OriginIdColumn = originColumn,
 			ReverseIdColumn = d.Sequence.Column,
+			RemarksColumn = DbTableConfig.RemarksColumn,
 		};
 		return t;
 	}
@@ -322,6 +330,14 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
+						ColumnName = DbTableConfig.RemarksColumn,
+						TypeName = DbEnvironment.TextTypeName,
+						AllowNull = false,
+						IsUniqueKey = false,
+						DefaultValue = string.Empty,
+					},
+					new ColumnDefinition()
+					{
 						ColumnName = DbTableConfig.TimestampColumn,
 						TypeName = DbEnvironment.TimestampTypeName,
 						AllowNull= false,
@@ -331,6 +347,7 @@ public class SystemEnvironment
 			},
 			RequestIdColumn = idcolumn,
 			DestinationSequenceColumn = d.Sequence.Column,
+			RemarksColumn = DbTableConfig.RemarksColumn,
 		};
 		return t;
 	}

@@ -43,9 +43,17 @@ AS
 SELECT
     r.sale_journals__r__reverse_id,
     r.sale_journal_id,
-    r.created_at
+    r.interlink__remarks,
+    r.created_at,
+    ROW_NUMBER() OVER(
+        PARTITION BY
+            r.sale_journal_id
+        ORDER BY
+            r.sale_journals__r__reverse_id
+    ) AS row_num
 FROM
     sale_journals__r__reverse AS r
+    INNER JOIN sale_journals__relation AS rel ON r.sale_journal_id = rel.sale_journal_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -101,20 +109,13 @@ DELETE FROM
     __reverse_request AS d
 WHERE
     (d.sale_journal_id) IN (
-        /* If it does not exist in the relation table, remove it from the target */
+        /* Delete duplicate rows so that the destination ID is unique */
         SELECT
             r.sale_journal_id
         FROM
             __reverse_request AS r
         WHERE
-            NOT EXISTS (
-                SELECT
-                    *
-                FROM
-                    sale_journals__relation AS x
-                WHERE
-                    x.sale_journal_id = r.sale_journal_id
-            )
+            r.row_num <> 1
     )
 """;
 		var actual = query.ToText();
@@ -145,7 +146,8 @@ WITH
             d.shop_id,
             d.price * -1 AS price,
             d.remarks,
-            p.keymap_name
+            p.keymap_name,
+            rm.interlink__remarks
         FROM
             (
                 /* destination */
@@ -161,16 +163,7 @@ WITH
             ) AS d
             INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
             INNER JOIN interlink_process AS p ON r.interlink__process_id = p.interlink__process_id
-        WHERE
-            EXISTS (
-                /* exists request material */
-                SELECT
-                    *
-                FROM
-                    __reverse_request AS x
-                WHERE
-                    x.sale_journal_id = d.sale_journal_id
-            )
+            INNER JOIN __reverse_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
@@ -180,7 +173,8 @@ SELECT
     d.shop_id,
     d.price,
     d.remarks,
-    d.keymap_name
+    d.keymap_name,
+    d.interlink__remarks
 FROM
     _target_datasource AS d
 """;

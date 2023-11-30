@@ -55,6 +55,8 @@ public class DbTableConfig
 
 	public string ActionNameColumn { get; set; } = "action";
 
+	public string RemarksColumn { get; set; } = "interlink__remarks";
+
 	public string TimestampColumn { get; set; } = "created_at";
 
 	public string InsertCountColumn { get; set; } = "insert_count";
@@ -64,6 +66,4 @@ public class DbTableConfig
 	public string OriginIdColumnFormat { get; set; } = "origin__{0}";
 
 	public string RequestIdColumnFormat { get; set; } = "{0}_id";
-
-
 }

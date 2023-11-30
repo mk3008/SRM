@@ -77,11 +77,12 @@ FROM
 		var expect = """
 INSERT INTO
     sale_journals__reverse (
-        sale_journal_id, origin__sale_journal_id
+        sale_journal_id, origin__sale_journal_id, interlink__remarks
     )
 SELECT
     d.sale_journal_id,
-    d.origin__sale_journal_id
+    d.origin__sale_journal_id,
+    d.interlink__remarks
 FROM
     (
         SELECT
@@ -92,11 +93,11 @@ FROM
             t.shop_id,
             t.price,
             t.remarks,
-            t.keymap_name
+            t.keymap_name,
+            t.interlink__remarks
         FROM
             __reverse_datasource AS t
     ) AS d
-
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

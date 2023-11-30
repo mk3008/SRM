@@ -15,6 +15,8 @@ public class ReverseForwardingMaterializer
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
+	public string RowNumberColumnName { get; set; } = "row_num";
+
 	public MaterializeResult? Create(IDbConnection connection, DbDestination destination, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (destination.ReverseOption == null) throw new NotSupportedException();
@@ -66,8 +68,23 @@ public class ReverseForwardingMaterializer
 	private CreateTableQuery CreateRequestMaterialTableQuery(DbDestination destination)
 	{
 		var request = Environment.GetReverseRequestTable(destination);
+		var relation = Environment.GetRelationTable(destination);
+
+		var sq = request.ToSelectQuery();
+		var f = sq.FromClause!;
+		var d = f.Root;
+		var rel = f.InnerJoin(relation.Definition.TableFullName).As("rel").On(d, destination.Sequence.Column);
+
+		sq.Select(new FunctionValue("row_number", () =>
+		{
+			var over = new OverClause();
+			over.AddPartition(new ColumnValue(d, destination.Sequence.Column));
+			over.AddOrder(new SortableItem(new ColumnValue(d, request.RequestIdColumn)));
+			return over;
+		})).As(RowNumberColumnName);
+
 		var name = "__reverse_request";
-		return request.ToSelectQuery().ToCreateTableQuery(name);
+		return sq.ToCreateTableQuery(name);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(MaterializeResult result, DbDestination destination)
@@ -102,19 +119,11 @@ public class ReverseForwardingMaterializer
 		var relationTable = relation.Definition.TableFullName;
 
 		var sq = new SelectQuery();
-		sq.AddComment("If it does not exist in the relation table, remove it from the target");
+		sq.AddComment("Delete duplicate rows so that the destination ID is unique");
 
 		var (f, r) = sq.From(result.MaterialName).As("r");
 
-		sq.Where(() =>
-		{
-			// not exists (select * from RELATION x where d.id = x.id)
-			var q = new SelectQuery();
-			var (_, x) = q.From(relationTable).As("x");
-			q.Where(x, destination.Sequence.Column).Equal(r, destination.Sequence.Column);
-			q.SelectAll();
-			return q.ToNotExists();
-		});
+		sq.Where(r, RowNumberColumnName).NotEqual("1");
 
 		sq.Select(r, destination.Sequence.Column);
 
@@ -131,9 +140,9 @@ public class ReverseForwardingMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");
 		var (f, d) = sq.From(destination.ToSelectQuery()).As("d");
-		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(x => new ColumnValue(d, destination.Sequence.Column).Equal(x.Table, destination.Sequence.Column));
-		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(x => new ColumnValue(r, process.ProcessIdColumn).Equal(x.Table, process.ProcessIdColumn));
-
+		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, destination.Sequence.Column);
+		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, process.ProcessIdColumn);
+		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.Sequence.Column);
 		sq.Select(d);
 
 		//Rename the existing ID column and select it as the original ID
@@ -152,21 +161,7 @@ public class ReverseForwardingMaterializer
 		};
 
 		sq.Select(p, process.KeymapTableNameColumn);
-
-		//exists (select * from REQUEST x where d.id = x.id)
-		sq.Where(() =>
-		{
-			var q = new SelectQuery();
-			q.AddComment("exists request material");
-
-			var (_, x) = q.From(request.MaterialName).As("x");
-			q.Where(x, destination.Sequence.Column).Equal(d, destination.Sequence.Column);
-			q.SelectAll();
-
-			return q.ToExists();
-		});
-
-
+		sq.Select(rm, reverse.RemarksColumn);
 
 		return sq;
 	}
