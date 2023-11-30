@@ -140,6 +140,7 @@ WITH
     _target_datasource AS (
         /* data source to be added */
         SELECT
+            COALESCE(rev.root__sale_journal_id, d.sale_journal_id) AS root__sale_journal_id,
             d.sale_journal_id AS origin__sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
@@ -164,9 +165,11 @@ WITH
             INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
             INNER JOIN interlink_process AS p ON r.interlink__process_id = p.interlink__process_id
             INNER JOIN __reverse_request AS rm ON d.sale_journal_id = rm.sale_journal_id
+            LEFT JOIN sale_journals__reverse AS rev ON d.sale_journal_id = rev.sale_journal_id
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
+    d.root__sale_journal_id,
     d.origin__sale_journal_id,
     d.journal_closing_date,
     d.sale_date,

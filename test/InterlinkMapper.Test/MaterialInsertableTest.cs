@@ -77,16 +77,18 @@ FROM
 		var expect = """
 INSERT INTO
     sale_journals__reverse (
-        sale_journal_id, origin__sale_journal_id, interlink__remarks
+        sale_journal_id, root__sale_journal_id, origin__sale_journal_id, interlink__remarks
     )
 SELECT
     d.sale_journal_id,
+    d.root__sale_journal_id,
     d.origin__sale_journal_id,
     d.interlink__remarks
 FROM
     (
         SELECT
             t.sale_journal_id,
+            t.root__sale_journal_id,
             t.origin__sale_journal_id,
             t.journal_closing_date,
             t.sale_date,

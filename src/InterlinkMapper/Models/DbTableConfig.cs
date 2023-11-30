@@ -63,6 +63,8 @@ public class DbTableConfig
 
 	public string KeymapTableNameColumn { get; set; } = "keymap_name";
 
+	public string RootIdColumnFormat { get; set; } = "root__{0}";
+
 	public string OriginIdColumnFormat { get; set; } = "origin__{0}";
 
 	public string RequestIdColumnFormat { get; set; } = "{0}_id";

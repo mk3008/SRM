@@ -143,6 +143,14 @@ public class ReverseForwardingMaterializer
 		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, destination.Sequence.Column);
 		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, process.ProcessIdColumn);
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.Sequence.Column);
+		var rev = f.LeftJoin(reverse.Definition.TableFullName).As("rev").On(d, destination.Sequence.Column);
+
+		sq.Select(new FunctionValue("coalesce", new ValueCollection
+		{
+			new ColumnValue(rev, reverse.RootIdColumn),
+			new ColumnValue(d, destination.Sequence.Column)
+		})).As(reverse.RootIdColumn);
+
 		sq.Select(d);
 
 		//Rename the existing ID column and select it as the original ID

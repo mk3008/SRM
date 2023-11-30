@@ -253,6 +253,7 @@ public class SystemEnvironment
 	{
 		if (d.ReverseOption == null) throw new NotSupportedException();
 
+		var rootColumn = string.Format(DbTableConfig.RootIdColumnFormat, d.Sequence.Column);
 		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
 		var t = new ReverseTable()
 		{
@@ -268,6 +269,13 @@ public class SystemEnvironment
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull = false,
 						IsPrimaryKey = true,
+					},
+					new ColumnDefinition()
+					{
+						ColumnName = rootColumn,
+						TypeName = DbEnvironment.NumericTypeName,
+						AllowNull = false,
+						IsUniqueKey = false,
 					},
 					new ColumnDefinition()
 					{
@@ -292,6 +300,7 @@ public class SystemEnvironment
 					},
 				}
 			},
+			RootIdColumn = rootColumn,
 			OriginIdColumn = originColumn,
 			ReverseIdColumn = d.Sequence.Column,
 			RemarksColumn = DbTableConfig.RemarksColumn,
