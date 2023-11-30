@@ -267,7 +267,7 @@ UNION ALL
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    CONCAT('{"changed":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+    CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
 FROM
     (
         SELECT
@@ -371,7 +371,7 @@ WITH
         SELECT
             d.sale_journal_id,
             d.sale_id,
-            CONCAT('{"changed":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+            CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
         FROM
             (
                 SELECT
@@ -482,7 +482,7 @@ UNION ALL
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    CONCAT('{"changed":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+    CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
 FROM
     (
         SELECT
@@ -564,20 +564,32 @@ WITH
             INNER JOIN __validation_request AS r ON s.sale_id = r.sale_id
     ),
     _actual AS (
-        /* raw data source */
+        /* actual value */
         SELECT
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
-            SUM(d.price) AS price,
-            d.sale_id
+            d.price,
+            d.sale_id,
+            r.sale_journal_id
         FROM
-            __raw AS d
-        GROUP BY
-            d.journal_closing_date,
-            d.sale_date,
-            d.shop_id,
-            d.sale_id
+            (
+                /* raw data source */
+                SELECT
+                    d.journal_closing_date,
+                    d.sale_date,
+                    d.shop_id,
+                    SUM(d.price) AS price,
+                    d.sale_id
+                FROM
+                    __raw AS d
+                GROUP BY
+                    d.journal_closing_date,
+                    d.sale_date,
+                    d.shop_id,
+                    d.sale_id
+            ) AS d
+            INNER JOIN __validation_request AS r ON d.sale_id = r.sale_id
     ),
     _target_datasource AS (
         SELECT
@@ -593,7 +605,7 @@ WITH
         SELECT
             d.sale_journal_id,
             d.sale_id,
-            CONCAT('{"changed":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
+            CONCAT('{"updated":[', SUBSTRING(d.remarks, 1, LENGTH(d.remarks) - 1), ']}') AS remarks
         FROM
             (
                 SELECT

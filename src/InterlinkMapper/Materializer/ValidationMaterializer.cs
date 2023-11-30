@@ -168,18 +168,15 @@ public class ValidationMaterializer
 		{
 			cte.AddComment("request filter is injected");
 			InjectRequestFilter(cte, request, datasource);
-			return ds;
 		}
-		else
-		{
-			var sq = new SelectQuery();
-			sq.AddComment("actual value");
-			var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
-			sq.Select(d);
-			sq = InjectRequestFilter(sq, request, datasource);
 
-			return sq;
-		}
+		var sq = new SelectQuery();
+		sq.AddComment("actual value");
+		var (f, d) = sq.From(ds).As("d");
+		sq.Select(d);
+		sq = InjectRequestFilter(sq, request, datasource);
+
+		return sq;
 	}
 
 	private SelectQuery InjectRequestFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
@@ -234,7 +231,7 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateChangedDiffSubQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateUpdatedDiffSubQuery(MaterializeResult request, DbDatasource datasource)
 	{
 		var op = datasource.Destination.ReverseOption!;
 
@@ -296,10 +293,10 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateChangedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateUpdatedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
 		var sq = new SelectQuery();
-		var (f, d) = sq.From(CreateChangedDiffSubQuery(request, datasource)).As("d");
+		var (f, d) = sq.From(CreateUpdatedDiffSubQuery(request, datasource)).As("d");
 
 		sq.Select(d);
 		var remarks = sq.GetSelectableItems().Where(x => x.Alias == "remarks").First();
@@ -322,7 +319,7 @@ public class ValidationMaterializer
 
 		var concat_arg = new ValueCollection
 		{
-			"'{\"changed\":['",
+			"'{\"updated\":['",
 			new FunctionValue("substring", substring_arg),
 			"']}'"
 		};
@@ -334,11 +331,11 @@ public class ValidationMaterializer
 
 	private SelectQuery CreateValidationDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
 	{
-		var deletedsq = CreateDeletedDiffSelectQuery(request, datasource);
+		var sq = CreateDeletedDiffSelectQuery(request, datasource);
 
-		deletedsq.UnionAll(CreateChangedDiffSelectQuery(request, datasource));
+		sq.UnionAll(CreateUpdatedDiffSelectQuery(request, datasource));
 
-		return deletedsq;
+		return sq;
 	}
 
 	private CreateTableQuery CreateValidationDatasourceMaterialQuery(MaterializeResult request, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
