@@ -92,6 +92,7 @@ public class ValidationMaterializer
 		{
 			var over = new OverClause();
 			over.AddPartition(new ColumnValue(m, datasource.Destination.Sequence.Column));
+			over.AddOrder(new SortableItem(new ColumnValue(r, request.RequestIdColumn)));
 			return over;
 		})).As("row_num");
 

@@ -47,10 +47,13 @@ SELECT
     ROW_NUMBER() OVER(
         PARTITION BY
             m.sale_journal_id
+        ORDER BY
+            r.sale_journals__rv_sales_id
     ) AS row_num
 FROM
     sale_journals__rv_sales AS r
     INNER JOIN sale_journals__m_sales AS m ON r.sale_id = m.sale_id
+
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
