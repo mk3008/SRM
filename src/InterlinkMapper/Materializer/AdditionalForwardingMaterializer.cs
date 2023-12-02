@@ -13,6 +13,8 @@ public class AdditionalForwardingMaterializer
 		Environment = environment;
 	}
 
+	public string RowNumberColumnName { get; set; } = "row_num";
+
 	private SystemEnvironment Environment { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
@@ -66,8 +68,29 @@ public class AdditionalForwardingMaterializer
 	private CreateTableQuery CreateRequestMaterialTableQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
+		var reverse = Environment.GetReverseTable(datasource.Destination);
+
+		var sq = request.ToSelectQuery();
+		var f = sq.FromClause!;
+		var d = f.Root;
+		var rev = f.LeftJoin(reverse.Definition.TableFullName).As("rev").On(x =>
+		{
+			return new ColumnValue(d, request.OriginIdColumn).Equal(x.Table, reverse.ReverseIdColumn);
+		});
+		var args = new ValueCollection();
+		datasource.KeyColumns.ForEach(key => args.Add(new ColumnValue(d, key.ColumnName)));
+
+		sq.Select(rev, reverse.RootIdColumn);
+		sq.Select(new FunctionValue("row_number", () =>
+		{
+			var over = new OverClause();
+			over.AddPartition(args);
+			over.AddOrder(new SortableItem(new ColumnValue(d, request.RequestIdColumn)));
+			return over;
+		})).As(RowNumberColumnName);
+
 		var name = "__additional_request";
-		return request.ToSelectQuery().ToCreateTableQuery(name);
+		return sq.ToCreateTableQuery(name);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(MaterializeResult result, DbDatasource datasource)
@@ -117,7 +140,7 @@ public class AdditionalForwardingMaterializer
 				q.Where(x, key).Equal(r, key);
 			});
 			q.SelectAll();
-			return q.ToExists();
+			return q.ToExists().Or(r, RowNumberColumnName).NotEqual("1");
 		});
 
 		datasourceKeys.ForEach(key => sq.Select(r, key));
@@ -132,43 +155,35 @@ public class AdditionalForwardingMaterializer
 
 		if (raw != null && raw.Table is VirtualTable vt && vt.Query is SelectQuery cte)
 		{
-			cte.AddComment("keymap filter is injected");
-			InjectKeymapFilter(cte, request, datasource);
-			return ds;
+			InjectRequestMaterialFilter(cte, request, datasource);
+			//return ds;
 		}
-		else
-		{
-			var sq = new SelectQuery();
-			sq.AddComment("keymap filter is injected");
-			var (f, d) = sq.From(datasource.ToSelectQuery()).As("d");
-			sq = InjectKeymapFilter(sq, request, datasource);
-			sq.Select(d);
-			return sq;
-		}
+
+		var sq = new SelectQuery();
+		var (f, d) = sq.From(ds).As("d");
+		sq.Select(d);
+		sq = InjectRequestMaterialFilter(sq, request, datasource);
+
+		return sq;
 	}
 
-	private SelectQuery InjectKeymapFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
+	private SelectQuery InjectRequestMaterialFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
 	{
-		var requestTable = Environment.GetInsertRequestTable(datasource);
-		var d = sq.FromClause!.Root.Alias;
+		var reverse = Environment.GetReverseTable(datasource.Destination);
+		var f = sq.FromClause!;
+		var d = f.Root;
 
-		//exists (select * from REQUEST x where d.key = x.key)
-		sq.Where(() =>
+		sq.AddComment("inject request material filter");
+		var rm = f.InnerJoin(request.MaterialName).As("rm").On(x =>
 		{
-			var q = new SelectQuery();
-			q.AddComment("exists request material");
-
-			var (_, x) = q.From(request.MaterialName).As("x");
-
-			requestTable.DatasourceKeyColumns.ForEach(key =>
+			datasource.KeyColumns.ForEach(key =>
 			{
-				q.Where(x, key).Equal(d, key);
+				x.Condition(d, key.ColumnName).Equal(x.Table, key.ColumnName);
 			});
-
-			q.SelectAll();
-
-			return q.ToExists();
 		});
+
+		sq.Select(rm, reverse.RootIdColumn);
+		sq.Select(rm, reverse.OriginIdColumn);
 
 		return sq;
 	}

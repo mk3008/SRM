@@ -298,6 +298,13 @@ public class SystemEnvironment
 						AllowNull= false,
 						DefaultValue = DbEnvironment.TimestampDefaultValue,
 					},
+				},
+				Indexes = new()
+				{
+					new DbIndexDefinition()
+					{
+						Columns = [rootColumn]
+					}
 				}
 			},
 			RootIdColumn = rootColumn,
@@ -414,6 +421,7 @@ public class SystemEnvironment
 	{
 		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
+		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Destination.Sequence.Column);
 
 		var columndefs = new List<ColumnDefinition>
 		{
@@ -442,6 +450,12 @@ public class SystemEnvironment
 			AllowNull = false,
 			DefaultValue = DbEnvironment.TimestampDefaultValue,
 		});
+		columndefs.Add(new ColumnDefinition()
+		{
+			ColumnName = originColumn,
+			TypeName = DbEnvironment.NumericTypeName,
+			AllowNull = true,
+		});
 
 		var t = new InsertRequestTable()
 		{
@@ -452,6 +466,7 @@ public class SystemEnvironment
 				ColumnDefinitions = columndefs
 			},
 			RequestIdColumn = idcolumn,
+			OriginIdColumn = originColumn,
 			DatasourceKeyColumns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
 		};
 		return t;

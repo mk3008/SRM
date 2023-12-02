@@ -53,7 +53,9 @@ public class DestinationTest
 	            t.sale_date,
 	            t.shop_id,
 	            t.price,
-	            t.sale_id
+	            t.sale_id,
+				t.root__sale_journal_id,
+				t.origin__sale_journal_id
 	        FROM
 	            __datasource AS t
 	    ) AS d
