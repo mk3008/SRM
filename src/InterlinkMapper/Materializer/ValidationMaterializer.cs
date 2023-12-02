@@ -150,7 +150,8 @@ public class ValidationMaterializer
 		var keymap = Environment.GetKeymapTable(datasource);
 
 		var sq = new SelectQuery();
-		sq.AddComment("expected value");
+		sq.AddComment("inject request material filter for destination");
+
 		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
 		f.InnerJoin(request.MaterialName).As("rm").On(d, datasource.Destination.Sequence.Column);
 		sq.Select(d);
@@ -168,12 +169,10 @@ public class ValidationMaterializer
 
 		if (raw != null && raw.Table is VirtualTable vt && vt.Query is SelectQuery cte)
 		{
-			cte.AddComment("request filter is injected");
 			InjectRequestFilter(cte, request, datasource);
 		}
 
 		var sq = new SelectQuery();
-		sq.AddComment("actual value");
 		var (f, d) = sq.From(ds).As("d");
 		sq.Select(d);
 		sq = InjectRequestFilter(sq, request, datasource);
@@ -183,6 +182,8 @@ public class ValidationMaterializer
 
 	private SelectQuery InjectRequestFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
 	{
+		sq.AddComment("inject request material filter");
+
 		var keymap = Environment.GetKeymapTable(datasource);
 		var f = sq.FromClause!;
 		var d = f.Root;

@@ -131,7 +131,7 @@ WHERE
 		var query = Proxy.CreateExpectValueSelectQuery(requestMaterial, datasource);
 
 		var expect = """
-/* expected value */
+/* inject request material filter for destination */
 SELECT
     d.sale_journal_id,
     d.journal_closing_date,
@@ -169,7 +169,7 @@ FROM
 		var query = Proxy.CreateActualValueSelectQuery(requestMaterial, datasource);
 
 		var expect = """
-/* actual value */
+/* inject request material filter */
 SELECT
     d.journal_closing_date,
     d.sale_date,
@@ -208,7 +208,7 @@ FROM
 		var expect = """
 WITH
     _expect AS (
-        /* expected value */
+        /* inject request material filter for destination */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -232,7 +232,7 @@ WITH
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     _actual AS (
-        /* actual value */
+        /* inject request material filter */
         SELECT
             d.journal_closing_date,
             d.sale_date,
@@ -311,7 +311,7 @@ CREATE TEMPORARY TABLE
 AS
 WITH
     _expect AS (
-        /* expected value */
+        /* inject request material filter for destination */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -335,7 +335,7 @@ WITH
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     _actual AS (
-        /* actual value */
+        /* inject request material filter */
         SELECT
             d.journal_closing_date,
             d.sale_date,
@@ -423,7 +423,7 @@ FROM
 		var expect = """
 WITH
     _expect AS (
-        /* expected value */
+        /* inject request material filter for destination */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -447,7 +447,7 @@ WITH
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     _actual AS (
-        /* actual value */
+        /* inject request material filter */
         SELECT
             d.journal_closing_date,
             d.sale_date,
@@ -526,7 +526,7 @@ CREATE TEMPORARY TABLE
 AS
 WITH
     _expect AS (
-        /* expected value */
+        /* inject request material filter for destination */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -550,7 +550,7 @@ WITH
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
     __raw AS (
-        /* request filter is injected */
+        /* inject request material filter */
         SELECT
             s.sale_date AS journal_closing_date,
             s.sale_date,
@@ -564,7 +564,7 @@ WITH
             INNER JOIN __validation_request AS rm ON s.sale_id = rm.sale_id
     ),
     _actual AS (
-        /* actual value */
+        /* inject request material filter */
         SELECT
             d.journal_closing_date,
             d.sale_date,

@@ -169,11 +169,12 @@ public class AdditionalForwardingMaterializer
 
 	private SelectQuery InjectRequestMaterialFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
 	{
+		sq.AddComment("inject request material filter");
+
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 		var f = sq.FromClause!;
 		var d = f.Root;
 
-		sq.AddComment("inject request material filter");
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(x =>
 		{
 			datasource.KeyColumns.ForEach(key =>
