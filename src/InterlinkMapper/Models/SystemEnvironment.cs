@@ -251,8 +251,6 @@ public class SystemEnvironment
 
 	public ReverseTable GetReverseTable(DbDestination d)
 	{
-		if (d.ReverseOption == null) throw new NotSupportedException();
-
 		var rootColumn = string.Format(DbTableConfig.RootIdColumnFormat, d.Sequence.Column);
 		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
 		var t = new ReverseTable()
@@ -317,8 +315,6 @@ public class SystemEnvironment
 
 	public ReverseRequestTable GetReverseRequestTable(DbDestination d)
 	{
-		if (d.ReverseOption == null) throw new NotSupportedException();
-
 		var tablename = string.Format(DbTableConfig.ReverseRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
@@ -370,8 +366,6 @@ public class SystemEnvironment
 
 	public ValidationRequestTable GetValidationRequestTable(DbDatasource d)
 	{
-		if (d.Destination.ReverseOption == null) throw new NotSupportedException();
-
 		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Destination.Table.TableName, d.DatasourceName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 

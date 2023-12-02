@@ -19,7 +19,7 @@ public class ReverseForwardingMaterializer
 
 	public MaterializeResult? Create(IDbConnection connection, DbDestination destination, Func<SelectQuery, SelectQuery>? injector)
 	{
-		if (destination.ReverseOption == null) throw new NotSupportedException();
+		if (!destination.AllowReverse) throw new NotSupportedException();
 
 		var requestMaterialQuery = CreateRequestMaterialTableQuery(destination);
 
@@ -135,7 +135,7 @@ public class ReverseForwardingMaterializer
 		var reverse = Environment.GetReverseTable(destination);
 		var relation = Environment.GetRelationTable(destination);
 		var process = Environment.GetProcessTable();
-		var op = destination.ReverseOption!;
+		var op = destination.ReverseOption;
 
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");

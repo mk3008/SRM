@@ -24,7 +24,7 @@ public class ValidationMaterializer
 
 	public MaterializeResult? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		if (datasource.Destination.ReverseOption == null) throw new NotSupportedException();
+		if (!datasource.Destination.AllowReverse) throw new NotSupportedException();
 		if (string.IsNullOrEmpty(Environment.DbEnvironment.LengthFunction)) throw new NullReferenceException(nameof(Environment.DbEnvironment.LengthFunction));
 
 		var requestMaterialQuery = CreateRequestMaterialTableQuery(datasource);
@@ -204,7 +204,7 @@ public class ValidationMaterializer
 	{
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 
-		var op = datasource.Destination.ReverseOption!;
+		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
 		var expect = sq.With(CreateExpectValueSelectQuery(request, datasource)).As("_expect");
@@ -239,7 +239,7 @@ public class ValidationMaterializer
 	private SelectQuery CreateUpdatedDiffSubQuery(MaterializeResult request, DbDatasource datasource)
 	{
 		var reverse = Environment.GetReverseTable(datasource.Destination);
-		var op = datasource.Destination.ReverseOption!;
+		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
 		var expect = sq.With(CreateExpectValueSelectQuery(request, datasource)).As("_expect");
