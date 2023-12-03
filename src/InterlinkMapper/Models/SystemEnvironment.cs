@@ -528,4 +528,20 @@ public class SystemEnvironment
 
 		return iq;
 	}
+
+	public DeleteQuery CreateKeymapDeleteQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
+	{
+		var reverse = GetReverseTable(datasource.Destination);
+		var keymap = GetKeymapTable(datasource);
+
+		var sq = new SelectQuery();
+		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
+
+		sq.Select(d, reverse.OriginIdColumn).As(datasource.Destination.Sequence.Column);
+
+		var q = sq.ToDeleteQuery(keymap.Definition.TableFullName);
+		q.AddComment("canceling the keymap due to reverse");
+
+		return q;
+	}
 }

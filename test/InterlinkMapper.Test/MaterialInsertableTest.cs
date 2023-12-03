@@ -36,7 +36,7 @@ public class MaterialInsertableTest
 		var keymap = Environment.GetKeymapTable(datasource);
 		var datasourceMaterial = MaterialRepository.AdditinalDatasourceMeterial;
 
-		var query = keymap.CreateInsertQueryFrom(datasourceMaterial);
+		var query = keymap.CreateInsertQuery(datasourceMaterial);
 
 		var expect = """
 INSERT INTO
@@ -67,6 +67,8 @@ FROM
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
+
+
 	[Fact]
 	public void Reverse_CreateInsertQueryFrom()
 	{
@@ -74,7 +76,7 @@ FROM
 		var reverse = Environment.GetReverseTable(destination);
 		var datasourceMaterial = MaterialRepository.ReverseDatasourceMeterial;
 
-		var query = reverse.CreateInsertQueryFrom(datasourceMaterial);
+		var query = reverse.CreateInsertQuery(datasourceMaterial);
 
 		var expect = """
 INSERT INTO

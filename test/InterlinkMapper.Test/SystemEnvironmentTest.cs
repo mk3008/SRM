@@ -16,11 +16,15 @@ public class SystemEnvironmentTest
 		{
 			DbConnetionConfig = new DummyDB(),
 		};
+
+		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
 	private readonly UnitTestLogger Logger;
 
 	public readonly SystemEnvironment Environment;
+
+	public readonly DummyMaterialRepository MaterialRepository;
 
 	private DbDatasource GetTestDatasouce()
 	{
@@ -137,40 +141,6 @@ RETURNING
 	}
 
 	[Fact]
-	public void CreateKeymapInsertQuery()
-	{
-		var query = Environment.CreateKeymapInsertQuery(GetTestDatasouce(), GetDummyDatasourceMeterial());
-
-		var expect = """
-INSERT INTO
-    sale_journals__m_sales (
-        sale_journal_id, sale_id
-    )
-SELECT
-    d.sale_journal_id,
-    d.sale_id
-FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.journal_closing_date,
-            t.sale_date,
-            t.shop_id,
-            t.price,
-            t.sale_id,
-			t.root__sale_journal_id,
-			t.origin__sale_journal_id
-        FROM
-            __datasource AS t
-    ) AS d
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
 	public void CreateRelationInsertQuery()
 	{
 		var query = Environment.CreateRelationInsertQuery(GetTestDatasouce(), GetDummyDatasourceMeterial(), 40);
@@ -200,6 +170,46 @@ FROM
         FROM
             __datasource AS t
     ) AS d
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void CreateKeymapDeleteQuery()
+	{
+		var datasource = DatasourceRepository.sales;
+		var datasourceMaterial = MaterialRepository.ReverseDatasourceMeterial;
+
+		var query = Environment.CreateKeymapDeleteQuery(datasource, datasourceMaterial);
+
+		var expect = """
+/* canceling the keymap due to reverse */
+DELETE FROM
+    sale_journals__m_sales AS d
+WHERE
+    (d.sale_journal_id) IN (
+        SELECT
+            d.origin__sale_journal_id AS sale_journal_id
+        FROM
+            (
+                SELECT
+                    t.sale_journal_id,
+                    t.root__sale_journal_id,
+                    t.origin__sale_journal_id,
+                    t.journal_closing_date,
+                    t.sale_date,
+                    t.shop_id,
+                    t.price,
+                    t.remarks,
+                    t.keymap_name,
+                    t.interlink__remarks
+                FROM
+                    __reverse_datasource AS t
+            ) AS d
+    )
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

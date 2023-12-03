@@ -1,4 +1,6 @@
-﻿namespace InterlinkMapper.Models;
+﻿using InterlinkMapper.Materializer;
+
+namespace InterlinkMapper.Models;
 
 public class KeymapTable : IMaterialInsertable
 {
