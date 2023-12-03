@@ -67,8 +67,6 @@ FROM
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
-
-
 	[Fact]
 	public void Reverse_CreateInsertQueryFrom()
 	{

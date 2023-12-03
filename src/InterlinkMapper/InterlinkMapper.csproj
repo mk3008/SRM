@@ -7,15 +7,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Batches\**" />
 		<Compile Remove="Configs\**" />
 		<Compile Remove="Services\**" />
 		<Compile Remove="Tables\**" />
-		<EmbeddedResource Remove="Batches\**" />
 		<EmbeddedResource Remove="Configs\**" />
 		<EmbeddedResource Remove="Services\**" />
 		<EmbeddedResource Remove="Tables\**" />
-		<None Remove="Batches\**" />
 		<None Remove="Configs\**" />
 		<None Remove="Services\**" />
 		<None Remove="Tables\**" />
@@ -38,6 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Include="Services\ReverseForwardingService.cs" />
 		<Compile Include="Services\AdditionalForwardingService.cs" />
 	</ItemGroup>
 
@@ -50,12 +48,6 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="RedOrb" Version="0.1.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Actions\" />
-		<Folder Include="Batches\espace\" />
-		<Folder Include="Services\escape\" />
 	</ItemGroup>
 
 </Project>

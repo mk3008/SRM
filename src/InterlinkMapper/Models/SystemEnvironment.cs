@@ -468,15 +468,14 @@ public class SystemEnvironment
 
 	public InsertQuery CreateKeymapInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
 	{
-		var table = GetKeymapTable(datasource);
+		var keymap = GetKeymapTable(datasource);
+		return keymap.CreateInsertQuery(datasourceMaterial);
+	}
 
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
-
-		sq.Select(d, table.DestinationSequenceColumn);
-		table.DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
-
-		return sq.ToInsertQuery(table.Definition.TableFullName);
+	public InsertQuery CreateReverseInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
+	{
+		var reverse = GetReverseTable(datasource.Destination);
+		return reverse.CreateInsertQuery(datasourceMaterial);
 	}
 
 	public InsertQuery CreateRelationInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial, long processId)

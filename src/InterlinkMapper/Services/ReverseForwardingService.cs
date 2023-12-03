@@ -6,17 +6,17 @@ using System.Data;
 
 namespace InterlinkMapper.Services;
 
-public class AdditionalForwardingService
+public class ReverseForwardingService
 {
-	public AdditionalForwardingService(SystemEnvironment environment)
+	public ReverseForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Materializer = new AdditionalForwardingMaterializer(Environment);
+		Materializer = new ReverseForwardingMaterializer(Environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private AdditionalForwardingMaterializer Materializer { get; init; }
+	private ReverseForwardingMaterializer Materializer { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
@@ -26,7 +26,7 @@ public class AdditionalForwardingService
 		var transaction = CreateTransactionRow(datasource);
 		transaction.TransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
 
-		var datasourceMaterial = Materializer.Create(connection, datasource, injector);
+		var datasourceMaterial = Materializer.Create(connection, datasource.Destination, injector);
 		if (datasourceMaterial == null || datasourceMaterial.Count == 0) return;
 
 		// create process row
@@ -36,8 +36,11 @@ public class AdditionalForwardingService
 		// transfer datasource
 		connection.Execute(datasource.Destination.CreateInsertQueryFrom(datasourceMaterial), commandTimeout: CommandTimeout);
 
+		// remove system relation mapping
+		connection.Execute(Environment.CreateKeymapDeleteQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
+
 		// create system relation mapping
-		connection.Execute(Environment.CreateKeymapInsertQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
+		connection.Execute(Environment.CreateReverseInsertQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
 		connection.Execute(Environment.CreateRelationInsertQuery(datasource, datasourceMaterial, process.ProcessId), commandTimeout: CommandTimeout);
 	}
 
@@ -57,7 +60,7 @@ public class AdditionalForwardingService
 		var keymap = Environment.GetKeymapTable(datasource);
 		var row = new ProcessRow()
 		{
-			ActionName = nameof(AdditionalForwardingService),
+			ActionName = nameof(ReverseForwardingMaterializer),
 			TransactionId = transactionId,
 			InsertCount = insertCount,
 			KeymapTableName = keymap.Definition.TableFullName,
@@ -66,5 +69,5 @@ public class AdditionalForwardingService
 	}
 }
 
-[GeneratePrivateProxy(typeof(AdditionalForwardingService))]
-public partial struct AdditionalForwardingServiceProxy;
+[GeneratePrivateProxy(typeof(ReverseForwardingService))]
+public partial struct ReverseForwardingServiceProxy;
