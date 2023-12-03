@@ -366,7 +366,7 @@ public class SystemEnvironment
 
 	public ValidationRequestTable GetValidationRequestTable(DbDatasource d)
 	{
-		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Destination.Table.TableName, d.DatasourceName);
+		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
 		var columndefs = new List<ColumnDefinition>
