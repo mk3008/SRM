@@ -29,6 +29,12 @@ public class ReverseForwardingService
 		var datasourceMaterial = Materializer.Create(connection, datasource.Destination, injector);
 		if (datasourceMaterial == null || datasourceMaterial.Count == 0) return;
 
+		// execute core
+		Execute(connection, datasource, transaction, datasourceMaterial);
+	}
+
+	public void Execute(IDbConnection connection, DbDatasource datasource, TransactionRow transaction, MaterializeResult datasourceMaterial)
+	{
 		// create process row
 		var process = CreateProcessRow(datasource, transaction.TransactionId, datasourceMaterial.Count);
 		process.ProcessId = connection.Execute(Environment.CreateProcessInsertQuery(process));

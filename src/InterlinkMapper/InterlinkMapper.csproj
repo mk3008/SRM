@@ -35,6 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Include="Services\ValidationForwardingService.cs" />
 		<Compile Include="Services\ReverseForwardingService.cs" />
 		<Compile Include="Services\AdditionalForwardingService.cs" />
 	</ItemGroup>
