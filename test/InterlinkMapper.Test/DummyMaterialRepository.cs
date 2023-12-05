@@ -6,53 +6,125 @@ namespace InterlinkMapper.Test;
 
 public class DummyMaterialRepository(SystemEnvironment environment)
 {
-	public MaterializeResult AdditionalRequestMeterial =>
-		new MaterializeResult()
+	public AdditionalMaterial AdditionalRequestMeterial =>
+		new AdditionalMaterial()
 		{
 			MaterialName = "__additional_request",
+			Count = 1,
+			SelectQuery = null!,
+			CommandTimeout = 10,
+			DatasourceKeyColumns = new(),
+			DestinationColumns = null!,
+			DestinationIdColumn = null!,
+			DestinationTable = null!,
+			KeymapTable = null!,
+			OriginIdColumn = null!,
+			PlaceHolderIdentifer = null!,
+			ProcessIdColumn = null!,
+			RelationTable = null!,
+			RemarksColumn = null!,
+			ReverseTable = null!,
+			RootIdColumn = null!,
 		};
 
-	public MaterializeResult ReverseRequestMeterial =>
-		new MaterializeResult()
+	public ReverseMaterial ReverseRequestMeterial =>
+		new ReverseMaterial()
 		{
 			MaterialName = "__reverse_request",
+			Count = 1,
+			SelectQuery = null!,
+			CommandTimeout = 10,
+			DestinationColumns = null!,
+			DestinationIdColumn = null!,
+			DestinationTable = null!,
+			OriginIdColumn = null!,
+			PlaceHolderIdentifer = null!,
+			ProcessIdColumn = null!,
+			RelationTable = null!,
+			RemarksColumn = null!,
+			ReverseTable = null!,
+			RootIdColumn = null!,
+			KeymapTableNameColumn = null!,
 		};
 
-	public MaterializeResult ValidationRequestMeterial =>
-		new MaterializeResult()
+	public ValidationMaterial ValidationRequestMeterial =>
+		new ValidationMaterial()
 		{
 			MaterialName = "__validation_request",
+			Count = 1,
+			SelectQuery = null!,
+			CommandTimeout = 10,
+			DatasourceKeyColumns = new(),
+			DestinationColumns = null!,
+			DestinationIdColumn = null!,
+			DestinationTable = null!,
+			KeymapTable = null!,
+			OriginIdColumn = null!,
+			PlaceHolderIdentifer = null!,
+			ProcessIdColumn = null!,
+			RelationTable = null!,
+			RemarksColumn = null!,
+			ReverseTable = null!,
+			RootIdColumn = null!,
+			KeymapTableNameColumn = null!,
 		};
 
 	public MaterializeResult AdditinalDatasourceMeterial => CreateAdditionalDatasourceMeterial();
 
 	public MaterializeResult ReverseDatasourceMeterial => CreateReverseDatasourceMeterial();
 
-	private MaterializeResult CreateAdditionalDatasourceMeterial()
+	private AdditionalMaterial CreateAdditionalDatasourceMeterial()
 	{
 		var requestMaterial = AdditionalRequestMeterial;
 
 		var service = new AdditionalForwardingMaterializer(environment);
-		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(requestMaterial, DatasourceRepository.sales, (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(DatasourceRepository.sales, requestMaterial, (SelectQuery x) => x);
 
-		return new MaterializeResult()
+		return new AdditionalMaterial()
 		{
 			MaterialName = query.TableFullName,
-			SelectQuery = query.ToSelectQuery()
+			SelectQuery = query.ToSelectQuery(),
+			Count = 1,
+			CommandTimeout = 10,
+			DatasourceKeyColumns = new(),
+			DestinationColumns = null!,
+			DestinationIdColumn = null!,
+			DestinationTable = null!,
+			KeymapTable = null!,
+			OriginIdColumn = null!,
+			PlaceHolderIdentifer = null!,
+			ProcessIdColumn = null!,
+			RelationTable = null!,
+			RemarksColumn = null!,
+			ReverseTable = null!,
+			RootIdColumn = null!,
 		};
 	}
 
-	private MaterializeResult CreateReverseDatasourceMeterial()
+	private ReverseMaterial CreateReverseDatasourceMeterial()
 	{
 		var requestMaterial = ReverseRequestMeterial;
 
 		var service = new ReverseForwardingMaterializer(environment);
-		var query = service.AsPrivateProxy().CreateReverseDatasourceMaterialQuery(requestMaterial, DestinationRepository.sale_journals, (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateReverseDatasourceMaterialQuery(DestinationRepository.sale_journals, requestMaterial, (SelectQuery x) => x);
 
-		return new MaterializeResult()
+		return new ReverseMaterial()
 		{
 			MaterialName = query.TableFullName,
-			SelectQuery = query.ToSelectQuery()
+			SelectQuery = query.ToSelectQuery(),
+			Count = 1,
+			CommandTimeout = 10,
+			DestinationColumns = null!,
+			DestinationIdColumn = null!,
+			DestinationTable = null!,
+			OriginIdColumn = null!,
+			PlaceHolderIdentifer = null!,
+			ProcessIdColumn = null!,
+			RelationTable = null!,
+			RemarksColumn = null!,
+			ReverseTable = null!,
+			RootIdColumn = null!,
+			KeymapTableNameColumn = null!,
 		};
 	}
 }

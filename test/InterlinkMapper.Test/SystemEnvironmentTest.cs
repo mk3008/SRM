@@ -31,27 +31,30 @@ public class SystemEnvironmentTest
 		return DatasourceRepository.sales;
 	}
 
-	private MaterializeResult GetDummyRequestMeterial()
-	{
-		return new MaterializeResult()
-		{
-			MaterialName = "__request",
-		};
-	}
+	//private MaterializeResult GetDummyRequestMeterial()
+	//{
+	//	return new MaterializeResult()
+	//	{
+	//		MaterialName = "__request",
+	//		Count = 1,
+	//		SelectQuery = null!
+	//	};
+	//}
 
-	private MaterializeResult GetDummyDatasourceMeterial()
-	{
-		var requestMaterial = GetDummyRequestMeterial();
+	//private MaterializeResult GetDummyDatasourceMeterial()
+	//{
+	//	var requestMaterial = GetDummyRequestMeterial();
 
-		var service = new AdditionalForwardingMaterializer(Environment);
-		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(requestMaterial, GetTestDatasouce(), (SelectQuery x) => x);
+	//	var service = new AdditionalForwardingMaterializer(Environment);
+	//	var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(GetTestDatasouce(), requestMaterial, (SelectQuery x) => x);
 
-		return new MaterializeResult()
-		{
-			MaterialName = query.TableFullName,
-			SelectQuery = query.ToSelectQuery()
-		};
-	}
+	//	return new MaterializeResult()
+	//	{
+	//		MaterialName = query.TableFullName,
+	//		SelectQuery = query.ToSelectQuery(),
+	//		Count = 1,
+	//	};
+	//}
 
 	private TransactionRow GetDummyTransactionRow()
 	{
@@ -140,80 +143,80 @@ RETURNING
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
-	[Fact]
-	public void CreateRelationInsertQuery()
-	{
-		var query = Environment.CreateRelationInsertQuery(GetTestDatasouce(), GetDummyDatasourceMeterial(), 40);
+	//	[Fact]
+	//	public void CreateRelationInsertQuery()
+	//	{
+	//		var query = Environment.CreateRelationInsertQuery(GetTestDatasouce(), GetDummyDatasourceMeterial(), 40);
 
-		var expect = """
-/*
-  :interlink__process_id = 40
-*/
-INSERT INTO
-    sale_journals__relation (
-        sale_journal_id, interlink__process_id
-    )
-SELECT
-    d.sale_journal_id,
-    :interlink__process_id AS interlink__process_id
-FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.journal_closing_date,
-            t.sale_date,
-            t.shop_id,
-            t.price,
-            t.sale_id,
-			t.root__sale_journal_id,
-			t.origin__sale_journal_id
-        FROM
-            __datasource AS t
-    ) AS d
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
+	//		var expect = """
+	///*
+	//  :interlink__process_id = 40
+	//*/
+	//INSERT INTO
+	//    sale_journals__relation (
+	//        sale_journal_id, interlink__process_id
+	//    )
+	//SELECT
+	//    d.sale_journal_id,
+	//    :interlink__process_id AS interlink__process_id
+	//FROM
+	//    (
+	//        SELECT
+	//            t.sale_journal_id,
+	//            t.journal_closing_date,
+	//            t.sale_date,
+	//            t.shop_id,
+	//            t.price,
+	//            t.sale_id,
+	//			t.root__sale_journal_id,
+	//			t.origin__sale_journal_id
+	//        FROM
+	//            __datasource AS t
+	//    ) AS d
+	//""";
+	//		var actual = query.ToText();
+	//		Logger.LogInformation(actual);
 
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
+	//		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	//	}
 
-	[Fact]
-	public void CreateKeymapDeleteQuery()
-	{
-		var datasource = DatasourceRepository.sales;
-		var datasourceMaterial = MaterialRepository.ReverseDatasourceMeterial;
+	//	[Fact]
+	//	public void CreateKeymapDeleteQuery()
+	//	{
+	//		var datasource = DatasourceRepository.sales;
+	//		var datasourceMaterial = MaterialRepository.ReverseDatasourceMeterial;
 
-		var query = Environment.CreateKeymapDeleteQuery(datasource, datasourceMaterial);
+	//		var query = Environment.CreateKeymapDeleteQuery(datasource, datasourceMaterial);
 
-		var expect = """
-/* canceling the keymap due to reverse */
-DELETE FROM
-    sale_journals__m_sales AS d
-WHERE
-    (d.sale_journal_id) IN (
-        SELECT
-            d.origin__sale_journal_id AS sale_journal_id
-        FROM
-            (
-                SELECT
-                    t.sale_journal_id,
-                    t.root__sale_journal_id,
-                    t.origin__sale_journal_id,
-                    t.journal_closing_date,
-                    t.sale_date,
-                    t.shop_id,
-                    t.price,
-                    t.remarks,
-                    t.keymap_name,
-                    t.interlink__remarks
-                FROM
-                    __reverse_datasource AS t
-            ) AS d
-    )
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
+	//		var expect = """
+	///* canceling the keymap due to reverse */
+	//DELETE FROM
+	//    sale_journals__m_sales AS d
+	//WHERE
+	//    (d.sale_journal_id) IN (
+	//        SELECT
+	//            d.origin__sale_journal_id AS sale_journal_id
+	//        FROM
+	//            (
+	//                SELECT
+	//                    t.sale_journal_id,
+	//                    t.root__sale_journal_id,
+	//                    t.origin__sale_journal_id,
+	//                    t.journal_closing_date,
+	//                    t.sale_date,
+	//                    t.shop_id,
+	//                    t.price,
+	//                    t.remarks,
+	//                    t.keymap_name,
+	//                    t.interlink__remarks
+	//                FROM
+	//                    __reverse_datasource AS t
+	//            ) AS d
+	//    )
+	//""";
+	//		var actual = query.ToText();
+	//		Logger.LogInformation(actual);
 
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
+	//		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	//	}
 }

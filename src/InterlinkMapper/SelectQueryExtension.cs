@@ -11,6 +11,13 @@ public static class SelectQueryExtension
 		return pname;
 	}
 
+	public static string Select(this SelectQuery source, string placeHolderIdentifer, string column, object value)
+	{
+		var pname = placeHolderIdentifer + column;
+		source.Select(source.AddParameter(pname, value)).As(column);
+		return pname;
+	}
+
 	public static void Select(this SelectQuery source, Sequence sequence)
 	{
 		source.Select(sequence.Command).As(sequence.Column);

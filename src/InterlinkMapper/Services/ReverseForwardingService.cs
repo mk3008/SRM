@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
-using PrivateProxy;
 using System.Data;
 
 namespace InterlinkMapper.Services;
@@ -26,28 +25,14 @@ public class ReverseForwardingService
 		var transaction = CreateTransactionRow(datasource);
 		transaction.TransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
 
-		var datasourceMaterial = Materializer.Create(connection, datasource.Destination, injector);
-		if (datasourceMaterial == null || datasourceMaterial.Count == 0) return;
+		var material = Materializer.Create(connection, datasource.Destination, injector);
+		if (material == null || material.Count == 0) return;
 
-		// execute core
-		Execute(connection, datasource, transaction, datasourceMaterial);
-	}
-
-	public void Execute(IDbConnection connection, DbDatasource datasource, TransactionRow transaction, MaterializeResult datasourceMaterial)
-	{
 		// create process row
-		var process = CreateProcessRow(datasource, transaction.TransactionId, datasourceMaterial.Count);
+		var process = CreateProcessRow(datasource, transaction.TransactionId, material.Count);
 		process.ProcessId = connection.Execute(Environment.CreateProcessInsertQuery(process));
 
-		// transfer datasource
-		connection.Execute(datasource.Destination.CreateInsertQueryFrom(datasourceMaterial), commandTimeout: CommandTimeout);
-
-		// remove system relation mapping
-		connection.Execute(Environment.CreateKeymapDeleteQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
-
-		// create system relation mapping
-		connection.Execute(Environment.CreateReverseInsertQuery(datasource, datasourceMaterial), commandTimeout: CommandTimeout);
-		connection.Execute(Environment.CreateRelationInsertQuery(datasource, datasourceMaterial, process.ProcessId), commandTimeout: CommandTimeout);
+		material.ExecuteTransfer(connection, process.ProcessId);
 	}
 
 	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")
@@ -74,6 +59,3 @@ public class ReverseForwardingService
 		return row;
 	}
 }
-
-[GeneratePrivateProxy(typeof(ReverseForwardingService))]
-public partial struct ReverseForwardingServiceProxy;

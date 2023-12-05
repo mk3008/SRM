@@ -26,22 +26,20 @@ public class ValidationForwardingService
 		var transaction = CreateTransactionRow(datasource);
 		transaction.TransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
 
-		var datasourceMaterial = Materializer.Create(connection, datasource, injector);
-		if (datasourceMaterial == null || datasourceMaterial.Count == 0) return;
+		var material = Materializer.Create(connection, datasource, injector);
+		if (material == null || material.Count == 0) return;
 
 		// create process row
-		var process = CreateProcessRow(datasource, transaction.TransactionId, datasourceMaterial.Count);
+		var process = CreateProcessRow(datasource, transaction.TransactionId, material.Count);
 		process.ProcessId = connection.Execute(Environment.CreateProcessInsertQuery(process));
 
 		// reverse transfer
-		var reverseServise = new ReverseForwardingService(Environment);
-		reverseServise.Execute(connection, datasource, transaction, datasourceMaterial);
+		material.ToReverseMaterial().ExecuteTransfer(connection, process.ProcessId);
 
 		// * additional transfer
 		// Before performing additional transfers,
 		// perform a reverse transfer first to release the keymap.
-		var additionalServise = new ReverseForwardingService(Environment);
-		additionalServise.Execute(connection, datasource, transaction, datasourceMaterial);
+		material.ToAdditionalMaterial().ExecuteTransfer(connection, process.ProcessId);
 	}
 
 	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")

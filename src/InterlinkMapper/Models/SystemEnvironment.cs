@@ -415,7 +415,6 @@ public class SystemEnvironment
 	{
 		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
-		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Destination.Sequence.Column);
 
 		var columndefs = new List<ColumnDefinition>
 		{
@@ -444,12 +443,6 @@ public class SystemEnvironment
 			AllowNull = false,
 			DefaultValue = DbEnvironment.TimestampDefaultValue,
 		});
-		columndefs.Add(new ColumnDefinition()
-		{
-			ColumnName = originColumn,
-			TypeName = DbEnvironment.NumericTypeName,
-			AllowNull = true,
-		});
 
 		var t = new InsertRequestTable()
 		{
@@ -460,7 +453,6 @@ public class SystemEnvironment
 				ColumnDefinitions = columndefs
 			},
 			RequestIdColumn = idcolumn,
-			OriginIdColumn = originColumn,
 			DatasourceKeyColumns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
 		};
 		return t;
@@ -528,19 +520,5 @@ public class SystemEnvironment
 		return iq;
 	}
 
-	public DeleteQuery CreateKeymapDeleteQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
-	{
-		var reverse = GetReverseTable(datasource.Destination);
-		var keymap = GetKeymapTable(datasource);
 
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
-
-		sq.Select(d, reverse.OriginIdColumn).As(datasource.Destination.Sequence.Column);
-
-		var q = sq.ToDeleteQuery(keymap.Definition.TableFullName);
-		q.AddComment("canceling the keymap due to reverse");
-
-		return q;
-	}
 }

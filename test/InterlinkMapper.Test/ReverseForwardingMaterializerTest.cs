@@ -67,7 +67,7 @@ FROM
 		var destination = DestinationRepository.sale_journals;
 		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
 
-		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, destination);
+		var query = Proxy.CreateOriginDeleteQuery(destination, requestMaterial);
 
 		var expect = """
 DELETE FROM
@@ -102,7 +102,7 @@ WHERE
 		var destination = DestinationRepository.sale_journals;
 		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
 
-		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, destination);
+		var query = Proxy.CleanUpMaterialRequestQuery(destination, requestMaterial);
 
 		var expect = """
 DELETE FROM
@@ -130,7 +130,7 @@ WHERE
 		var destination = DestinationRepository.sale_journals;
 		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
 
-		var query = Proxy.CreateReverseDatasourceMaterialQuery(requestMaterial, destination, (SelectQuery x) => x);
+		var query = Proxy.CreateReverseDatasourceMaterialQuery(destination, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE

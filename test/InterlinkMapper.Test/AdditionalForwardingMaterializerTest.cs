@@ -56,8 +56,6 @@ SELECT
     r.sale_journals__ri_sales_id,
     r.sale_id,
     r.created_at,
-    r.origin__sale_journal_id,
-    rev.root__sale_journal_id,
     ROW_NUMBER() OVER(
         PARTITION BY
             r.sale_id
@@ -66,7 +64,35 @@ SELECT
     ) AS row_num
 FROM
     sale_journals__ri_sales AS r
-    LEFT JOIN sale_journals__reverse AS rev ON r.origin__sale_journal_id = rev.sale_journal_id
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void TestCreateRequestMaterialTableQueryAsReverseCascade()
+	{
+		var datasource = DatasourceRepository.sales;
+		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
+
+		var expect = """
+CREATE TEMPORARY TABLE
+    __additional_request
+AS
+SELECT
+    r.sale_journals__ri_sales_id,
+    r.sale_id,
+    r.created_at,
+    ROW_NUMBER() OVER(
+        PARTITION BY
+            r.sale_id
+        ORDER BY
+            r.sale_journals__ri_sales_id
+    ) AS row_num
+FROM
+    sale_journals__ri_sales AS r
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -79,7 +105,7 @@ FROM
 	{
 		var datasource = DatasourceRepository.sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
-		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, datasource);
+		var query = Proxy.CreateOriginDeleteQuery(datasource, requestMaterial);
 
 		var expect = """
 DELETE FROM
@@ -113,7 +139,7 @@ WHERE
 	{
 		var datasource = DatasourceRepository.sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
-		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, datasource);
+		var query = Proxy.CleanUpMaterialRequestQuery(datasource, requestMaterial);
 
 		var expect = """
 DELETE FROM
@@ -148,7 +174,7 @@ WHERE
 		var datasource = DatasourceRepository.sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
-		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
+		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -203,7 +229,7 @@ FROM
 		var datasource = DatasourceRepository.cte_sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
-		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
+		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE

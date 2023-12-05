@@ -1,7 +1,9 @@
-﻿using Carbunql.Tables;
+﻿using Carbunql.Clauses;
+using Carbunql.Tables;
 using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
+using System.Diagnostics;
 
 namespace InterlinkMapper.Materializer;
 
@@ -22,14 +24,14 @@ public class ValidationMaterializer
 
 	public string RowNumberColumnName { get; set; } = "row_num";
 
-	public MaterializeResult? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public ValidationMaterial? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (!datasource.Destination.AllowReverse) throw new NotSupportedException();
 		if (string.IsNullOrEmpty(Environment.DbEnvironment.LengthFunction)) throw new NullReferenceException(nameof(Environment.DbEnvironment.LengthFunction));
 
 		var requestMaterialQuery = CreateRequestMaterialTableQuery(datasource);
 
-		var requestMaterial = ExecuteMaterialQuery(connection, requestMaterialQuery);
+		var requestMaterial = ExecuteMaterialQuery(connection, datasource, requestMaterialQuery);
 
 		if (requestMaterial.Count == 0) return null;
 
@@ -40,22 +42,43 @@ public class ValidationMaterializer
 		if (requestMaterial.Count == deleteRows) return null;
 
 		var datasourceMaterialQuery = CreateValidationDatasourceMaterialQuery(requestMaterial, datasource, injector);
-		return ExecuteMaterialQuery(connection, datasourceMaterialQuery);
+		return ExecuteMaterialQuery(connection, datasource, datasourceMaterialQuery);
 	}
 
-	private MaterializeResult ExecuteMaterialQuery(IDbConnection connection, CreateTableQuery createTableQuery)
+	private ValidationMaterial ExecuteMaterialQuery(IDbConnection connection, DbDatasource datasource, CreateTableQuery createTableQuery)
 	{
+		var process = Environment.GetProcessTable();
+		var relation = Environment.GetRelationTable(datasource.Destination);
+		var keymap = Environment.GetKeymapTable(datasource);
+		var reverse = Environment.GetReverseTable(datasource.Destination);
+
 		var tableName = createTableQuery.TableFullName;
 
 		connection.Execute(createTableQuery, commandTimeout: CommandTimeout);
 
 		var rows = connection.ExecuteScalar<int>(createTableQuery.ToCountQuery());
 
-		return new MaterializeResult
+		return new ValidationMaterial
 		{
 			Count = rows,
 			MaterialName = tableName,
 			SelectQuery = createTableQuery.ToSelectQuery(),
+
+			DatasourceKeyColumns = datasource.KeyColumns.Select(x => x.ColumnName).ToList(),
+			RootIdColumn = reverse.RootIdColumn,
+			OriginIdColumn = reverse.OriginIdColumn,
+			RemarksColumn = reverse.RemarksColumn,
+			DestinationTable = datasource.Destination.Table.GetTableFullName(),
+			DestinationColumns = datasource.Destination.Table.Columns,
+			DestinationIdColumn = datasource.Destination.Sequence.Column,
+			KeymapTable = keymap.Definition.TableFullName,
+			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
+			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
+			ProcessIdColumn = process.ProcessIdColumn,
+			RelationTable = relation.Definition.TableFullName,
+			ReverseTable = reverse.Definition.TableFullName,
+
+			KeymapTableNameColumn = process.KeymapTableNameColumn
 		};
 	}
 

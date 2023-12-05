@@ -1,5 +1,4 @@
 using Carbunql;
-using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
