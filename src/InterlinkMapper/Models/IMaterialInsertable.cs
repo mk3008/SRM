@@ -9,6 +9,7 @@ public interface IMaterialInsertable
 
 public static class IMaterialInsertableExtension
 {
+	[Obsolete]
 	public static InsertQuery CreateInsertQuery(this IMaterialInsertable source, MaterializeResult datasourceMaterial)
 	{
 		var sq = new SelectQuery();

@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using PrivateProxy;
 
 namespace InterlinkMapper.Materializer;
 
@@ -45,3 +46,6 @@ public class AdditionalMaterial : MaterializeResult
 		connection.Execute(CreateReverseInsertQuery(), commandTimeout: CommandTimeout);
 	}
 }
+
+[GeneratePrivateProxy(typeof(AdditionalMaterial))]
+public partial struct AdditionalMaterialProxy;

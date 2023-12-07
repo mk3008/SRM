@@ -11,8 +11,14 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		{
 			MaterialName = "__additional_request",
 			Count = 1,
-			SelectQuery = null!,
+			SelectQuery = GetRequestQuery(),
 		};
+
+	private SelectQuery GetRequestQuery()
+	{
+		var m = new AdditionalForwardingMaterializer(environment);
+		return m.AsPrivateProxy().CreateRequestMaterialQuery(DatasourceRepository.sales).ToSelectQuery();
+	}
 
 	public ReverseMaterial ReverseRequestMeterial =>
 		new ReverseMaterial()
@@ -56,36 +62,29 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			KeymapTableNameColumn = null!,
 		};
 
-	public MaterializeResult AdditinalMeterial => CreateAdditionalMaterialQuery();
+	public AdditionalMaterial AdditinalMeterial => CreateAdditionalMaterialQuery();
 
 	public MaterializeResult ReverseDatasourceMeterial => CreateReverseDatasourceMeterial();
 
 	private AdditionalMaterial CreateAdditionalMaterialQuery()
 	{
-		var requestMaterial = AdditionalRequestMeterial;
-
+		var datasource = DatasourceRepository.sales;
+		var request = AdditionalRequestMeterial;
 		var service = new AdditionalForwardingMaterializer(environment);
-		var query = service.AsPrivateProxy().CreateAdditionalMaterialQuery(DatasourceRepository.sales, requestMaterial, (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateAdditionalMaterialQuery(
+			datasource,
+			request,
+			(SelectQuery x) => x
+		);
 
-		return new AdditionalMaterial()
+		var material = new Material
 		{
+			Count = 1,
 			MaterialName = query.TableFullName,
 			SelectQuery = query.ToSelectQuery(),
-			Count = 1,
-			CommandTimeout = 10,
-			DatasourceKeyColumns = new(),
-			DestinationColumns = null!,
-			DestinationIdColumn = null!,
-			DestinationTable = null!,
-			KeymapTable = null!,
-			OriginIdColumn = null!,
-			PlaceHolderIdentifer = null!,
-			ProcessIdColumn = null!,
-			RelationTable = null!,
-			RemarksColumn = null!,
-			ReverseTable = null!,
-			RootIdColumn = null!,
 		};
+
+		return service.AsPrivateProxy().ToAdditionalMaterial(datasource, material);
 	}
 
 	private ReverseMaterial CreateReverseDatasourceMeterial()

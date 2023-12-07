@@ -34,31 +34,32 @@ public class DestinationTest
 		var query = destination.CreateInsertQueryFrom(datasourceMaterial);
 
 		var expect = """
-	INSERT INTO
-	    sale_journals (
-	        sale_journal_id, journal_closing_date, sale_date, shop_id, price
-	    )
-	SELECT
-	    d.sale_journal_id,
-	    d.journal_closing_date,
-	    d.sale_date,
-	    d.shop_id,
-	    d.price
-	FROM
-	    (
-	        SELECT
-	            t.sale_journal_id,
-	            t.journal_closing_date,
-	            t.sale_date,
-	            t.shop_id,
-	            t.price,
-	            t.sale_id,
-				t.root__sale_journal_id,
-				t.origin__sale_journal_id
-	        FROM
-	            __datasource AS t
-	    ) AS d
-	""";
+INSERT INTO
+	sale_journals (
+	    sale_journal_id, journal_closing_date, sale_date, shop_id, price
+	)
+SELECT
+	d.sale_journal_id,
+	d.journal_closing_date,
+	d.sale_date,
+	d.shop_id,
+	d.price
+FROM
+	(
+	    SELECT
+	        t.sale_journal_id,
+	        t.journal_closing_date,
+	        t.sale_date,
+	        t.shop_id,
+	        t.price,
+	        t.sale_id,
+	        t.root__sale_journal_id,
+	        t.origin__sale_journal_id,
+	        t.interlink__remarks
+	    FROM
+	        __datasource AS t
+	) AS d
+""";
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
 

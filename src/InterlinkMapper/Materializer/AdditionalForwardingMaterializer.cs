@@ -59,25 +59,11 @@ public class AdditionalForwardingMaterializer
 		var keymap = Environment.GetKeymapTable(datasource);
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 
-		var sq = (SelectQuery)material.SelectQuery.DeepCopy();
-		if (!sq.SelectClause!.Where(x => x.Alias == reverse.RootIdColumn).Any())
-		{
-			sq.Select("null::int8").As(reverse.RootIdColumn);
-		};
-		if (!sq.SelectClause!.Where(x => x.Alias == reverse.OriginIdColumn).Any())
-		{
-			sq.Select("null::int8").As(reverse.RootIdColumn);
-		};
-		if (!sq.SelectClause!.Where(x => x.Alias == reverse.RemarksColumn).Any())
-		{
-			sq.Select("null::text").As(reverse.RemarksColumn);
-		};
-
 		return new AdditionalMaterial
 		{
 			Count = material.Count,
 			MaterialName = material.MaterialName,
-			SelectQuery = sq,
+			SelectQuery = material.SelectQuery,
 			DatasourceKeyColumns = datasource.KeyColumns.Select(x => x.ColumnName).ToList(),
 			RootIdColumn = reverse.RootIdColumn,
 			OriginIdColumn = reverse.OriginIdColumn,
@@ -121,6 +107,7 @@ public class AdditionalForwardingMaterializer
 		// For add requests, origin information does not exist.
 		sq.Select("null::int8").As(reverse.RootIdColumn);
 		sq.Select("null::int8").As(reverse.OriginIdColumn);
+		sq.Select("null::text").As(reverse.RemarksColumn);
 
 		sq.Select(new FunctionValue("row_number", () =>
 		{
@@ -225,6 +212,7 @@ public class AdditionalForwardingMaterializer
 
 		sq.Select(rm, reverse.RootIdColumn);
 		sq.Select(rm, reverse.OriginIdColumn);
+		sq.Select(rm, reverse.RemarksColumn);
 
 		return sq;
 	}

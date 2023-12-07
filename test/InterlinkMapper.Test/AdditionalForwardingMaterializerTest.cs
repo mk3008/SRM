@@ -45,6 +45,7 @@ SELECT
     r.created_at,
     null::int8 AS root__sale_journal_id,
     null::int8 AS origin__sale_journal_id,
+    null::text AS interlink__remarks,
     ROW_NUMBER() OVER(
         PARTITION BY
             r.sale_id
@@ -150,7 +151,8 @@ WITH
             d.price,
             d.sale_id,
             rm.root__sale_journal_id,
-            rm.origin__sale_journal_id
+            rm.origin__sale_journal_id,
+            rm.interlink__remarks
         FROM
             (
                 /* raw data source */
@@ -173,7 +175,8 @@ SELECT
     d.price,
     d.sale_id,
     d.root__sale_journal_id,
-    d.origin__sale_journal_id
+    d.origin__sale_journal_id,
+    d.interlink__remarks
 FROM
     _target_datasource AS d
 """;
@@ -206,7 +209,8 @@ WITH
             s.sale_id,
             s.sale_detail_id,
             rm.root__sale_journal_id,
-            rm.origin__sale_journal_id
+            rm.origin__sale_journal_id,
+            rm.interlink__remarks
         FROM
             sale_detail AS s
             INNER JOIN __additional_request AS rm ON s.sale_id = rm.sale_id
@@ -220,7 +224,8 @@ WITH
             d.price,
             d.sale_id,
             rm.root__sale_journal_id,
-            rm.origin__sale_journal_id
+            rm.origin__sale_journal_id,
+            rm.interlink__remarks
         FROM
             (
                 /* raw data source */
@@ -248,7 +253,8 @@ SELECT
     d.price,
     d.sale_id,
     d.root__sale_journal_id,
-    d.origin__sale_journal_id
+    d.origin__sale_journal_id,
+    d.interlink__remarks
 FROM
     _target_datasource AS d
 """;

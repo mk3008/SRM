@@ -32,11 +32,8 @@ public class MaterialInsertableTest
 	[Fact]
 	public void Keymap_CreateInsertQueryFrom()
 	{
-		var datasource = DatasourceRepository.sales;
-		var keymap = Environment.GetKeymapTable(datasource);
-		var datasourceMaterial = MaterialRepository.AdditinalMeterial;
-
-		var query = keymap.CreateInsertQuery(datasourceMaterial);
+		var material = MaterialRepository.AdditinalMeterial;
+		var query = material.AsPrivateProxy().CreateKeymapInsertQuery();
 
 		var expect = """
 INSERT INTO
@@ -56,7 +53,8 @@ FROM
             t.price,
             t.sale_id,
             t.root__sale_journal_id,
-            t.origin__sale_journal_id
+            t.origin__sale_journal_id,
+            t.interlink__remarks
         FROM
             __datasource AS t
     ) AS d
