@@ -1,7 +1,4 @@
-﻿using Carbunql.Building;
-using InterlinkMapper.Materializer;
-
-namespace InterlinkMapper.Models;
+﻿namespace InterlinkMapper.Models;
 
 public class SystemEnvironment
 {
@@ -458,31 +455,6 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public InsertQuery CreateKeymapInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
-	{
-		var keymap = GetKeymapTable(datasource);
-		return keymap.CreateInsertQuery(datasourceMaterial);
-	}
-
-	public InsertQuery CreateReverseInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial)
-	{
-		var reverse = GetReverseTable(datasource.Destination);
-		return reverse.CreateInsertQuery(datasourceMaterial);
-	}
-
-	public InsertQuery CreateRelationInsertQuery(DbDatasource datasource, MaterializeResult datasourceMaterial, long processId)
-	{
-		var table = GetRelationTable(datasource.Destination);
-
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");
-
-		sq.Select(d, table.DestinationSequenceColumn);
-		sq.Select(DbEnvironment, table.ProcessIdColumn, processId);
-
-		return sq.ToInsertQuery(table.Definition.TableFullName);
-	}
-
 	public InsertQuery CreateTransactionInsertQuery(TransactionRow row)
 	{
 		var table = GetTansactionTable();
@@ -519,6 +491,4 @@ public class SystemEnvironment
 
 		return iq;
 	}
-
-
 }
