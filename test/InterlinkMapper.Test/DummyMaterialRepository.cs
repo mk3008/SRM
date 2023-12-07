@@ -6,25 +6,12 @@ namespace InterlinkMapper.Test;
 
 public class DummyMaterialRepository(SystemEnvironment environment)
 {
-	public AdditionalMaterial AdditionalRequestMeterial =>
-		new AdditionalMaterial()
+	public Material AdditionalRequestMeterial =>
+		new Material()
 		{
 			MaterialName = "__additional_request",
 			Count = 1,
 			SelectQuery = null!,
-			CommandTimeout = 10,
-			DatasourceKeyColumns = new(),
-			DestinationColumns = null!,
-			DestinationIdColumn = null!,
-			DestinationTable = null!,
-			KeymapTable = null!,
-			OriginIdColumn = null!,
-			PlaceHolderIdentifer = null!,
-			ProcessIdColumn = null!,
-			RelationTable = null!,
-			RemarksColumn = null!,
-			ReverseTable = null!,
-			RootIdColumn = null!,
 		};
 
 	public ReverseMaterial ReverseRequestMeterial =>
@@ -69,16 +56,16 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			KeymapTableNameColumn = null!,
 		};
 
-	public MaterializeResult AdditinalDatasourceMeterial => CreateAdditionalDatasourceMeterial();
+	public MaterializeResult AdditinalMeterial => CreateAdditionalMaterialQuery();
 
 	public MaterializeResult ReverseDatasourceMeterial => CreateReverseDatasourceMeterial();
 
-	private AdditionalMaterial CreateAdditionalDatasourceMeterial()
+	private AdditionalMaterial CreateAdditionalMaterialQuery()
 	{
 		var requestMaterial = AdditionalRequestMeterial;
 
 		var service = new AdditionalForwardingMaterializer(environment);
-		var query = service.AsPrivateProxy().CreateAdditionalDatasourceMaterialQuery(DatasourceRepository.sales, requestMaterial, (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateAdditionalMaterialQuery(DatasourceRepository.sales, requestMaterial, (SelectQuery x) => x);
 
 		return new AdditionalMaterial()
 		{

@@ -21,36 +21,45 @@ public class AdditionalForwardingMaterializer
 
 	public AdditionalMaterial? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var requestMaterialQuery = CreateRequestMaterialTableQuery(datasource);
+		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
+		var request = CreateMaterial(connection, requestMaterialQuery);
+		if (request.Count == 0) return null;
 
-		var requestMaterial = ExecuteMaterialQuery(connection, datasource, requestMaterialQuery);
-
-		if (requestMaterial.Count == 0) return null;
-
-		ExecuteDeleteOriginRequest(connection, datasource, requestMaterial);
-		var deleteRows = ExecuteCleanUpMaterialRequest(connection, datasource, requestMaterial);
+		DeleteOriginRequest(connection, datasource, request);
+		var deleteRows = CleanUpMaterialRequest(connection, datasource, request);
 
 		// If all requests are deleted, there are no processing targets.
-		if (requestMaterial.Count == deleteRows) return null;
+		if (request.Count == deleteRows) return null;
 
-		var datasourceMaterialQuery = CreateAdditionalDatasourceMaterialQuery(datasource, requestMaterial, injector);
-		return ExecuteMaterialQuery(connection, datasource, datasourceMaterialQuery);
+		var additionalMaterialQuery = CreateAdditionalMaterialQuery(datasource, request, injector);
+		var additional = CreateMaterial(connection, additionalMaterialQuery);
+
+		return ToAdditionalMaterial(datasource, additional);
 	}
 
-	private AdditionalMaterial ExecuteMaterialQuery(IDbConnection connection, DbDatasource datasource, CreateTableQuery createTableQuery)
+	private Material CreateMaterial(IDbConnection connection, CreateTableQuery query)
+	{
+		var tableName = query.TableFullName;
+
+		connection.Execute(query, commandTimeout: CommandTimeout);
+		var rows = connection.ExecuteScalar<int>(query.ToCountQuery());
+
+		return new Material
+		{
+			Count = rows,
+			MaterialName = tableName,
+			SelectQuery = query.ToSelectQuery(),
+		};
+	}
+
+	private AdditionalMaterial ToAdditionalMaterial(DbDatasource datasource, Material material)
 	{
 		var process = Environment.GetProcessTable();
 		var relation = Environment.GetRelationTable(datasource.Destination);
 		var keymap = Environment.GetKeymapTable(datasource);
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 
-		var tableName = createTableQuery.TableFullName;
-
-		connection.Execute(createTableQuery, commandTimeout: CommandTimeout);
-
-		var rows = connection.ExecuteScalar<int>(createTableQuery.ToCountQuery());
-
-		var sq = createTableQuery.ToSelectQuery();
+		var sq = (SelectQuery)material.SelectQuery.DeepCopy();
 		if (!sq.SelectClause!.Where(x => x.Alias == reverse.RootIdColumn).Any())
 		{
 			sq.Select("null::int8").As(reverse.RootIdColumn);
@@ -66,8 +75,8 @@ public class AdditionalForwardingMaterializer
 
 		return new AdditionalMaterial
 		{
-			Count = rows,
-			MaterialName = tableName,
+			Count = material.Count,
+			MaterialName = material.MaterialName,
 			SelectQuery = sq,
 			DatasourceKeyColumns = datasource.KeyColumns.Select(x => x.ColumnName).ToList(),
 			RootIdColumn = reverse.RootIdColumn,
@@ -85,19 +94,19 @@ public class AdditionalForwardingMaterializer
 		};
 	}
 
-	private int ExecuteDeleteOriginRequest(IDbConnection connection, DbDatasource datasource, MaterializeResult result)
+	private int DeleteOriginRequest(IDbConnection connection, DbDatasource datasource, Material result)
 	{
 		var query = CreateOriginDeleteQuery(datasource, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private int ExecuteCleanUpMaterialRequest(IDbConnection connection, DbDatasource datasource, MaterializeResult result)
+	private int CleanUpMaterialRequest(IDbConnection connection, DbDatasource datasource, Material result)
 	{
 		var query = CleanUpMaterialRequestQuery(datasource, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private CreateTableQuery CreateRequestMaterialTableQuery(DbDatasource datasource)
+	private CreateTableQuery CreateRequestMaterialQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
 		var reverse = Environment.GetReverseTable(datasource.Destination);
@@ -105,14 +114,14 @@ public class AdditionalForwardingMaterializer
 		var sq = request.ToSelectQuery();
 		var f = sq.FromClause!;
 		var d = f.Root;
-		//var rev = f.LeftJoin(reverse.Definition.TableFullName).As("rev").On(x =>
-		//{
-		//	return new ColumnValue(d, request.OriginIdColumn).Equal(x.Table, reverse.ReverseIdColumn);
-		//});
+
 		var args = new ValueCollection();
 		datasource.KeyColumns.ForEach(key => args.Add(new ColumnValue(d, key.ColumnName)));
 
-		//sq.Select(rev, reverse.RootIdColumn);
+		// For add requests, origin information does not exist.
+		sq.Select("null::int8").As(reverse.RootIdColumn);
+		sq.Select("null::int8").As(reverse.OriginIdColumn);
+
 		sq.Select(new FunctionValue("row_number", () =>
 		{
 			var over = new OverClause();
@@ -125,7 +134,7 @@ public class AdditionalForwardingMaterializer
 		return sq.ToCreateTableQuery(name);
 	}
 
-	private DeleteQuery CreateOriginDeleteQuery(DbDatasource datasource, MaterializeResult result)
+	private DeleteQuery CreateOriginDeleteQuery(DbDatasource datasource, Material result)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
 		var requestTable = request.Definition.TableFullName;
@@ -151,7 +160,7 @@ public class AdditionalForwardingMaterializer
 		return sq.ToDeleteQuery(requestTable);
 	}
 
-	private DeleteQuery CleanUpMaterialRequestQuery(DbDatasource datasource, MaterializeResult result)
+	private DeleteQuery CleanUpMaterialRequestQuery(DbDatasource datasource, Material result)
 	{
 		var keyamp = Environment.GetKeymapTable(datasource);
 		var keymapTable = keyamp.Definition.TableFullName;
@@ -180,7 +189,7 @@ public class AdditionalForwardingMaterializer
 		return sq.ToDeleteQuery(result.MaterialName);
 	}
 
-	private SelectQuery CreateAdditionalDatasourceSelectQuery(DbDatasource datasource, MaterializeResult request)
+	private SelectQuery CreateAdditionalDatasourceSelectQuery(DbDatasource datasource, Material request)
 	{
 		var ds = datasource.ToSelectQuery();
 		var raw = ds.GetCommonTables().Where(x => x.Alias == "__raw").FirstOrDefault();
@@ -188,7 +197,6 @@ public class AdditionalForwardingMaterializer
 		if (raw != null && raw.Table is VirtualTable vt && vt.Query is SelectQuery cte)
 		{
 			InjectRequestMaterialFilter(cte, datasource, request);
-			//return ds;
 		}
 
 		var sq = new SelectQuery();
@@ -199,7 +207,7 @@ public class AdditionalForwardingMaterializer
 		return sq;
 	}
 
-	private SelectQuery InjectRequestMaterialFilter(SelectQuery sq, DbDatasource datasource, MaterializeResult request)
+	private SelectQuery InjectRequestMaterialFilter(SelectQuery sq, DbDatasource datasource, Material request)
 	{
 		sq.AddComment("inject request material filter");
 
@@ -221,7 +229,7 @@ public class AdditionalForwardingMaterializer
 		return sq;
 	}
 
-	private CreateTableQuery CreateAdditionalDatasourceMaterialQuery(DbDatasource datasource, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
+	private CreateTableQuery CreateAdditionalMaterialQuery(DbDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
 		var _datasource = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As("_target_datasource");

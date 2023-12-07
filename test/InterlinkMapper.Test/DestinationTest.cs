@@ -29,7 +29,7 @@ public class DestinationTest
 	public void CreateInsertQueryFromAdditionalMaterial()
 	{
 		var destination = DestinationRepository.sale_journals;
-		var datasourceMaterial = MaterialRepository.AdditinalDatasourceMeterial;
+		var datasourceMaterial = MaterialRepository.AdditinalMeterial;
 
 		var query = destination.CreateInsertQueryFrom(datasourceMaterial);
 

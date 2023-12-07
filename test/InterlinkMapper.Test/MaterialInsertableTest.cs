@@ -34,7 +34,7 @@ public class MaterialInsertableTest
 	{
 		var datasource = DatasourceRepository.sales;
 		var keymap = Environment.GetKeymapTable(datasource);
-		var datasourceMaterial = MaterialRepository.AdditinalDatasourceMeterial;
+		var datasourceMaterial = MaterialRepository.AdditinalMeterial;
 
 		var query = keymap.CreateInsertQuery(datasourceMaterial);
 

@@ -29,24 +29,11 @@ public class AdditionalForwardingMaterializerTest
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
-	//private DbDatasource GetTestDatasouce()
-	//{
-	//	return DatasourceRepository.sales;
-	//}
-
-	//private MaterializeResult GetDummyRequestMeterial()
-	//{
-	//	return new MaterializeResult()
-	//	{
-	//		MaterialName = "__additional_request",
-	//	};
-	//}
-
 	[Fact]
-	public void TestCreateRequestMaterialTableQuery()
+	public void TestCreateRequestMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
+		var query = Proxy.CreateRequestMaterialQuery(datasource);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -56,35 +43,8 @@ SELECT
     r.sale_journals__ri_sales_id,
     r.sale_id,
     r.created_at,
-    ROW_NUMBER() OVER(
-        PARTITION BY
-            r.sale_id
-        ORDER BY
-            r.sale_journals__ri_sales_id
-    ) AS row_num
-FROM
-    sale_journals__ri_sales AS r
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void TestCreateRequestMaterialTableQueryAsReverseCascade()
-	{
-		var datasource = DatasourceRepository.sales;
-		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
-
-		var expect = """
-CREATE TEMPORARY TABLE
-    __additional_request
-AS
-SELECT
-    r.sale_journals__ri_sales_id,
-    r.sale_id,
-    r.created_at,
+    null::int8 AS root__sale_journal_id,
+    null::int8 AS origin__sale_journal_id,
     ROW_NUMBER() OVER(
         PARTITION BY
             r.sale_id
@@ -169,12 +129,12 @@ WHERE
 	}
 
 	[Fact]
-	public void TestCreateDatasourceMaterialQuery()
+	public void TestCreateAdditionalMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
-		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
+		var query = Proxy.CreateAdditionalMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -224,12 +184,12 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateDatasourceMaterialQuery_Has_raw_CTE()
+	public void TestCreateAdditionalMaterialQuery_Has_raw_CTE()
 	{
 		var datasource = DatasourceRepository.cte_sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
-		var query = Proxy.CreateAdditionalDatasourceMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
+		var query = Proxy.CreateAdditionalMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
