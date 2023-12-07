@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using PrivateProxy;
 
 namespace InterlinkMapper.Materializer;
 
@@ -35,9 +36,9 @@ public class ReverseMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
 
+		sq.Select(d, DestinationIdColumn);
 		sq.Select(d, RootIdColumn);
 		sq.Select(d, OriginIdColumn);
-		sq.Select(d, DestinationIdColumn);
 		sq.Select(d, RemarksColumn);
 
 		return sq.ToInsertQuery(ReverseTable);
@@ -58,3 +59,6 @@ public class ReverseMaterial : MaterializeResult
 		connection.Execute(CreateReverseInsertQuery(), commandTimeout: CommandTimeout);
 	}
 }
+
+[GeneratePrivateProxy(typeof(ReverseMaterial))]
+public partial struct ReverseMaterialProxy;

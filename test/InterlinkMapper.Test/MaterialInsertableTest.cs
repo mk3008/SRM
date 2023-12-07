@@ -68,11 +68,8 @@ FROM
 	[Fact]
 	public void Reverse_CreateInsertQueryFrom()
 	{
-		var destination = DestinationRepository.sale_journals;
-		var reverse = Environment.GetReverseTable(destination);
-		var datasourceMaterial = MaterialRepository.ReverseDatasourceMeterial;
-
-		var query = reverse.CreateInsertQuery(datasourceMaterial);
+		var material = MaterialRepository.ReverseMeterial;
+		var query = material.AsPrivateProxy().CreateReverseInsertQuery();
 
 		var expect = """
 INSERT INTO

@@ -6,7 +6,7 @@ using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class AdditionalForwardingMaterializer
+public class AdditionalForwardingMaterializer : IMaterializer
 {
 	public AdditionalForwardingMaterializer(SystemEnvironment environment)
 	{
@@ -22,7 +22,7 @@ public class AdditionalForwardingMaterializer
 	public AdditionalMaterial? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
-		var request = CreateMaterial(connection, requestMaterialQuery);
+		var request = this.CreateMaterial(connection, requestMaterialQuery);
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
@@ -31,25 +31,10 @@ public class AdditionalForwardingMaterializer
 		// If all requests are deleted, there are no processing targets.
 		if (request.Count == deleteRows) return null;
 
-		var additionalMaterialQuery = CreateAdditionalMaterialQuery(datasource, request, injector);
-		var additional = CreateMaterial(connection, additionalMaterialQuery);
+		var query = CreateAdditionalMaterialQuery(datasource, request, injector);
+		var additional = this.CreateMaterial(connection, query);
 
 		return ToAdditionalMaterial(datasource, additional);
-	}
-
-	private Material CreateMaterial(IDbConnection connection, CreateTableQuery query)
-	{
-		var tableName = query.TableFullName;
-
-		connection.Execute(query, commandTimeout: CommandTimeout);
-		var rows = connection.ExecuteScalar<int>(query.ToCountQuery());
-
-		return new Material
-		{
-			Count = rows,
-			MaterialName = tableName,
-			SelectQuery = query.ToSelectQuery(),
-		};
 	}
 
 	private AdditionalMaterial ToAdditionalMaterial(DbDatasource datasource, Material material)

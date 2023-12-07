@@ -34,7 +34,7 @@ public class ReverseForwardingMaterializerTest
 	{
 		var destination = DestinationRepository.sale_journals;
 
-		var query = Proxy.CreateRequestMaterialTableQuery(destination);
+		var query = Proxy.CreateRequestMaterialQuery(destination);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -130,7 +130,7 @@ WHERE
 		var destination = DestinationRepository.sale_journals;
 		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
 
-		var query = Proxy.CreateReverseDatasourceMaterialQuery(destination, requestMaterial, (SelectQuery x) => x);
+		var query = Proxy.CreateReverseMaterialQuery(destination, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE

@@ -1,12 +1,10 @@
-﻿using Carbunql.Clauses;
-using InterlinkMapper.Models;
+﻿using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
-using System.Diagnostics;
 
 namespace InterlinkMapper.Materializer;
 
-public class ReverseForwardingMaterializer
+public class ReverseForwardingMaterializer : IMaterializer
 {
 	public ReverseForwardingMaterializer(SystemEnvironment environment)
 	{
@@ -23,40 +21,34 @@ public class ReverseForwardingMaterializer
 	{
 		if (!destination.AllowReverse) throw new NotSupportedException();
 
-		var requestMaterialQuery = CreateRequestMaterialTableQuery(destination);
+		var requestMaterialQuery = CreateRequestMaterialQuery(destination);
+		var request = this.CreateMaterial(connection, requestMaterialQuery);
 
-		var requestMaterial = ExecuteMaterialQuery(connection, destination, requestMaterialQuery);
+		if (request.Count == 0) return null;
 
-		if (requestMaterial.Count == 0) return null;
-
-		ExecuteDeleteOriginRequest(connection, destination, requestMaterial);
-		var deleteRows = ExecuteCleanUpMaterialRequest(connection, destination, requestMaterial);
+		DeleteOriginRequest(connection, destination, request);
+		var deleteRows = CleanUpMaterialRequest(connection, destination, request);
 
 		// If all requests are deleted, there are no processing targets.
-		if (requestMaterial.Count == deleteRows) return null;
+		if (request.Count == deleteRows) return null;
 
-		var datasourceMaterialQuery = CreateReverseDatasourceMaterialQuery(destination, requestMaterial, injector);
-		return ExecuteMaterialQuery(connection, destination, datasourceMaterialQuery);
+		var query = CreateReverseMaterialQuery(destination, request, injector);
+		var reverse = this.CreateMaterial(connection, query);
+
+		return ToReverseMaterial(destination, reverse);
 	}
 
-	private ReverseMaterial ExecuteMaterialQuery(IDbConnection connection, DbDestination destination, CreateTableQuery createTableQuery)
+	private ReverseMaterial ToReverseMaterial(DbDestination destination, Material material)
 	{
 		var process = Environment.GetProcessTable();
 		var relation = Environment.GetRelationTable(destination);
 		var reverse = Environment.GetReverseTable(destination);
 
-		//var request = Environment.GetReverseRequestTable(destination);
-		var tableName = createTableQuery.TableFullName;
-
-		connection.Execute(createTableQuery, commandTimeout: CommandTimeout);
-
-		var rows = connection.ExecuteScalar<int>(createTableQuery.ToCountQuery());
-
 		return new ReverseMaterial
 		{
-			Count = rows,
-			MaterialName = tableName,
-			SelectQuery = createTableQuery.ToSelectQuery(),
+			Count = material.Count,
+			MaterialName = material.MaterialName,
+			SelectQuery = material.SelectQuery,
 			RootIdColumn = reverse.RootIdColumn,
 			OriginIdColumn = reverse.OriginIdColumn,
 			RemarksColumn = reverse.RemarksColumn,
@@ -72,19 +64,19 @@ public class ReverseForwardingMaterializer
 		};
 	}
 
-	private int ExecuteDeleteOriginRequest(IDbConnection connection, DbDestination destination, MaterializeResult result)
+	private int DeleteOriginRequest(IDbConnection connection, DbDestination destination, Material result)
 	{
 		var query = CreateOriginDeleteQuery(destination, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private int ExecuteCleanUpMaterialRequest(IDbConnection connection, DbDestination destination, MaterializeResult result)
+	private int CleanUpMaterialRequest(IDbConnection connection, DbDestination destination, Material result)
 	{
 		var query = CleanUpMaterialRequestQuery(destination, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private CreateTableQuery CreateRequestMaterialTableQuery(DbDestination destination)
+	private CreateTableQuery CreateRequestMaterialQuery(DbDestination destination)
 	{
 		var request = Environment.GetReverseRequestTable(destination);
 		var relation = Environment.GetRelationTable(destination);
@@ -106,7 +98,7 @@ public class ReverseForwardingMaterializer
 		return sq.ToCreateTableQuery(name);
 	}
 
-	private DeleteQuery CreateOriginDeleteQuery(DbDestination destination, MaterializeResult result)
+	private DeleteQuery CreateOriginDeleteQuery(DbDestination destination, Material result)
 	{
 		var request = Environment.GetReverseRequestTable(destination);
 		var requestTable = request.Definition.TableFullName;
@@ -132,7 +124,7 @@ public class ReverseForwardingMaterializer
 		return sq.ToDeleteQuery(requestTable);
 	}
 
-	private DeleteQuery CleanUpMaterialRequestQuery(DbDestination destination, MaterializeResult result)
+	private DeleteQuery CleanUpMaterialRequestQuery(DbDestination destination, Material result)
 	{
 		var relation = Environment.GetRelationTable(destination);
 		var relationTable = relation.Definition.TableFullName;
@@ -149,7 +141,7 @@ public class ReverseForwardingMaterializer
 		return sq.ToDeleteQuery(result.MaterialName);
 	}
 
-	private SelectQuery CreateReverseDatasourceSelectQuery(DbDestination destination, MaterializeResult request)
+	private SelectQuery CreateReverseDatasourceSelectQuery(DbDestination destination, Material request)
 	{
 		var reverse = Environment.GetReverseTable(destination);
 		var relation = Environment.GetRelationTable(destination);
@@ -193,7 +185,7 @@ public class ReverseForwardingMaterializer
 		return sq;
 	}
 
-	private CreateTableQuery CreateReverseDatasourceMaterialQuery(DbDestination destination, MaterializeResult request, Func<SelectQuery, SelectQuery>? injector)
+	private CreateTableQuery CreateReverseMaterialQuery(DbDestination destination, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
 		var _datasource = sq.With(CreateReverseDatasourceSelectQuery(destination, request)).As("_target_datasource");

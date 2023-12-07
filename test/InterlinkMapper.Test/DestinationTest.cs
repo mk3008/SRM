@@ -70,7 +70,7 @@ FROM
 	public void CreateInsertQueryFromReverseMaterial()
 	{
 		var destination = DestinationRepository.sale_journals;
-		var datasourceMaterial = MaterialRepository.ReverseDatasourceMeterial;
+		var datasourceMaterial = MaterialRepository.ReverseMeterial;
 
 		var query = destination.CreateInsertQueryFrom(datasourceMaterial);
 

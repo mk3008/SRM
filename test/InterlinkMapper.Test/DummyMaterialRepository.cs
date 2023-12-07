@@ -11,34 +11,28 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		{
 			MaterialName = "__additional_request",
 			Count = 1,
-			SelectQuery = GetRequestQuery(),
+			SelectQuery = GetAdditionalRequestQuery(),
 		};
 
-	private SelectQuery GetRequestQuery()
+	private SelectQuery GetAdditionalRequestQuery()
 	{
 		var m = new AdditionalForwardingMaterializer(environment);
 		return m.AsPrivateProxy().CreateRequestMaterialQuery(DatasourceRepository.sales).ToSelectQuery();
 	}
 
-	public ReverseMaterial ReverseRequestMeterial =>
-		new ReverseMaterial()
+	public Material ReverseRequestMeterial =>
+		new Material()
 		{
 			MaterialName = "__reverse_request",
 			Count = 1,
-			SelectQuery = null!,
-			CommandTimeout = 10,
-			DestinationColumns = null!,
-			DestinationIdColumn = null!,
-			DestinationTable = null!,
-			OriginIdColumn = null!,
-			PlaceHolderIdentifer = null!,
-			ProcessIdColumn = null!,
-			RelationTable = null!,
-			RemarksColumn = null!,
-			ReverseTable = null!,
-			RootIdColumn = null!,
-			KeymapTableNameColumn = null!,
+			SelectQuery = GetReverseRequestQuery()
 		};
+
+	private SelectQuery GetReverseRequestQuery()
+	{
+		var m = new ReverseForwardingMaterializer(environment);
+		return m.AsPrivateProxy().CreateRequestMaterialQuery(DestinationRepository.sale_journals).ToSelectQuery();
+	}
 
 	public ValidationMaterial ValidationRequestMeterial =>
 		new ValidationMaterial()
@@ -64,7 +58,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 
 	public AdditionalMaterial AdditinalMeterial => CreateAdditionalMaterialQuery();
 
-	public MaterializeResult ReverseDatasourceMeterial => CreateReverseDatasourceMeterial();
+	public ReverseMaterial ReverseMeterial => CreateReverseMeterial();
 
 	private AdditionalMaterial CreateAdditionalMaterialQuery()
 	{
@@ -87,30 +81,24 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		return service.AsPrivateProxy().ToAdditionalMaterial(datasource, material);
 	}
 
-	private ReverseMaterial CreateReverseDatasourceMeterial()
+	private ReverseMaterial CreateReverseMeterial()
 	{
-		var requestMaterial = ReverseRequestMeterial;
-
+		var destination = DestinationRepository.sale_journals;
+		var request = ReverseRequestMeterial;
 		var service = new ReverseForwardingMaterializer(environment);
-		var query = service.AsPrivateProxy().CreateReverseDatasourceMaterialQuery(DestinationRepository.sale_journals, requestMaterial, (SelectQuery x) => x);
+		var query = service.AsPrivateProxy().CreateReverseMaterialQuery(
+			destination,
+			request,
+			(SelectQuery x) => x
+		);
 
-		return new ReverseMaterial()
+		var material = new Material
 		{
+			Count = 1,
 			MaterialName = query.TableFullName,
 			SelectQuery = query.ToSelectQuery(),
-			Count = 1,
-			CommandTimeout = 10,
-			DestinationColumns = null!,
-			DestinationIdColumn = null!,
-			DestinationTable = null!,
-			OriginIdColumn = null!,
-			PlaceHolderIdentifer = null!,
-			ProcessIdColumn = null!,
-			RelationTable = null!,
-			RemarksColumn = null!,
-			ReverseTable = null!,
-			RootIdColumn = null!,
-			KeymapTableNameColumn = null!,
 		};
+
+		return service.AsPrivateProxy().ToReverseMaterial(destination, material);
 	}
 }
