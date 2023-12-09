@@ -41,13 +41,7 @@ CREATE TEMPORARY TABLE
 AS
 SELECT
     r.sale_journals__ri_sales_id,
-    r.sale_id,
-    ROW_NUMBER() OVER(
-        PARTITION BY
-            r.sale_id
-        ORDER BY
-            r.sale_journals__ri_sales_id
-    ) AS row_num
+    r.sale_id
 FROM
     sale_journals__ri_sales AS r
 """;
@@ -83,40 +77,6 @@ WHERE
                 WHERE
                     x.sale_journals__ri_sales_id = r.sale_journals__ri_sales_id
             )
-    )
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void TestCleanUpMaterialRequestQuery()
-	{
-		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
-		var query = Proxy.CleanUpMaterialRequestQuery(datasource, requestMaterial);
-
-		var expect = """
-DELETE FROM
-    __additional_request AS d
-WHERE
-    (d.sale_id) IN (
-        /* exclude requests that exist in the keymap from forwarding */
-        SELECT
-            r.sale_id
-        FROM
-            __additional_request AS r
-        WHERE
-            EXISTS (
-                SELECT
-                    *
-                FROM
-                    sale_journals__km_sales AS x
-                WHERE
-                    x.sale_id = r.sale_id
-            ) OR r.row_num <> 1
     )
 """;
 		var actual = query.ToText();

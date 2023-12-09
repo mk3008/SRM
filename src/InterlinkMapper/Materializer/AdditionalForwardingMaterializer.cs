@@ -26,10 +26,6 @@ public class AdditionalForwardingMaterializer : IMaterializer
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
-		var deleteRows = CleanUpMaterialRequest(connection, datasource, request);
-
-		// If all requests are deleted, there are no processing targets.
-		if (request.Count == deleteRows) return null;
 
 		var query = CreateAdditionalMaterialQuery(datasource, request, injector);
 		var additional = this.CreateMaterial(connection, query);
@@ -74,12 +70,6 @@ public class AdditionalForwardingMaterializer : IMaterializer
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private int CleanUpMaterialRequest(IDbConnection connection, DbDatasource datasource, Material result)
-	{
-		var query = CleanUpMaterialRequestQuery(datasource, result);
-		return connection.Execute(query, commandTimeout: CommandTimeout);
-	}
-
 	private CreateTableQuery CreateRequestMaterialQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
@@ -96,16 +86,6 @@ public class AdditionalForwardingMaterializer : IMaterializer
 			args.Add(new ColumnValue(r, key.ColumnName));
 			sq.Select(r, key.ColumnName);
 		});
-
-		//sq.Select($"cast(null as {Environment.DbEnvironment.TextTypeName})").As(keyhistory.RemarksColumn);
-
-		sq.Select(new FunctionValue("row_number", () =>
-		{
-			var over = new OverClause();
-			over.AddPartition(args);
-			over.AddOrder(new SortableItem(new ColumnValue(r, request.RequestIdColumn)));
-			return over;
-		})).As(RowNumberColumnName);
 
 		var name = "__additional_request";
 		return sq.ToCreateTableQuery(name);
@@ -135,35 +115,6 @@ public class AdditionalForwardingMaterializer : IMaterializer
 		sq.Select(r, requestId);
 
 		return sq.ToDeleteQuery(requestTable);
-	}
-
-	private DeleteQuery CleanUpMaterialRequestQuery(DbDatasource datasource, Material result)
-	{
-		var keyamp = Environment.GetKeyMapTable(datasource);
-		var keymapTable = keyamp.Definition.TableFullName;
-		var datasourceKeys = keyamp.DatasourceKeyColumns;
-
-		var sq = new SelectQuery();
-		sq.AddComment("exclude requests that exist in the keymap from forwarding");
-
-		var (f, r) = sq.From(result.MaterialName).As("r");
-
-		sq.Where(() =>
-		{
-			// exists (select * from KEYMAP x where d.key = x.key)
-			var q = new SelectQuery();
-			var (_, x) = q.From(keymapTable).As("x");
-			datasourceKeys.ForEach(key =>
-			{
-				q.Where(x, key).Equal(r, key);
-			});
-			q.SelectAll();
-			return q.ToExists().Or(r, RowNumberColumnName).NotEqual("1");
-		});
-
-		datasourceKeys.ForEach(key => sq.Select(r, key));
-
-		return sq.ToDeleteQuery(result.MaterialName);
 	}
 
 	private SelectQuery CreateAdditionalDatasourceSelectQuery(DbDatasource datasource, Material request)
@@ -199,8 +150,6 @@ public class AdditionalForwardingMaterializer : IMaterializer
 				x.Condition(d, key.ColumnName).Equal(x.Table, key.ColumnName);
 			});
 		});
-
-		//sq.Select(rm, reverse.RemarksColumn);
 
 		return sq;
 	}

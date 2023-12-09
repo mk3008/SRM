@@ -99,34 +99,6 @@ WHERE
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
-	//	[Fact]
-	//	public void TestCleanUpMaterialRequestQuery()
-	//	{
-	//		var destination = DestinationRepository.sale_journals;
-	//		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
-
-	//		var query = Proxy.CleanUpMaterialRequestQuery(destination, requestMaterial);
-
-	//		var expect = """
-	//DELETE FROM
-	//    __reverse_request AS d
-	//WHERE
-	//    (d.sale_journal_id) IN (
-	//        /* Delete duplicate rows so that the destination ID is unique */
-	//        SELECT
-	//            r.sale_journal_id
-	//        FROM
-	//            __reverse_request AS r
-	//        WHERE
-	//            r.row_num <> 1
-	//    )
-	//""";
-	//		var actual = query.ToText();
-	//		Logger.LogInformation(actual);
-
-	//		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	//	}
-
 	[Fact]
 	public void TestCreateMaterialQuery()
 	{

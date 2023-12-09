@@ -27,10 +27,6 @@ public class ReverseForwardingMaterializer : IMaterializer
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, destination, request);
-		//var deleteRows = CleanUpMaterialRequest(connection, destination, request);
-
-		//// If all requests are deleted, there are no processing targets.
-		//if (request.Count == deleteRows) return null;
 
 		var query = CreateReverseMaterialQuery(destination, request, injector);
 		var reverse = this.CreateMaterial(connection, query);
@@ -71,12 +67,6 @@ public class ReverseForwardingMaterializer : IMaterializer
 		var query = CreateOriginDeleteQuery(destination, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
-
-	//private int CleanUpMaterialRequest(IDbConnection connection, DbDestination destination, Material result)
-	//{
-	//	var query = CleanUpMaterialRequestQuery(destination, result);
-	//	return connection.Execute(query, commandTimeout: CommandTimeout);
-	//}
 
 	private CreateTableQuery CreateRequestMaterialQuery(DbDestination destination)
 	{
@@ -135,23 +125,6 @@ public class ReverseForwardingMaterializer : IMaterializer
 		return sq.ToDeleteQuery(requestTable);
 	}
 
-	//private DeleteQuery CleanUpMaterialRequestQuery(DbDestination destination, Material result)
-	//{
-	//	var relation = Environment.GetRelationTable(destination);
-	//	var relationTable = relation.Definition.TableFullName;
-
-	//	var sq = new SelectQuery();
-	//	sq.AddComment("Delete duplicate rows so that the destination ID is unique");
-
-	//	var (f, r) = sq.From(result.MaterialName).As("r");
-
-	//	sq.Where(r, RowNumberColumnName).NotEqual("1");
-
-	//	sq.Select(r, destination.Sequence.Column);
-
-	//	return sq.ToDeleteQuery(result.MaterialName);
-	//}
-
 	private SelectQuery CreateReverseDatasourceSelectQuery(DbDestination destination, Material request)
 	{
 		var reverse = Environment.GetReverseTable(destination);
@@ -162,10 +135,7 @@ public class ReverseForwardingMaterializer : IMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");
 		var (f, d) = sq.From(destination.ToSelectQuery()).As("d");
-		//var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, destination.Sequence.Column);
-		//var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, process.ProcessIdColumn);
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.Sequence.Column);
-		//var rev = f.LeftJoin(reverse.Definition.TableFullName).As("rev").On(d, destination.Sequence.Column);
 
 		sq.Select(rm, relation.RootIdColumn);
 
