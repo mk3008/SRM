@@ -55,13 +55,13 @@ public class ValidationForwardingService
 
 	private ProcessRow CreateProcessRow(DbDatasource datasource, long transactionId, int insertCount)
 	{
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
 		var row = new ProcessRow()
 		{
 			ActionName = nameof(ValidationForwardingService),
 			TransactionId = transactionId,
 			InsertCount = insertCount,
-			KeymapTableName = keymap.Definition.TableFullName,
+			KeyRelationTableName = keymap.Definition.TableFullName,
 		};
 		return row;
 	}

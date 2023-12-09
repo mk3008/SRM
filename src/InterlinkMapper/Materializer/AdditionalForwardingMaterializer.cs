@@ -41,7 +41,8 @@ public class AdditionalForwardingMaterializer : IMaterializer
 	{
 		var process = Environment.GetProcessTable();
 		var relation = Environment.GetRelationTable(datasource.Destination);
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
+		var history = Environment.GetKeyRelationTable(datasource);
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 
 		return new AdditionalMaterial
@@ -56,12 +57,14 @@ public class AdditionalForwardingMaterializer : IMaterializer
 			DestinationTable = datasource.Destination.Table.GetTableFullName(),
 			DestinationColumns = datasource.Destination.Table.Columns,
 			DestinationIdColumn = datasource.Destination.Sequence.Column,
-			KeymapTable = keymap.Definition.TableFullName,
+			KeyMapTable = keymap.Definition.TableFullName,
+			KeyRelationTable = history.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
 			ProcessIdColumn = process.ProcessIdColumn,
 			RelationTable = relation.Definition.TableFullName,
 			ReverseTable = reverse.Definition.TableFullName,
+			NumericType = Environment.DbEnvironment.NumericTypeName,
 		};
 	}
 
@@ -80,25 +83,27 @@ public class AdditionalForwardingMaterializer : IMaterializer
 	private CreateTableQuery CreateRequestMaterialQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetInsertRequestTable(datasource);
-		var reverse = Environment.GetReverseTable(datasource.Destination);
+		var keyhistory = Environment.GetKeyRelationTable(datasource);
 
-		var sq = request.ToSelectQuery();
-		var f = sq.FromClause!;
-		var d = f.Root;
+		var sq = new SelectQuery();
+		var (f, r) = sq.From(request.Definition.TableFullName).As("r");
+
+		sq.Select(r, request.RequestIdColumn);
 
 		var args = new ValueCollection();
-		datasource.KeyColumns.ForEach(key => args.Add(new ColumnValue(d, key.ColumnName)));
+		datasource.KeyColumns.ForEach(key =>
+		{
+			args.Add(new ColumnValue(r, key.ColumnName));
+			sq.Select(r, key.ColumnName);
+		});
 
-		// For add requests, origin information does not exist.
-		sq.Select("null::int8").As(reverse.RootIdColumn);
-		sq.Select("null::int8").As(reverse.OriginIdColumn);
-		sq.Select("null::text").As(reverse.RemarksColumn);
+		//sq.Select($"cast(null as {Environment.DbEnvironment.TextTypeName})").As(keyhistory.RemarksColumn);
 
 		sq.Select(new FunctionValue("row_number", () =>
 		{
 			var over = new OverClause();
 			over.AddPartition(args);
-			over.AddOrder(new SortableItem(new ColumnValue(d, request.RequestIdColumn)));
+			over.AddOrder(new SortableItem(new ColumnValue(r, request.RequestIdColumn)));
 			return over;
 		})).As(RowNumberColumnName);
 
@@ -134,7 +139,7 @@ public class AdditionalForwardingMaterializer : IMaterializer
 
 	private DeleteQuery CleanUpMaterialRequestQuery(DbDatasource datasource, Material result)
 	{
-		var keyamp = Environment.GetKeymapTable(datasource);
+		var keyamp = Environment.GetKeyMapTable(datasource);
 		var keymapTable = keyamp.Definition.TableFullName;
 		var datasourceKeys = keyamp.DatasourceKeyColumns;
 
@@ -195,9 +200,7 @@ public class AdditionalForwardingMaterializer : IMaterializer
 			});
 		});
 
-		sq.Select(rm, reverse.RootIdColumn);
-		sq.Select(rm, reverse.OriginIdColumn);
-		sq.Select(rm, reverse.RemarksColumn);
+		//sq.Select(rm, reverse.RemarksColumn);
 
 		return sq;
 	}

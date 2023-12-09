@@ -68,7 +68,8 @@ public class SystemEnvironmentTest
 
 	private ProcessRow GetDummyProcessRow()
 	{
-		var keymap = Environment.GetKeymapTable(GetTestDatasouce());
+		var keymap = Environment.GetKeyMapTable(GetTestDatasouce());
+		var keyrelation = Environment.GetKeyRelationTable(GetTestDatasouce());
 
 		return new ProcessRow()
 		{
@@ -76,7 +77,8 @@ public class SystemEnvironmentTest
 			DatasourceId = 10,
 			ActionName = "test",
 			TransactionId = 30,
-			KeymapTableName = keymap.Definition.TableName,
+			KeyMapTableName = keymap.Definition.TableName,
+			KeyRelationTableName = keyrelation.Definition.TableName,
 			InsertCount = 100
 		};
 	}
@@ -119,19 +121,21 @@ RETURNING
   :interlink__transaction_id = 30
   :datasource_id = 10
   :destination_id = 20
-  :keymap_name = 'sale_journals__m_sales'
+  :key_map = 'sale_journals__km_sales'
+  :key_relation = 'sale_journals__kr_sales'
   :action = 'test'
   :insert_count = 100
 */
 INSERT INTO
     interlink_process (
-        interlink__transaction_id, datasource_id, destination_id, keymap_name, action, insert_count
+        interlink__transaction_id, datasource_id, destination_id, key_map, key_relation, action, insert_count
     )
 SELECT
     :interlink__transaction_id AS interlink__transaction_id,
     :datasource_id AS datasource_id,
     :destination_id AS destination_id,
-    :keymap_name AS keymap_name,
+    :key_map AS key_map,
+    :key_relation AS key_relation,
     :action AS action,
     :insert_count AS insert_count
 RETURNING

@@ -118,7 +118,7 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.KeymapTableNameColumn,
+						ColumnName = DbTableConfig.KeyMapTableNameColumn,
 						TypeName = DbEnvironment.TextTypeName,
 						AllowNull= false,
 					},
@@ -137,13 +137,17 @@ public class SystemEnvironment
 			DestinationIdColumn = DbTableConfig.DestinationIdColumn,
 			ActionColumn = DbTableConfig.ActionNameColumn,
 			InsertCountColumn = DbTableConfig.InsertCountColumn,
-			KeymapTableNameColumn = DbTableConfig.KeymapTableNameColumn
+			KeyMapTableNameColumn = DbTableConfig.KeyMapTableNameColumn,
+			KeyRelationTableNameColumn = DbTableConfig.KeyRelationTableNameColumn,
 		};
 		return t;
 	}
 
 	public RelationTable GetRelationTable(DbDestination d)
 	{
+		var rootColumn = string.Format(DbTableConfig.RootIdColumnFormat, d.Sequence.Column);
+		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
+
 		var t = new RelationTable()
 		{
 			Definition = new()
@@ -189,12 +193,14 @@ public class SystemEnvironment
 				}
 			},
 			ProcessIdColumn = DbTableConfig.ProcessIdColumn,
-			DestinationSequenceColumn = d.Sequence.Column,
+			DestinationIdColumn = d.Sequence.Column,
+			RootIdColumn = rootColumn,
+			OriginIdColumn = originColumn,
 		};
 		return t;
 	}
 
-	public KeymapTable GetKeymapTable(DbDatasource d)
+	public KeymapTable GetKeyMapTable(DbDatasource d)
 	{
 		var columndefs = new List<ColumnDefinition>
 		{
@@ -228,7 +234,7 @@ public class SystemEnvironment
 			Definition = new()
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = string.Format(DbTableConfig.KeymapTableNameFormat, d.Destination.Table.TableName, d.KeyName),
+				TableName = string.Format(DbTableConfig.KeyMapTableNameFormat, d.Destination.Table.TableName, d.KeyName),
 				ColumnDefinitions = columndefs,
 				Indexes = new()
 				{
@@ -240,8 +246,66 @@ public class SystemEnvironment
 					}
 				}
 			},
-			DestinationSequenceColumn = d.Destination.Sequence.Column,
+			DestinationIdColumn = d.Destination.Sequence.Column,
 			DatasourceKeyColumns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
+		};
+		return t;
+	}
+
+	public KeyRelationTable GetKeyRelationTable(DbDatasource d)
+	{
+		var columndefs = new List<ColumnDefinition>
+		{
+			new ColumnDefinition()
+			{
+				ColumnName = d.Destination.Sequence.Column,
+				TypeName = DbEnvironment.NumericTypeName,
+				AllowNull = false,
+				IsPrimaryKey = true,
+			}
+		};
+		d.KeyColumns.ForEach(x =>
+		{
+			columndefs.Add(new ColumnDefinition()
+			{
+				ColumnName = x.ColumnName,
+				TypeName = x.TypeName,
+				AllowNull = false,
+			});
+		});
+		columndefs.Add(new ColumnDefinition()
+		{
+			ColumnName = DbTableConfig.RemarksColumn,
+			TypeName = DbEnvironment.TextTypeName,
+			AllowNull = true,
+			IsPrimaryKey = false,
+		});
+		columndefs.Add(new ColumnDefinition()
+		{
+			ColumnName = DbTableConfig.TimestampColumn,
+			TypeName = DbEnvironment.TimestampTypeName,
+			AllowNull = false,
+			DefaultValue = DbEnvironment.TimestampDefaultValue,
+		});
+		var t = new KeyRelationTable()
+		{
+			Definition = new()
+			{
+				SchemaName = DbTableConfig.ControlTableSchemaName,
+				TableName = string.Format(DbTableConfig.KeyRelationTableNameFormat, d.Destination.Table.TableName, d.KeyName),
+				ColumnDefinitions = columndefs,
+				Indexes = new()
+				{
+					new DbIndexDefinition()
+					{
+						IndexNumber = 1,
+						Columns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
+					}
+				}
+			},
+			DestinationIdColumn = d.Destination.Sequence.Column,
+			DatasourceKeyColumns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
+			RemarksColumn = DbTableConfig.RemarksColumn
 		};
 		return t;
 	}
@@ -355,7 +419,7 @@ public class SystemEnvironment
 				}
 			},
 			RequestIdColumn = idcolumn,
-			DestinationSequenceColumn = d.Sequence.Column,
+			DestinationIdColumn = d.Sequence.Column,
 			RemarksColumn = DbTableConfig.RemarksColumn,
 		};
 		return t;
@@ -481,7 +545,8 @@ public class SystemEnvironment
 		sq.Select(DbEnvironment, table.TransactionIdColumn, row.TransactionId);
 		sq.Select(DbEnvironment, table.DatasourceIdColumn, row.DatasourceId);
 		sq.Select(DbEnvironment, table.DestinationIdColumn, row.DestinationId);
-		sq.Select(DbEnvironment, table.KeymapTableNameColumn, row.KeymapTableName);
+		sq.Select(DbEnvironment, table.KeyMapTableNameColumn, row.KeyMapTableName);
+		sq.Select(DbEnvironment, table.KeyRelationTableNameColumn, row.KeyRelationTableName);
 		sq.Select(DbEnvironment, table.ActionColumn, row.ActionName);
 		sq.Select(DbEnvironment, table.InsertCountColumn, row.InsertCount);
 

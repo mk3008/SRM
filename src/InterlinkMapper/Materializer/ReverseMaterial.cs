@@ -31,6 +31,19 @@ public class ReverseMaterial : MaterializeResult
 		return q;
 	}
 
+	internal InsertQuery CreateKeymapHitoryInsertQuery(string keymapTable)
+	{
+		var sq = new SelectQuery();
+		var (_, d) = sq.From(SelectQuery).As("d");
+
+		sq.Select(d, DestinationIdColumn);
+		sq.Select(d, RootIdColumn);
+		sq.Select(d, OriginIdColumn);
+		sq.Select(d, RemarksColumn);
+
+		return sq.ToInsertQuery(ReverseTable);
+	}
+
 	internal InsertQuery CreateReverseInsertQuery()
 	{
 		var sq = new SelectQuery();

@@ -20,7 +20,9 @@ public class DbTableConfig
 
 	public string RelationTableNameFormat { get; set; } = "{0}__relation";
 
-	public string KeymapTableNameFormat { get; set; } = "{0}__m_{1}";
+	public string KeyMapTableNameFormat { get; set; } = "{0}__km_{1}";
+
+	public string KeyRelationTableNameFormat { get; set; } = "{0}__kr_{1}";
 
 	public string ReverseTableNameFormat { get; set; } = "{0}__reverse";
 
@@ -61,7 +63,9 @@ public class DbTableConfig
 
 	public string InsertCountColumn { get; set; } = "insert_count";
 
-	public string KeymapTableNameColumn { get; set; } = "keymap_name";
+	public string KeyMapTableNameColumn { get; set; } = "key_map";
+
+	public string KeyRelationTableNameColumn { get; set; } = "key_relation";
 
 	public string RootIdColumnFormat { get; set; } = "root__{0}";
 

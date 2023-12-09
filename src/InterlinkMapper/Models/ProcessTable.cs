@@ -16,7 +16,7 @@ public class ProcessTable
 
 	public string InsertCountColumn { get; set; } = string.Empty;
 
-	public string KeymapTableNameColumn { get; set; } = string.Empty;
-	//public string FlipFlagColumnName { get; set; } = string.Empty;
-}
+	public string KeyMapTableNameColumn { get; set; } = string.Empty;
 
+	public string KeyRelationTableNameColumn { get; set; } = string.Empty;
+}

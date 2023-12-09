@@ -1,13 +1,11 @@
-﻿using Carbunql.Clauses;
-using Carbunql.Tables;
+﻿using Carbunql.Tables;
 using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
-using System.Diagnostics;
 
 namespace InterlinkMapper.Materializer;
 
-public class ValidationMaterializer
+public class ValidationMaterializer : IMaterializer
 {
 	public ValidationMaterializer(SystemEnvironment environment)
 	{
@@ -29,40 +27,36 @@ public class ValidationMaterializer
 		if (!datasource.Destination.AllowReverse) throw new NotSupportedException();
 		if (string.IsNullOrEmpty(Environment.DbEnvironment.LengthFunction)) throw new NullReferenceException(nameof(Environment.DbEnvironment.LengthFunction));
 
-		var requestMaterialQuery = CreateRequestMaterialTableQuery(datasource);
+		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
+		var request = this.CreateMaterial(connection, requestMaterialQuery);
 
-		var requestMaterial = ExecuteMaterialQuery(connection, datasource, requestMaterialQuery);
+		if (request.Count == 0) return null;
 
-		if (requestMaterial.Count == 0) return null;
-
-		ExecuteDeleteOriginRequest(connection, requestMaterial, datasource);
-		var deleteRows = ExecuteCleanUpMaterialRequest(connection, requestMaterial, datasource);
+		DeleteOriginRequest(connection, datasource, request);
+		var deleteRows = CleanUpMaterialRequest(connection, datasource, request);
 
 		// If all requests are deleted, there are no processing targets.
-		if (requestMaterial.Count == deleteRows) return null;
+		if (request.Count == deleteRows) return null;
 
-		var datasourceMaterialQuery = CreateValidationDatasourceMaterialQuery(requestMaterial, datasource, injector);
-		return ExecuteMaterialQuery(connection, datasource, datasourceMaterialQuery);
+		var query = CreateValidationMaterialQuery(datasource, request, injector);
+		var validation = this.CreateMaterial(connection, query);
+
+		return ToValidationMaterial(datasource, validation);
 	}
 
-	private ValidationMaterial ExecuteMaterialQuery(IDbConnection connection, DbDatasource datasource, CreateTableQuery createTableQuery)
+	private ValidationMaterial ToValidationMaterial(DbDatasource datasource, Material material)
 	{
 		var process = Environment.GetProcessTable();
 		var relation = Environment.GetRelationTable(datasource.Destination);
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
+		var history = Environment.GetKeyRelationTable(datasource);
 		var reverse = Environment.GetReverseTable(datasource.Destination);
-
-		var tableName = createTableQuery.TableFullName;
-
-		connection.Execute(createTableQuery, commandTimeout: CommandTimeout);
-
-		var rows = connection.ExecuteScalar<int>(createTableQuery.ToCountQuery());
 
 		return new ValidationMaterial
 		{
-			Count = rows,
-			MaterialName = tableName,
-			SelectQuery = createTableQuery.ToSelectQuery(),
+			Count = material.Count,
+			MaterialName = material.MaterialName,
+			SelectQuery = material.SelectQuery,
 
 			DatasourceKeyColumns = datasource.KeyColumns.Select(x => x.ColumnName).ToList(),
 			RootIdColumn = reverse.RootIdColumn,
@@ -72,45 +66,41 @@ public class ValidationMaterializer
 			DestinationColumns = datasource.Destination.Table.Columns,
 			DestinationIdColumn = datasource.Destination.Sequence.Column,
 			KeymapTable = keymap.Definition.TableFullName,
+			KeyRelationTable = history.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
 			ProcessIdColumn = process.ProcessIdColumn,
 			RelationTable = relation.Definition.TableFullName,
 			ReverseTable = reverse.Definition.TableFullName,
 
-			KeymapTableNameColumn = process.KeymapTableNameColumn
+			KeymapTableNameColumn = process.KeyMapTableNameColumn,
 		};
 	}
 
-	private int ExecuteDeleteOriginRequest(IDbConnection connection, MaterializeResult result, DbDatasource datasource)
+	private int DeleteOriginRequest(IDbConnection connection, DbDatasource datasource, Material result)
 	{
-		var query = CreateOriginDeleteQuery(result, datasource);
+		var query = CreateOriginDeleteQuery(datasource, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private int ExecuteCleanUpMaterialRequest(IDbConnection connection, MaterializeResult result, DbDatasource datasource)
+	private int CleanUpMaterialRequest(IDbConnection connection, DbDatasource datasource, Material result)
 	{
-		var query = CleanUpMaterialRequestQuery(result, datasource);
+		var query = CleanUpMaterialRequestQuery(datasource, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private CreateTableQuery CreateRequestMaterialTableQuery(DbDatasource datasource)
+	private CreateTableQuery CreateRequestMaterialQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
 
-		var sq = request.ToSelectQuery();
-		var f = sq.FromClause!;
-		var r = f.Root;
-		var m = f.InnerJoin(keymap.Definition.TableFullName).As("m").On((x) =>
-		{
-			keymap.DatasourceKeyColumns.ForEach(key =>
-			{
-				x.Condition(f, key).Equal(x.Table, key);
-			});
-		});
+		var sq = new SelectQuery();
+		var (f, r) = sq.From(request.Definition.TableFullName).As("r");
+		var m = f.InnerJoin(keymap.Definition.TableFullName).As("m").On(r, datasource.KeyColumns.Select(x => x.ColumnName));
 
+		sq.Select(r, request.RequestIdColumn);
 		sq.Select(m, datasource.Destination.Sequence.Column);
+		datasource.KeyColumns.ForEach(key => sq.Select(m, key.ColumnName));
 
 		//row_number() over(order by m.sale_journal_id) as row_num
 		sq.Select(new FunctionValue("row_number", () =>
@@ -124,7 +114,7 @@ public class ValidationMaterializer
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
-	private DeleteQuery CreateOriginDeleteQuery(MaterializeResult result, DbDatasource datasource)
+	private DeleteQuery CreateOriginDeleteQuery(DbDatasource datasource, Material result)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
 		var requestTable = request.Definition.TableFullName;
@@ -150,10 +140,10 @@ public class ValidationMaterializer
 		return sq.ToDeleteQuery(requestTable);
 	}
 
-	private DeleteQuery CleanUpMaterialRequestQuery(MaterializeResult result, DbDatasource datasource)
+	private DeleteQuery CleanUpMaterialRequestQuery(DbDatasource datasource, Material result)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
 
 		var sq = new SelectQuery();
 		sq.AddComment("Delete duplicate rows so that the destination ID is unique");
@@ -167,13 +157,13 @@ public class ValidationMaterializer
 		return sq.ToDeleteQuery(result.MaterialName);
 	}
 
-	private SelectQuery CreateExpectValueSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateExpectValueSelectQuery(DbDatasource datasource, Material request)
 	{
-		var validation = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeymapTable(datasource);
+		//var validation = Environment.GetValidationRequestTable(datasource);
+		//var keymap = Environment.GetKeymapTable(datasource);
 
 		var sq = new SelectQuery();
-		sq.AddComment("inject request material filter for destination");
+		sq.AddComment("inject request material filter");
 
 		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
 		f.InnerJoin(request.MaterialName).As("rm").On(d, datasource.Destination.Sequence.Column);
@@ -182,32 +172,36 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateActualValueSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateActualValueSelectQuery(DbDatasource datasource, Material request)
 	{
 		var validation = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
 
 		var ds = datasource.ToSelectQuery();
 		var raw = ds.GetCommonTables().Where(x => x.Alias == "__raw").FirstOrDefault();
 
 		if (raw != null && raw.Table is VirtualTable vt && vt.Query is SelectQuery cte)
 		{
-			InjectRequestFilter(cte, request, datasource);
+			InjectRequestFilter(cte, datasource, request);
 		}
 
 		var sq = new SelectQuery();
+
 		var (f, d) = sq.From(ds).As("d");
-		sq.Select(d);
-		sq = InjectRequestFilter(sq, request, datasource);
+
+		sq = InjectRequestFilter(sq, datasource, request);
+		sq.AddComment("does not exist if physically deleted");
+
+		sq.Select(d, overwrite: false);
 
 		return sq;
 	}
 
-	private SelectQuery InjectRequestFilter(SelectQuery sq, MaterializeResult request, DbDatasource datasource)
+	private SelectQuery InjectRequestFilter(SelectQuery sq, DbDatasource datasource, Material request)
 	{
 		sq.AddComment("inject request material filter");
 
-		var keymap = Environment.GetKeymapTable(datasource);
+		var keymap = Environment.GetKeyMapTable(datasource);
 		var f = sq.FromClause!;
 		var d = f.Root;
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(x =>
@@ -223,26 +217,22 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateDeletedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateDeletedDiffSelectQuery(DbDatasource datasource, Material request)
 	{
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 
 		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
-		var expect = sq.With(CreateExpectValueSelectQuery(request, datasource)).As("_expect");
-		var actual = sq.With(CreateActualValueSelectQuery(request, datasource)).As("_actual");
+		sq.AddComment("reverse only");
+
+		var expect = sq.With(CreateExpectValueSelectQuery(datasource, request)).As("_expect");
+		var actual = sq.With(CreateActualValueSelectQuery(datasource, request)).As("_actual");
 
 		var key = datasource.KeyColumns.First().ColumnName;
 
 		var (f, e) = sq.From(expect).As("e");
-		var a = f.LeftJoin(actual).As("a").On(x =>
-		{
-			datasource.KeyColumns.ForEach(key =>
-			{
-				x.Condition(e, key.ColumnName).Equal(x.Table, key.ColumnName);
-			});
-		});
+		var a = f.LeftJoin(actual).As("a").On(e, datasource.Destination.Sequence.Column);
 
 		var validationColumns = e.GetColumnNames()
 			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
@@ -259,25 +249,19 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateUpdatedDiffSubQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateUpdatedDiffSubQuery(DbDatasource datasource, Material request)
 	{
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
-		var expect = sq.With(CreateExpectValueSelectQuery(request, datasource)).As("_expect");
-		var actual = sq.With(CreateActualValueSelectQuery(request, datasource)).As("_actual");
+		var expect = sq.With(CreateExpectValueSelectQuery(datasource, request)).As("_expect");
+		var actual = sq.With(CreateActualValueSelectQuery(datasource, request)).As("_actual");
 
 		var key = datasource.KeyColumns.First().ColumnName;
 
 		var (f, e) = sq.From(expect).As("e");
-		var a = f.InnerJoin(actual).As("a").On(x =>
-		{
-			datasource.KeyColumns.ForEach(key =>
-			{
-				x.Condition(e, key.ColumnName).Equal(x.Table, key.ColumnName);
-			});
-		});
+		var a = f.InnerJoin(actual).As("a").On(e, datasource.Destination.Sequence.Column);
 
 		var validationColumns = e.GetColumnNames()
 			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
@@ -322,12 +306,13 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateUpdatedDiffSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateUpdatedDiffSelectQuery(DbDatasource datasource, Material request)
 	{
 		var reverse = Environment.GetReverseTable(datasource.Destination);
 
 		var sq = new SelectQuery();
-		var (f, d) = sq.From(CreateUpdatedDiffSubQuery(request, datasource)).As("d");
+		sq.AddComment("reverse and additional");
+		var (f, d) = sq.From(CreateUpdatedDiffSubQuery(datasource, request)).As("d");
 
 		sq.Select(d);
 		var remarks = sq.GetSelectableItems().Where(x => x.Alias == reverse.RemarksColumn).First();
@@ -360,19 +345,19 @@ public class ValidationMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateValidationDatasourceSelectQuery(MaterializeResult request, DbDatasource datasource)
+	private SelectQuery CreateValidationDatasourceSelectQuery(DbDatasource datasource, Material request)
 	{
-		var sq = CreateDeletedDiffSelectQuery(request, datasource);
+		var sq = CreateDeletedDiffSelectQuery(datasource, request);
 
-		sq.UnionAll(CreateUpdatedDiffSelectQuery(request, datasource));
+		sq.UnionAll(CreateUpdatedDiffSelectQuery(datasource, request));
 
 		return sq;
 	}
 
-	private CreateTableQuery CreateValidationDatasourceMaterialQuery(MaterializeResult request, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	private CreateTableQuery CreateValidationMaterialQuery(DbDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
-		var _datasource = sq.With(CreateValidationDatasourceSelectQuery(request, datasource)).As("_target_datasource");
+		var _datasource = sq.With(CreateValidationDatasourceSelectQuery(datasource, request)).As("_target_datasource");
 
 		var (f, d) = sq.From(_datasource).As("d");
 

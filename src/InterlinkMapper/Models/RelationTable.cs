@@ -2,9 +2,13 @@
 
 public class RelationTable
 {
-	public DbTableDefinition Definition { get; set; } = new();
+	public required DbTableDefinition Definition { get; init; }
 
-	public string ProcessIdColumn { get; set; } = string.Empty;
+	public required string ProcessIdColumn { get; init; }
 
-	public string DestinationSequenceColumn { get; set; } = string.Empty;
+	public required string DestinationIdColumn { get; init; }
+
+	public required string RootIdColumn { get; init; }
+
+	public required string OriginIdColumn { get; init; }
 }

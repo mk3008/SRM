@@ -14,5 +14,7 @@ public class ProcessRow
 
 	public long InsertCount { get; set; }
 
-	public string KeymapTableName { get; set; } = string.Empty;
+	public string KeyMapTableName { get; set; } = string.Empty;
+
+	public string KeyRelationTableName { get; set; } = string.Empty;
 }

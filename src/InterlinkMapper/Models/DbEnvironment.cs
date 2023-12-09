@@ -8,6 +8,8 @@ public class DbEnvironment
 
 	public string TextTypeName { get; set; } = "text";
 
+	public string BooleanTypeName { get; set; } = "bool";
+
 	public string TimestampTypeName { get; set; } = "timestamp";
 
 	public string TimestampDefaultValue { get; set; } = "current_timestamp";

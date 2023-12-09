@@ -30,7 +30,7 @@ public class ReverseForwardingMaterializerTest
 	public readonly ReverseForwardingMaterializerProxy Proxy;
 
 	[Fact]
-	public void TestCreateRequestMaterialTableQuery()
+	public void TestCreateRequestMaterialQuery()
 	{
 		var destination = DestinationRepository.sale_journals;
 
@@ -40,20 +40,23 @@ public class ReverseForwardingMaterializerTest
 CREATE TEMPORARY TABLE
     __reverse_request
 AS
+/* Only original slips can be reversed.(where id = origin_id) */
+/* Only unprocessed slips can be reversed.(where reverse is null) */
 SELECT
     r.sale_journals__r__reverse_id,
     r.sale_journal_id,
+    r.root__sale_journal_id,
     r.interlink__remarks,
-    r.created_at,
-    ROW_NUMBER() OVER(
-        PARTITION BY
-            r.sale_journal_id
-        ORDER BY
-            r.sale_journals__r__reverse_id
-    ) AS row_num
+    p.key_map,
+    p.key_relation
 FROM
-    sale_journals__r__reverse AS r
-    INNER JOIN sale_journals__relation AS rel ON r.sale_journal_id = rel.sale_journal_id
+    sale_journals__r__reverse AS d
+    INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
+    LEFT JOIN sale_journals__relation AS reverse ON r.sale_journal_id = reverse.origin__sale_journal_id
+    INNER JOIN interlink_process AS p ON r.interlink__process_id = p.interlink__process_id
+WHERE
+    r.sale_journal_id = r.origin__sale_journal_id
+    AND reverse.sale_journal_id IS null
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -96,36 +99,36 @@ WHERE
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
+	//	[Fact]
+	//	public void TestCleanUpMaterialRequestQuery()
+	//	{
+	//		var destination = DestinationRepository.sale_journals;
+	//		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
+
+	//		var query = Proxy.CleanUpMaterialRequestQuery(destination, requestMaterial);
+
+	//		var expect = """
+	//DELETE FROM
+	//    __reverse_request AS d
+	//WHERE
+	//    (d.sale_journal_id) IN (
+	//        /* Delete duplicate rows so that the destination ID is unique */
+	//        SELECT
+	//            r.sale_journal_id
+	//        FROM
+	//            __reverse_request AS r
+	//        WHERE
+	//            r.row_num <> 1
+	//    )
+	//""";
+	//		var actual = query.ToText();
+	//		Logger.LogInformation(actual);
+
+	//		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	//	}
+
 	[Fact]
-	public void TestCleanUpMaterialRequestQuery()
-	{
-		var destination = DestinationRepository.sale_journals;
-		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
-
-		var query = Proxy.CleanUpMaterialRequestQuery(destination, requestMaterial);
-
-		var expect = """
-DELETE FROM
-    __reverse_request AS d
-WHERE
-    (d.sale_journal_id) IN (
-        /* Delete duplicate rows so that the destination ID is unique */
-        SELECT
-            r.sale_journal_id
-        FROM
-            __reverse_request AS r
-        WHERE
-            r.row_num <> 1
-    )
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void TestCreateDatasourceMaterialQuery()
+	public void TestCreateMaterialQuery()
 	{
 		var destination = DestinationRepository.sale_journals;
 		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
@@ -140,14 +143,15 @@ WITH
     _target_datasource AS (
         /* data source to be added */
         SELECT
-            COALESCE(rev.root__sale_journal_id, d.sale_journal_id) AS root__sale_journal_id,
+            rm.root__sale_journal_id,
             d.sale_journal_id AS origin__sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
             d.price * -1 AS price,
             d.remarks,
-            p.keymap_name,
+            rm.key_map,
+            rm.key_relation,
             rm.interlink__remarks
         FROM
             (
@@ -162,10 +166,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
-            INNER JOIN interlink_process AS p ON r.interlink__process_id = p.interlink__process_id
             INNER JOIN __reverse_request AS rm ON d.sale_journal_id = rm.sale_journal_id
-            LEFT JOIN sale_journals__reverse AS rev ON d.sale_journal_id = rev.sale_journal_id
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
@@ -176,7 +177,8 @@ SELECT
     d.shop_id,
     d.price,
     d.remarks,
-    d.keymap_name,
+    d.key_map,
+    d.key_relation,
     d.interlink__remarks
 FROM
     _target_datasource AS d

@@ -6,7 +6,7 @@ public class ReverseRequestTable : IRequestTable
 
 	public string RequestIdColumn { get; set; } = string.Empty;
 
-	public string DestinationSequenceColumn { get; set; } = string.Empty;
+	public string DestinationIdColumn { get; set; } = string.Empty;
 
 	public string RemarksColumn { get; set; } = string.Empty;
 }

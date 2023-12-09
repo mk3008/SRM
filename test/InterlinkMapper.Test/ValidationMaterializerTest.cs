@@ -30,10 +30,10 @@ public class ValidationMaterializerTest
 	public readonly DummyMaterialRepository MaterialRepository;
 
 	[Fact]
-	public void TestCreateRequestMaterialTableQuery()
+	public void TestCreateRequestMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var query = Proxy.CreateRequestMaterialTableQuery(datasource);
+		var query = Proxy.CreateRequestMaterialQuery(datasource);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -41,9 +41,8 @@ CREATE TEMPORARY TABLE
 AS
 SELECT
     r.sale_journals__rv_sales_id,
-    r.sale_id,
-    r.created_at,
     m.sale_journal_id,
+    m.sale_id,
     ROW_NUMBER() OVER(
         PARTITION BY
             m.sale_journal_id
@@ -53,7 +52,6 @@ SELECT
 FROM
     sale_journals__rv_sales AS r
     INNER JOIN sale_journals__m_sales AS m ON r.sale_id = m.sale_id
-
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -65,8 +63,8 @@ FROM
 	public void TestCreateOriginDeleteQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
-		var query = Proxy.CreateOriginDeleteQuery(requestMaterial, datasource);
+		var request = MaterialRepository.ValidationRequestMeterial;
+		var query = Proxy.CreateOriginDeleteQuery(datasource, request);
 
 		var expect = """
 DELETE FROM
@@ -99,8 +97,8 @@ WHERE
 	public void TestCleanUpMaterialRequestQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
-		var query = Proxy.CleanUpMaterialRequestQuery(requestMaterial, datasource);
+		var request = MaterialRepository.ValidationRequestMeterial;
+		var query = Proxy.CleanUpMaterialRequestQuery(datasource, request);
 
 		var expect = """
 DELETE FROM
@@ -126,12 +124,12 @@ WHERE
 	public void TestCreateExpectValueSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
+		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateExpectValueSelectQuery(requestMaterial, datasource);
+		var query = Proxy.CreateExpectValueSelectQuery(datasource, request);
 
 		var expect = """
-/* inject request material filter for destination */
+/* inject request material filter */
 SELECT
     d.sale_journal_id,
     d.journal_closing_date,
@@ -164,19 +162,20 @@ FROM
 	public void TestCreateActualValueSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
+		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateActualValueSelectQuery(requestMaterial, datasource);
+		var query = Proxy.CreateActualValueSelectQuery(datasource, request);
 
 		var expect = """
 /* inject request material filter */
+/* does not exist if physically deleted */
 SELECT
+    rm.sale_journal_id,
     d.journal_closing_date,
     d.sale_date,
     d.shop_id,
     d.price,
-    d.sale_id,
-    rm.sale_journal_id
+    d.sale_id
 FROM
     (
         /* raw data source */
@@ -201,14 +200,15 @@ FROM
 	public void TestCreateValidationDatasourceSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
+		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateValidationDatasourceSelectQuery(requestMaterial, datasource);
+		var query = Proxy.CreateValidationDatasourceSelectQuery(datasource, request);
 
 		var expect = """
+/* reverse only */
 WITH
     _expect AS (
-        /* inject request material filter for destination */
+        /* inject request material filter */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -233,13 +233,14 @@ WITH
     ),
     _actual AS (
         /* inject request material filter */
+        /* does not exist if physically deleted */
         SELECT
+            rm.sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id,
-            rm.sale_journal_id
+            d.sale_id
         FROM
             (
                 /* raw data source */
@@ -260,10 +261,11 @@ SELECT
     '{"deleted":true}' AS interlink__remarks
 FROM
     _expect AS e
-    LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
+    LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
 WHERE
     a.sale_id IS null
 UNION ALL
+/* reverse and additional */
 SELECT
     d.sale_journal_id,
     d.sale_id,
@@ -286,7 +288,7 @@ FROM
             END) AS interlink__remarks
         FROM
             _expect AS e
-            INNER JOIN _actual AS a ON e.sale_id = a.sale_id
+            INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             false OR e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date OR e.sale_date IS NOT DISTINCT FROM a.sale_date OR e.shop_id IS NOT DISTINCT FROM a.shop_id OR e.price IS NOT DISTINCT FROM a.price
     ) AS d
@@ -298,12 +300,12 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateDatasourceMaterialQuery()
+	public void TestCreateMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
+		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateValidationDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
+		var query = Proxy.CreateValidationMaterialQuery(datasource, request, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -311,7 +313,7 @@ CREATE TEMPORARY TABLE
 AS
 WITH
     _expect AS (
-        /* inject request material filter for destination */
+        /* inject request material filter */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -336,13 +338,14 @@ WITH
     ),
     _actual AS (
         /* inject request material filter */
+        /* does not exist if physically deleted */
         SELECT
+            rm.sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id,
-            rm.sale_journal_id
+            d.sale_id
         FROM
             (
                 /* raw data source */
@@ -358,16 +361,18 @@ WITH
             INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     ),
     _target_datasource AS (
+        /* reverse only */
         SELECT
             e.sale_journal_id,
             a.sale_id,
             '{"deleted":true}' AS interlink__remarks
         FROM
             _expect AS e
-            LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
+            LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             a.sale_id IS null
         UNION ALL
+        /* reverse and additional */
         SELECT
             d.sale_journal_id,
             d.sale_id,
@@ -390,7 +395,7 @@ WITH
                     END) AS interlink__remarks
                 FROM
                     _expect AS e
-                    INNER JOIN _actual AS a ON e.sale_id = a.sale_id
+                    INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
                 WHERE
                     false OR e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date OR e.sale_date IS NOT DISTINCT FROM a.sale_date OR e.shop_id IS NOT DISTINCT FROM a.shop_id OR e.price IS NOT DISTINCT FROM a.price
             ) AS d
@@ -412,18 +417,19 @@ FROM
 	public void TestCreateValidationDatasourceSelectQuery_verbose()
 	{
 		var datasource = DatasourceRepository.sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
+		var request = MaterialRepository.ValidationRequestMeterial;
 
 		var env = new SystemEnvironment();
 		env.DbEnvironment.NullSafeEqualityOperator = string.Empty;
 		var proxy = new ValidationMaterializer(env).AsPrivateProxy();
 
-		var query = proxy.CreateValidationDatasourceSelectQuery(requestMaterial, datasource);
+		var query = proxy.CreateValidationDatasourceSelectQuery(datasource, request);
 
 		var expect = """
+/* reverse only */
 WITH
     _expect AS (
-        /* inject request material filter for destination */
+        /* inject request material filter */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -448,13 +454,14 @@ WITH
     ),
     _actual AS (
         /* inject request material filter */
+        /* does not exist if physically deleted */
         SELECT
+            rm.sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id,
-            rm.sale_journal_id
+            d.sale_id
         FROM
             (
                 /* raw data source */
@@ -475,10 +482,11 @@ SELECT
     '{"deleted":true}' AS interlink__remarks
 FROM
     _expect AS e
-    LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
+    LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
 WHERE
     a.sale_id IS null
 UNION ALL
+/* reverse and additional */
 SELECT
     d.sale_journal_id,
     d.sale_id,
@@ -501,7 +509,7 @@ FROM
             END) AS interlink__remarks
         FROM
             _expect AS e
-            INNER JOIN _actual AS a ON e.sale_id = a.sale_id
+            INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             false OR e.sale_journal_id <> a.sale_journal_id OR (e.sale_journal_id IS NOT null AND a.sale_journal_id IS null) OR (e.sale_journal_id IS null AND a.sale_journal_id IS NOT null) OR e.journal_closing_date <> a.journal_closing_date OR (e.journal_closing_date IS NOT null AND a.journal_closing_date IS null) OR (e.journal_closing_date IS null AND a.journal_closing_date IS NOT null) OR e.sale_date <> a.sale_date OR (e.sale_date IS NOT null AND a.sale_date IS null) OR (e.sale_date IS null AND a.sale_date IS NOT null) OR e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) OR e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null)
     ) AS d
@@ -516,9 +524,9 @@ FROM
 	public void TestCreateDatasourceMaterialQuery_CTE()
 	{
 		var datasource = DatasourceRepository.cte_sales;
-		var requestMaterial = MaterialRepository.ValidationRequestMeterial;
+		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateValidationDatasourceMaterialQuery(requestMaterial, datasource, (SelectQuery x) => x);
+		var query = Proxy.CreateValidationMaterialQuery(datasource, request, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -526,7 +534,7 @@ CREATE TEMPORARY TABLE
 AS
 WITH
     _expect AS (
-        /* inject request material filter for destination */
+        /* inject request material filter */
         SELECT
             d.sale_journal_id,
             d.journal_closing_date,
@@ -565,13 +573,14 @@ WITH
     ),
     _actual AS (
         /* inject request material filter */
+        /* does not exist if physically deleted */
         SELECT
+            rm.sale_journal_id,
             d.journal_closing_date,
             d.sale_date,
             d.shop_id,
             d.price,
-            d.sale_id,
-            rm.sale_journal_id
+            d.sale_id
         FROM
             (
                 /* raw data source */
@@ -592,16 +601,18 @@ WITH
             INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     ),
     _target_datasource AS (
+        /* reverse only */
         SELECT
             e.sale_journal_id,
             a.sale_id,
             '{"deleted":true}' AS interlink__remarks
         FROM
             _expect AS e
-            LEFT JOIN _actual AS a ON e.sale_id = a.sale_id
+            LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             a.sale_id IS null
         UNION ALL
+        /* reverse and additional */
         SELECT
             d.sale_journal_id,
             d.sale_id,
@@ -624,7 +635,7 @@ WITH
                     END) AS interlink__remarks
                 FROM
                     _expect AS e
-                    INNER JOIN _actual AS a ON e.sale_id = a.sale_id
+                    INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
                 WHERE
                     false OR e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date OR e.sale_date IS NOT DISTINCT FROM a.sale_date OR e.shop_id IS NOT DISTINCT FROM a.shop_id OR e.price IS NOT DISTINCT FROM a.price
             ) AS d
@@ -635,6 +646,66 @@ SELECT
     d.interlink__remarks
 FROM
     _target_datasource AS d
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void TestToAdditionalMaterial()
+	{
+		var material = MaterialRepository.ValidationMaterial;
+		var additional = material.ToAdditionalMaterial();
+		var query = additional.SelectQuery;
+
+		var expect = """
+/* since the keymap is assumed to have been deleted in the reverses process, we will not check its existence here. */
+SELECT
+    d.sale_id,
+    r.root__sale_journal_id,
+    r.origin__sale_journal_id,
+    d.interlink__remarks
+FROM
+    (
+        SELECT
+            t.sale_journal_id,
+            t.sale_id,
+            t.interlink__remarks
+        FROM
+            __validation_datasource AS t
+    ) AS d
+    INNER JOIN sale_journals__reverse AS r ON d.sale_journal_id = r.origin__sale_journal_id
+WHERE
+    d.sale_id IS NOT null
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void TestToReverseMaterial()
+	{
+		var material = MaterialRepository.ValidationMaterial;
+		var reverse = material.ToReverseMaterial();
+		var query = reverse.SelectQuery;
+
+		var expect = """
+SELECT
+    d.sale_journal_id,
+    d.interlink__remarks
+FROM
+    (
+        SELECT
+            t.sale_journal_id,
+            t.sale_id,
+            t.interlink__remarks
+        FROM
+            __validation_datasource AS t
+    ) AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

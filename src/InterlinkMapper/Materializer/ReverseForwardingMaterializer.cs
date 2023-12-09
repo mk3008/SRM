@@ -27,10 +27,10 @@ public class ReverseForwardingMaterializer : IMaterializer
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, destination, request);
-		var deleteRows = CleanUpMaterialRequest(connection, destination, request);
+		//var deleteRows = CleanUpMaterialRequest(connection, destination, request);
 
-		// If all requests are deleted, there are no processing targets.
-		if (request.Count == deleteRows) return null;
+		//// If all requests are deleted, there are no processing targets.
+		//if (request.Count == deleteRows) return null;
 
 		var query = CreateReverseMaterialQuery(destination, request, injector);
 		var reverse = this.CreateMaterial(connection, query);
@@ -55,12 +55,14 @@ public class ReverseForwardingMaterializer : IMaterializer
 			DestinationTable = destination.Table.GetTableFullName(),
 			DestinationColumns = destination.Table.Columns,
 			DestinationIdColumn = destination.Sequence.Column,
-			KeymapTableNameColumn = process.KeymapTableNameColumn,
+			KeymapTableNameColumn = process.KeyMapTableNameColumn,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
 			ProcessIdColumn = process.ProcessIdColumn,
 			RelationTable = relation.Definition.TableFullName,
 			ReverseTable = reverse.Definition.TableFullName,
+			DatasourceKeyColumns = null!,
+			KeyRelationTable = null!,
 		};
 	}
 
@@ -70,29 +72,38 @@ public class ReverseForwardingMaterializer : IMaterializer
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private int CleanUpMaterialRequest(IDbConnection connection, DbDestination destination, Material result)
-	{
-		var query = CleanUpMaterialRequestQuery(destination, result);
-		return connection.Execute(query, commandTimeout: CommandTimeout);
-	}
+	//private int CleanUpMaterialRequest(IDbConnection connection, DbDestination destination, Material result)
+	//{
+	//	var query = CleanUpMaterialRequestQuery(destination, result);
+	//	return connection.Execute(query, commandTimeout: CommandTimeout);
+	//}
 
 	private CreateTableQuery CreateRequestMaterialQuery(DbDestination destination)
 	{
 		var request = Environment.GetReverseRequestTable(destination);
 		var relation = Environment.GetRelationTable(destination);
+		var process = Environment.GetProcessTable();
 
-		var sq = request.ToSelectQuery();
-		var f = sq.FromClause!;
-		var d = f.Root;
-		var rel = f.InnerJoin(relation.Definition.TableFullName).As("rel").On(d, destination.Sequence.Column);
-
-		sq.Select(new FunctionValue("row_number", () =>
+		var sq = new SelectQuery();
+		sq.AddComment("Only original slips can be reversed.(where id = origin_id)");
+		sq.AddComment("Only unprocessed slips can be reversed.(where reverse is null)");
+		var (f, d) = sq.From(request.Definition.TableFullName).As("d");
+		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, request.DestinationIdColumn);
+		var reverse = f.LeftJoin(relation.Definition.TableFullName).As("reverse").On(x =>
 		{
-			var over = new OverClause();
-			over.AddPartition(new ColumnValue(d, destination.Sequence.Column));
-			over.AddOrder(new SortableItem(new ColumnValue(d, request.RequestIdColumn)));
-			return over;
-		})).As(RowNumberColumnName);
+			x.Condition(r, relation.DestinationIdColumn).Equal(x.Table, relation.OriginIdColumn);
+		});
+		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, relation.ProcessIdColumn);
+
+		sq.Select(r, request.RequestIdColumn);
+		sq.Select(r, request.DestinationIdColumn);
+		sq.Select(r, relation.RootIdColumn);
+		sq.Select(r, request.RemarksColumn);
+		sq.Select(p, process.KeyMapTableNameColumn);
+		sq.Select(p, process.KeyRelationTableNameColumn);
+
+		sq.Where(r, relation.DestinationIdColumn).Equal(r, relation.OriginIdColumn);
+		sq.Where(reverse, relation.DestinationIdColumn).IsNull();
 
 		var name = "__reverse_request";
 		return sq.ToCreateTableQuery(name);
@@ -124,22 +135,22 @@ public class ReverseForwardingMaterializer : IMaterializer
 		return sq.ToDeleteQuery(requestTable);
 	}
 
-	private DeleteQuery CleanUpMaterialRequestQuery(DbDestination destination, Material result)
-	{
-		var relation = Environment.GetRelationTable(destination);
-		var relationTable = relation.Definition.TableFullName;
+	//private DeleteQuery CleanUpMaterialRequestQuery(DbDestination destination, Material result)
+	//{
+	//	var relation = Environment.GetRelationTable(destination);
+	//	var relationTable = relation.Definition.TableFullName;
 
-		var sq = new SelectQuery();
-		sq.AddComment("Delete duplicate rows so that the destination ID is unique");
+	//	var sq = new SelectQuery();
+	//	sq.AddComment("Delete duplicate rows so that the destination ID is unique");
 
-		var (f, r) = sq.From(result.MaterialName).As("r");
+	//	var (f, r) = sq.From(result.MaterialName).As("r");
 
-		sq.Where(r, RowNumberColumnName).NotEqual("1");
+	//	sq.Where(r, RowNumberColumnName).NotEqual("1");
 
-		sq.Select(r, destination.Sequence.Column);
+	//	sq.Select(r, destination.Sequence.Column);
 
-		return sq.ToDeleteQuery(result.MaterialName);
-	}
+	//	return sq.ToDeleteQuery(result.MaterialName);
+	//}
 
 	private SelectQuery CreateReverseDatasourceSelectQuery(DbDestination destination, Material request)
 	{
@@ -151,16 +162,12 @@ public class ReverseForwardingMaterializer : IMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");
 		var (f, d) = sq.From(destination.ToSelectQuery()).As("d");
-		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, destination.Sequence.Column);
-		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, process.ProcessIdColumn);
+		//var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, destination.Sequence.Column);
+		//var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, process.ProcessIdColumn);
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.Sequence.Column);
-		var rev = f.LeftJoin(reverse.Definition.TableFullName).As("rev").On(d, destination.Sequence.Column);
+		//var rev = f.LeftJoin(reverse.Definition.TableFullName).As("rev").On(d, destination.Sequence.Column);
 
-		sq.Select(new FunctionValue("coalesce", new ValueCollection
-		{
-			new ColumnValue(rev, reverse.RootIdColumn),
-			new ColumnValue(d, destination.Sequence.Column)
-		})).As(reverse.RootIdColumn);
+		sq.Select(rm, relation.RootIdColumn);
 
 		sq.Select(d);
 
@@ -179,7 +186,8 @@ public class ReverseForwardingMaterializer : IMaterializer
 			}
 		};
 
-		sq.Select(p, process.KeymapTableNameColumn);
+		sq.Select(rm, process.KeyMapTableNameColumn);
+		sq.Select(rm, process.KeyRelationTableNameColumn);
 		sq.Select(rm, reverse.RemarksColumn);
 
 		return sq;

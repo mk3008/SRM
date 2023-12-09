@@ -34,31 +34,25 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		return m.AsPrivateProxy().CreateRequestMaterialQuery(DestinationRepository.sale_journals).ToSelectQuery();
 	}
 
-	public ValidationMaterial ValidationRequestMeterial =>
-		new ValidationMaterial()
+	public Material ValidationRequestMeterial =>
+		new Material()
 		{
 			MaterialName = "__validation_request",
 			Count = 1,
-			SelectQuery = null!,
-			CommandTimeout = 10,
-			DatasourceKeyColumns = new(),
-			DestinationColumns = null!,
-			DestinationIdColumn = null!,
-			DestinationTable = null!,
-			KeymapTable = null!,
-			OriginIdColumn = null!,
-			PlaceHolderIdentifer = null!,
-			ProcessIdColumn = null!,
-			RelationTable = null!,
-			RemarksColumn = null!,
-			ReverseTable = null!,
-			RootIdColumn = null!,
-			KeymapTableNameColumn = null!,
+			SelectQuery = GetValidationRequestQuery()
 		};
+
+	private SelectQuery GetValidationRequestQuery()
+	{
+		var m = new ValidationMaterializer(environment);
+		return m.AsPrivateProxy().CreateRequestMaterialQuery(DatasourceRepository.sales).ToSelectQuery();
+	}
 
 	public AdditionalMaterial AdditinalMeterial => CreateAdditionalMaterialQuery();
 
 	public ReverseMaterial ReverseMeterial => CreateReverseMeterial();
+
+	public ValidationMaterial ValidationMaterial => CreateValidationMaterial();
 
 	private AdditionalMaterial CreateAdditionalMaterialQuery()
 	{
@@ -100,5 +94,26 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		};
 
 		return service.AsPrivateProxy().ToReverseMaterial(destination, material);
+	}
+
+	private ValidationMaterial CreateValidationMaterial()
+	{
+		var datasource = DatasourceRepository.sales;
+		var request = ValidationRequestMeterial;
+		var service = new ValidationMaterializer(environment);
+		var query = service.AsPrivateProxy().CreateValidationMaterialQuery(
+			datasource,
+			request,
+			(SelectQuery x) => x
+		);
+
+		var material = new Material
+		{
+			Count = 1,
+			MaterialName = query.TableFullName,
+			SelectQuery = query.ToSelectQuery(),
+		};
+
+		return service.AsPrivateProxy().ToValidationMaterial(datasource, material);
 	}
 }
