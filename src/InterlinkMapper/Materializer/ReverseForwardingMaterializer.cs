@@ -15,8 +15,6 @@ public class ReverseForwardingMaterializer : IMaterializer
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public string RowNumberColumnName { get; set; } = "row_num";
-
 	public ReverseMaterial? Create(IDbConnection connection, DbDestination destination, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (!destination.AllowReverse) throw new NotSupportedException();
@@ -51,7 +49,6 @@ public class ReverseForwardingMaterializer : IMaterializer
 			DestinationTable = destination.Table.GetTableFullName(),
 			DestinationColumns = destination.Table.Columns,
 			DestinationIdColumn = destination.Sequence.Column,
-			KeymapTableNameColumn = process.KeyMapTableNameColumn,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
 			ProcessIdColumn = process.ProcessIdColumn,
@@ -59,6 +56,14 @@ public class ReverseForwardingMaterializer : IMaterializer
 			ReverseTable = reverse.Definition.TableFullName,
 			DatasourceKeyColumns = null!,
 			KeyRelationTable = null!,
+			ActionColumn = process.ActionColumn,
+			ProcessDestinationIdColumn = process.DestinationIdColumn,
+			ProcessDatasourceIdColumn = process.DatasourceIdColumn,
+			InsertCountColumn = process.InsertCountColumn,
+			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
+			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
+			ProcessTableName = process.Definition.GetTableFullName(),
+			TransactionIdColumn = process.TransactionIdColumn,
 		};
 	}
 
@@ -89,6 +94,8 @@ public class ReverseForwardingMaterializer : IMaterializer
 		sq.Select(r, request.DestinationIdColumn);
 		sq.Select(r, relation.RootIdColumn);
 		sq.Select(r, request.RemarksColumn);
+		sq.Select(p, process.DatasourceIdColumn);
+		sq.Select(p, process.DestinationIdColumn);
 		sq.Select(p, process.KeyMapTableNameColumn);
 		sq.Select(p, process.KeyRelationTableNameColumn);
 
@@ -156,6 +163,8 @@ public class ReverseForwardingMaterializer : IMaterializer
 			}
 		};
 
+		sq.Select(rm, process.DatasourceIdColumn);
+		sq.Select(rm, process.DestinationIdColumn);
 		sq.Select(rm, process.KeyMapTableNameColumn);
 		sq.Select(rm, process.KeyRelationTableNameColumn);
 		sq.Select(rm, reverse.RemarksColumn);

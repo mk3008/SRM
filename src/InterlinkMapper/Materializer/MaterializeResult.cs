@@ -1,4 +1,5 @@
-﻿using PrivateProxy;
+﻿using InterlinkMapper.Models;
+using PrivateProxy;
 
 namespace InterlinkMapper.Materializer;
 
@@ -11,6 +12,8 @@ public abstract class MaterializeResult
 	public required string MaterialName { get; init; } = string.Empty;
 
 	public required string PlaceHolderIdentifer { get; init; }
+
+	public required string TransactionIdColumn { get; init; }
 
 	public required string ProcessIdColumn { get; init; }
 
@@ -36,16 +39,49 @@ public abstract class MaterializeResult
 
 	public required List<string> DatasourceKeyColumns { get; init; }
 
-	internal InsertQuery CreateRelationInsertQuery(long processId)
+
+	public required string KeyMapTableNameColumn { get; init; }
+
+	public required string KeyRelationTableNameColumn { get; init; }
+
+	public required string ActionColumn { get; init; }
+
+	public required string InsertCountColumn { get; init; }
+
+	public required string ProcessTableName { get; init; }
+
+	public required string ProcessDestinationIdColumn { get; init; }
+
+	public required string ProcessDatasourceIdColumn { get; init; }
+
+
+	internal InsertQuery CreateProcessInsertQuery(ProcessRow row)
 	{
-		//var sq = new SelectQuery();
-		//var (_, d) = sq.From(SelectQuery).As("d");
+		//select :transaction_id, :destination_name, :datasoruce_name, :keymap_table, :relationmap_table
+		var sq = new SelectQuery();
+		sq.Select(PlaceHolderIdentifer, TransactionIdColumn, row.TransactionId);
+		sq.Select(PlaceHolderIdentifer, ProcessDatasourceIdColumn, row.DatasourceId);
+		sq.Select(PlaceHolderIdentifer, ProcessDestinationIdColumn, row.DestinationId);
+		sq.Select(PlaceHolderIdentifer, KeyMapTableNameColumn, row.KeyMapTableName);
+		sq.Select(PlaceHolderIdentifer, KeyRelationTableNameColumn, row.KeyRelationTableName);
+		sq.Select(PlaceHolderIdentifer, ActionColumn, row.ActionName);
+		sq.Select(PlaceHolderIdentifer, InsertCountColumn, row.InsertCount);
 
-		//sq.Select(d, DestinationIdColumn);
-		//sq.Select(PlaceHolderIdentifer, ProcessIdColumn, processId);
+		//insert into process_table returning process_id
+		var iq = sq.ToInsertQuery(ProcessTableName);
+		iq.Returning(ProcessIdColumn);
 
-		//return sq.ToInsertQuery(RelationTable);
+		return iq;
+	}
 
+	//internal InsertQuery CreateRelationInsertQuery(long processId)
+	//{
+	//	var sq = CreateRelationInsertSelectQuery(processId);
+	//	return sq.ToInsertQuery(RelationTable);
+	//}
+
+	internal SelectQuery CreateRelationInsertSelectQuery(long processId)
+	{
 		var sq = new SelectQuery();
 		var ct = sq.With(SelectQuery).As("d");
 
@@ -74,7 +110,7 @@ public abstract class MaterializeResult
 			sq.Select("null").As(RemarksColumn);
 		}
 
-		return sq.ToInsertQuery(RelationTable);
+		return sq;
 	}
 
 	internal InsertQuery CreateDestinationInsertQuery()

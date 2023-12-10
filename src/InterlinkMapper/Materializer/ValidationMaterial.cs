@@ -48,6 +48,14 @@ public class ValidationMaterial : MaterializeResult
 			RelationTable = RelationTable,
 			ReverseTable = ReverseTable,
 			NumericType = string.Empty,
+			ActionColumn = ActionColumn,
+			ProcessDatasourceIdColumn = ProcessDatasourceIdColumn,
+			ProcessDestinationIdColumn = ProcessDestinationIdColumn,
+			InsertCountColumn = InsertCountColumn,
+			KeyMapTableNameColumn = KeyMapTableNameColumn,
+			KeyRelationTableNameColumn = KeyRelationTableNameColumn,
+			ProcessTableName = ProcessTableName,
+			TransactionIdColumn = TransactionIdColumn,
 		};
 	}
 
@@ -69,7 +77,6 @@ public class ValidationMaterial : MaterializeResult
 			DestinationTable = DestinationTable,
 			DestinationColumns = DestinationColumns,
 			DestinationIdColumn = DestinationIdColumn,
-			KeymapTableNameColumn = KeymapTableNameColumn,
 			PlaceHolderIdentifer = PlaceHolderIdentifer,
 			CommandTimeout = CommandTimeout,
 			ProcessIdColumn = ProcessIdColumn,
@@ -77,6 +84,15 @@ public class ValidationMaterial : MaterializeResult
 			ReverseTable = ReverseTable,
 			DatasourceKeyColumns = null!,
 			KeyRelationTable = null!,
+
+			ActionColumn = ActionColumn,
+			ProcessDatasourceIdColumn = ProcessDatasourceIdColumn,
+			ProcessDestinationIdColumn = ProcessDestinationIdColumn,
+			InsertCountColumn = InsertCountColumn,
+			KeyMapTableNameColumn = KeyMapTableNameColumn,
+			KeyRelationTableNameColumn = KeyRelationTableNameColumn,
+			ProcessTableName = ProcessTableName,
+			TransactionIdColumn = TransactionIdColumn
 		};
 	}
 }

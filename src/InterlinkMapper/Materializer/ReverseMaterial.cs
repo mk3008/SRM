@@ -1,75 +1,95 @@
-﻿using System.Data;
+﻿using InterlinkMapper.Models;
 using PrivateProxy;
+using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
 public class ReverseMaterial : MaterializeResult
 {
-	public required string KeymapTableNameColumn { get; init; }
+	//public required string KeyMapColumn { get; init; }
 
-	internal SelectQuery CreateKeymapTableNameSelectQuery()
+	//public required string KeyRelationColumn { get; init; }
+
+
+
+	internal SelectQuery CreateProcessRowSelectQuery(long transactionId)
 	{
 		var sq = new SelectQuery();
-		var (_, d) = sq.From(SelectQuery).As("d");
+		var (f, d) = sq.From(SelectQuery).As("d");
 
-		sq.Select(d, KeymapTableNameColumn);
-		sq.SelectClause!.HasDistinctKeyword = true;
+		sq.Select(PlaceHolderIdentifer, nameof(transactionId)).As(nameof(ProcessRow.TransactionId));
+		sq.Select(d, ProcessDatasourceIdColumn).As(nameof(ProcessRow.DatasourceId));
+		sq.Select(d, ProcessDestinationIdColumn).As(nameof(ProcessRow.DestinationId));
+		sq.Select(d, KeyMapTableNameColumn).As(nameof(ProcessRow.KeyMapTableName));
+		sq.Select(d, KeyRelationTableNameColumn).As(nameof(ProcessRow.KeyRelationTableName));
+		sq.GetSelectableItems().ToList().ForEach(x => sq.Group(x));
+		sq.GetSelectableItems().ToList().ForEach(x => sq.Order(x));
+
+		sq.Select(new FunctionValue("count", "*")).As(nameof(ProcessRow.InsertCount));
 
 		return sq;
 	}
 
-	internal DeleteQuery CreateKeymapDeleteQuery(string keymapTable)
+	internal void ExecuteTransfer(IDbConnection connection, long transactionId)
+	{
+		var rows = connection.Query<ProcessRow>(CreateProcessRowSelectQuery(transactionId), commandTimeout: CommandTimeout).ToList();
+
+		foreach (var row in rows)
+		{
+			// regist process
+			row.ProcessId = connection.ExecuteScalar<long>(CreateProcessInsertQuery(row));
+
+			// transfer datasource
+			var cnt = connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
+			if (cnt != row.InsertCount) throw new InvalidOperationException();
+
+			// create system relation mapping
+			cnt = connection.Execute(CreateMapDeleteQuery(row), commandTimeout: CommandTimeout);
+			if (cnt != row.InsertCount) throw new InvalidOperationException();
+
+			cnt = connection.Execute(CreateRelationInsertQuery(row), commandTimeout: CommandTimeout);
+			if (cnt != row.InsertCount) throw new InvalidOperationException();
+		}
+	}
+
+	private InsertQuery CreateRelationInsertQuery(ProcessRow row)
 	{
 		var sq = new SelectQuery();
-		var (_, d) = sq.From(SelectQuery).As("d");
+		var (_, d) = sq.From(CreateMaterialSelectQuery(row)).As("d");
+
+		sq.Select(PlaceHolderIdentifer, ProcessIdColumn, row.ProcessId);
+		sq.Select(d, DestinationIdColumn);
+		sq.Select(d, RootIdColumn);
+		sq.Select(d, OriginIdColumn);
+		sq.Select(d, RemarksColumn);
+
+		sq.Order(d, DestinationIdColumn);
+
+		return sq.ToInsertQuery(row.KeyRelationTableName);
+	}
+
+	private DeleteQuery CreateMapDeleteQuery(ProcessRow row)
+	{
+		var sq = new SelectQuery();
+		var (_, d) = sq.From(CreateMaterialSelectQuery(row)).As("d");
 
 		sq.Select(d, OriginIdColumn).As(DestinationIdColumn);
 
-		var q = sq.ToDeleteQuery(keymapTable);
-		q.AddComment("canceling the keymap due to reverse");
-
-		return q;
+		return sq.ToDeleteQuery(row.KeyMapTableName);
 	}
 
-	internal InsertQuery CreateKeymapHitoryInsertQuery(string keymapTable)
+	private SelectQuery CreateMaterialSelectQuery(ProcessRow row)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
+		sq.Where(d, ProcessDatasourceIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + ProcessDatasourceIdColumn, row.DatasourceId));
+		sq.Where(d, ProcessDestinationIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + ProcessDestinationIdColumn, row.DestinationId));
+		sq.Where(d, KeyMapTableNameColumn).Equal(new ParameterValue(PlaceHolderIdentifer + KeyMapTableNameColumn, row.KeyMapTableName));
+		sq.Where(d, KeyRelationTableNameColumn).Equal(new ParameterValue(PlaceHolderIdentifer + KeyRelationTableNameColumn, row.KeyRelationTableName));
 
-		sq.Select(d, DestinationIdColumn);
-		sq.Select(d, RootIdColumn);
-		sq.Select(d, OriginIdColumn);
-		sq.Select(d, RemarksColumn);
+		sq.Select(d);
 
-		return sq.ToInsertQuery(ReverseTable);
-	}
-
-	internal InsertQuery CreateReverseInsertQuery()
-	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(SelectQuery).As("d");
-
-		sq.Select(d, DestinationIdColumn);
-		sq.Select(d, RootIdColumn);
-		sq.Select(d, OriginIdColumn);
-		sq.Select(d, RemarksColumn);
-
-		return sq.ToInsertQuery(ReverseTable);
-	}
-
-	internal void ExecuteTransfer(IDbConnection connection, long processId)
-	{
-		// transfer datasource
-		connection.Execute(CreateRelationInsertQuery(processId), commandTimeout: CommandTimeout);
-		connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
-
-		// create system relation mapping
-		var keymaps = connection.Query<string>(CreateKeymapTableNameSelectQuery(), commandTimeout: CommandTimeout).ToList();
-		foreach (var keymap in keymaps)
-		{
-			connection.Execute(CreateKeymapDeleteQuery(keymap), commandTimeout: CommandTimeout);
-		}
-		connection.Execute(CreateReverseInsertQuery(), commandTimeout: CommandTimeout);
+		return sq;
 	}
 }
 

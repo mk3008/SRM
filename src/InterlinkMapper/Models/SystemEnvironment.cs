@@ -15,12 +15,12 @@ public class SystemEnvironment
 			Definition = new()
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = DbTableConfig.TransactionTableName,
+				TableName = DbTableConfig.InterlinkTransactionTableName,
 				ColumnDefinitions = new()
 				{
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.TransactionIdColumn,
+						ColumnName = DbTableConfig.InterlinkTransactionIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 						IsPrimaryKey = true,
@@ -28,13 +28,13 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.DatasourceIdColumn,
+						ColumnName = DbTableConfig.InterlinkDatasourceIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.DestinationIdColumn,
+						ColumnName = DbTableConfig.InterlinkDestinationIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
@@ -59,9 +59,9 @@ public class SystemEnvironment
 					},
 				}
 			},
-			TransactionIdColumn = DbTableConfig.TransactionIdColumn,
-			DatasourceIdColumn = DbTableConfig.DatasourceIdColumn,
-			DestinationIdColumn = DbTableConfig.DestinationIdColumn,
+			TransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
+			DatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
+			DestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
 			ActionColumn = DbTableConfig.ActionNameColumn,
 			ArgumentColumn = DbTableConfig.ArgumentColumn,
 		};
@@ -75,12 +75,12 @@ public class SystemEnvironment
 			Definition = new()
 			{
 				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = DbTableConfig.ProcessTableName,
+				TableName = DbTableConfig.InterlinkProcessTableName,
 				ColumnDefinitions = new()
 				{
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.ProcessIdColumn,
+						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 						IsPrimaryKey = true,
@@ -88,19 +88,19 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.TransactionIdColumn,
+						ColumnName = DbTableConfig.InterlinkTransactionIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.DatasourceIdColumn,
+						ColumnName = DbTableConfig.InterlinkDatasourceIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.DestinationIdColumn,
+						ColumnName = DbTableConfig.InterlinkDestinationIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
@@ -131,10 +131,10 @@ public class SystemEnvironment
 					},
 				}
 			},
-			ProcessIdColumn = DbTableConfig.ProcessIdColumn,
-			TransactionIdColumn = DbTableConfig.TransactionIdColumn,
-			DatasourceIdColumn = DbTableConfig.DatasourceIdColumn,
-			DestinationIdColumn = DbTableConfig.DestinationIdColumn,
+			ProcessIdColumn = DbTableConfig.InterlinkProcessIdColumn,
+			TransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
+			DatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
+			DestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
 			ActionColumn = DbTableConfig.ActionNameColumn,
 			InsertCountColumn = DbTableConfig.InsertCountColumn,
 			KeyMapTableNameColumn = DbTableConfig.KeyMapTableNameColumn,
@@ -165,13 +165,13 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.ProcessIdColumn,
+						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.ProcessIdColumn,
+						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
 						TypeName = DbEnvironment.NumericTypeName,
 						AllowNull= false,
 					},
@@ -188,11 +188,11 @@ public class SystemEnvironment
 					new DbIndexDefinition()
 					{
 						IndexNumber = 1,
-						Columns = new() { DbTableConfig.ProcessIdColumn }
+						Columns = new() { DbTableConfig.InterlinkProcessIdColumn }
 					}
 				}
 			},
-			ProcessIdColumn = DbTableConfig.ProcessIdColumn,
+			ProcessIdColumn = DbTableConfig.InterlinkProcessIdColumn,
 			DestinationIdColumn = d.Sequence.Column,
 			RootIdColumn = rootColumn,
 			OriginIdColumn = originColumn,

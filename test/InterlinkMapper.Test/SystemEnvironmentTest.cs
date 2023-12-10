@@ -90,17 +90,17 @@ public class SystemEnvironmentTest
 
 		var expect = """
 /*
-  :destination_id = 20
-  :datasource_id = 10
+  :interlink__destination_id = 20
+  :interlink__datasource_id = 10
   :argument = 'argument'
 */
 INSERT INTO
-    interlink_transaction (
-        destination_id, datasource_id, argument
+    interlink__transaction (
+        interlink__destination_id, interlink__datasource_id, argument
     )
 SELECT
-    :destination_id AS destination_id,
-    :datasource_id AS datasource_id,
+    :interlink__destination_id AS interlink__destination_id,
+    :interlink__datasource_id AS interlink__datasource_id,
     :argument AS argument
 RETURNING
     interlink__transaction_id
@@ -119,23 +119,23 @@ RETURNING
 		var expect = """
 /*
   :interlink__transaction_id = 30
-  :datasource_id = 10
-  :destination_id = 20
-  :key_map = 'sale_journals__km_sales'
-  :key_relation = 'sale_journals__kr_sales'
+  :interlink__datasource_id = 10
+  :interlink__destination_id = 20
+  :interlink__key_map = 'sale_journals__km_sales'
+  :interlink__key_relation = 'sale_journals__kr_sales'
   :action = 'test'
   :insert_count = 100
 */
 INSERT INTO
-    interlink_process (
-        interlink__transaction_id, datasource_id, destination_id, key_map, key_relation, action, insert_count
+    interlink__process (
+        interlink__transaction_id, interlink__datasource_id, interlink__destination_id, interlink__key_map, interlink__key_relation, action, insert_count
     )
 SELECT
     :interlink__transaction_id AS interlink__transaction_id,
-    :datasource_id AS datasource_id,
-    :destination_id AS destination_id,
-    :key_map AS key_map,
-    :key_relation AS key_relation,
+    :interlink__datasource_id AS interlink__datasource_id,
+    :interlink__destination_id AS interlink__destination_id,
+    :interlink__key_map AS interlink__key_map,
+    :interlink__key_relation AS interlink__key_relation,
     :action AS action,
     :insert_count AS insert_count
 RETURNING

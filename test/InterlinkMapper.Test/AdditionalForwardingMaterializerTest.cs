@@ -239,19 +239,15 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateRelationInsertQuery()
+	public void TestCreateRelationInsertSelectQuery()
 	{
 		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertQuery(1);
+		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1);
 		var expect = """
 /*
   :interlink__process_id = 1
 */
-INSERT INTO
-    sale_journals__relation (
-        interlink__process_id, sale_journal_id, root__sale_journal_id, origin__sale_journal_id, interlink__remarks
-    )
 WITH
     d AS (
         SELECT

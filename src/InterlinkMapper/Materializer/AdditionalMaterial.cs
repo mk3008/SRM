@@ -6,8 +6,9 @@ namespace InterlinkMapper.Materializer;
 
 public class AdditionalMaterial : MaterializeResult
 {
-	public required string KeyMapTable { get; init; }
 
+
+	public required string KeyMapTable { get; init; }
 
 
 	//public required string KeyRelationIdColumn { get; init; }
@@ -91,7 +92,7 @@ public class AdditionalMaterial : MaterializeResult
 	public void ExecuteTransfer(IDbConnection connection, long processId)
 	{
 		// transfer datasource
-		connection.Execute(CreateRelationInsertQuery(processId), commandTimeout: CommandTimeout);
+		connection.Execute(CreateRelationInsertSelectQuery(processId), commandTimeout: CommandTimeout);
 		connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
 
 		// create system relation mapping

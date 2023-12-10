@@ -74,6 +74,15 @@ public class ValidationMaterializer : IMaterializer
 			ReverseTable = reverse.Definition.TableFullName,
 
 			KeymapTableNameColumn = process.KeyMapTableNameColumn,
+			TransactionIdColumn = process.TransactionIdColumn,
+
+			ActionColumn = process.ActionColumn,
+			ProcessDatasourceIdColumn = process.DatasourceIdColumn,
+			ProcessDestinationIdColumn = process.DestinationIdColumn,
+			InsertCountColumn = process.InsertCountColumn,
+			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
+			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
+			ProcessTableName = process.Definition.GetTableFullName()
 		};
 	}
 

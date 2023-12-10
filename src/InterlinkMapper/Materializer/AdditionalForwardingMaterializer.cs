@@ -61,6 +61,14 @@ public class AdditionalForwardingMaterializer : IMaterializer
 			RelationTable = relation.Definition.TableFullName,
 			ReverseTable = reverse.Definition.TableFullName,
 			NumericType = Environment.DbEnvironment.NumericTypeName,
+			ActionColumn = process.ActionColumn,
+			ProcessDestinationIdColumn = process.DestinationIdColumn,
+			ProcessDatasourceIdColumn = process.DatasourceIdColumn,
+			InsertCountColumn = process.InsertCountColumn,
+			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
+			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
+			ProcessTableName = process.Definition.GetTableFullName(),
+			TransactionIdColumn = process.TransactionIdColumn,
 		};
 	}
 
