@@ -17,13 +17,14 @@ public class ReverseMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (f, d) = sq.From(SelectQuery).As("d");
 
-		sq.Select(PlaceHolderIdentifer, nameof(transactionId)).As(nameof(ProcessRow.TransactionId));
 		sq.Select(d, ProcessDatasourceIdColumn).As(nameof(ProcessRow.DatasourceId));
 		sq.Select(d, ProcessDestinationIdColumn).As(nameof(ProcessRow.DestinationId));
 		sq.Select(d, KeyMapTableNameColumn).As(nameof(ProcessRow.KeyMapTableName));
 		sq.Select(d, KeyRelationTableNameColumn).As(nameof(ProcessRow.KeyRelationTableName));
-		sq.GetSelectableItems().ToList().ForEach(x => sq.Group(x));
-		sq.GetSelectableItems().ToList().ForEach(x => sq.Order(x));
+		sq.GetSelectableItems().ToList().ForEach(sq.Group);
+		sq.GetSelectableItems().ToList().ForEach(x => sq.Order(x.Value));
+
+		sq.Select(PlaceHolderIdentifer, nameof(ProcessRow.TransactionId), transactionId);
 
 		sq.Select(new FunctionValue("count", "*")).As(nameof(ProcessRow.InsertCount));
 

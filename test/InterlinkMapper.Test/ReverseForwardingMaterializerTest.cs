@@ -51,6 +51,60 @@ public class ReverseForwardingMaterializerTest
 	}
 
 	[Fact]
+	public void TestCreateProcessRowSelectQuery()
+	{
+		var material = MaterialRepository.ReverseMeterial;
+
+		var query = material.AsPrivateProxy().CreateProcessRowSelectQuery(1);
+
+		var expect = """
+/*
+  :TransactionId = 1
+*/
+SELECT
+    d.interlink__datasource_id AS DatasourceId,
+    d.interlink__destination_id AS DestinationId,
+    d.interlink__key_map AS KeyMapTableName,
+    d.interlink__key_relation AS KeyRelationTableName,
+    :TransactionId AS TransactionId,
+    COUNT(*) AS InsertCount
+FROM
+    (
+        SELECT
+            t.sale_journal_id,
+            t.root__sale_journal_id,
+            t.origin__sale_journal_id,
+            t.journal_closing_date,
+            t.sale_date,
+            t.shop_id,
+            t.price,
+            t.remarks,
+            t.interlink__datasource_id,
+            t.interlink__destination_id,
+            t.interlink__key_map,
+            t.interlink__key_relation,
+            t.interlink__remarks
+        FROM
+            __reverse_datasource AS t
+    ) AS d
+GROUP BY
+    d.interlink__datasource_id,
+    d.interlink__destination_id,
+    d.interlink__key_map,
+    d.interlink__key_relation
+ORDER BY
+    d.interlink__datasource_id,
+    d.interlink__destination_id,
+    d.interlink__key_map,
+    d.interlink__key_relation
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
 	public void TestCreateRequestMaterialQuery()
 	{
 		var destination = DestinationRepository.sale_journals;
