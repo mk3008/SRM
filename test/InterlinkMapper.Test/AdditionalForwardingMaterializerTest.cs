@@ -137,6 +137,43 @@ FROM
 	}
 
 	[Fact]
+	public void TestCreateProcessInsertQuery()
+	{
+		var material = MaterialRepository.AdditinalMeterial;
+
+		var query = material.AsPrivateProxy().CreateProcessInsertQuery(1);
+		var expect = """
+/*
+  :interlink__transaction_id = 1
+  :interlink__datasource_id = 'interlink__datasource_id'
+  :interlink__destination_id = 'interlink__destination_id'
+  :interlink__key_map = 'interlink__key_map'
+  :interlink__key_relation = 'interlink__key_relation'
+  :action = 'additional'
+  :insert_count = 1
+*/
+INSERT INTO
+    interlink__process (
+        interlink__transaction_id, interlink__datasource_id, interlink__destination_id, interlink__key_map, interlink__key_relation, action, insert_count
+    )
+SELECT
+    :interlink__transaction_id AS interlink__transaction_id,
+    :interlink__datasource_id AS interlink__datasource_id,
+    :interlink__destination_id AS interlink__destination_id,
+    :interlink__key_map AS interlink__key_map,
+    :interlink__key_relation AS interlink__key_relation,
+    :action AS action,
+    :insert_count AS insert_count
+RETURNING
+    interlink__process_id
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
 	public void TestCreateKeyRelationInsertQuery()
 	{
 		var material = MaterialRepository.AdditinalMeterial;

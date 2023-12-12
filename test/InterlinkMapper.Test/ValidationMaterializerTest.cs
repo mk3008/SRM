@@ -51,7 +51,7 @@ SELECT
     ) AS row_num
 FROM
     sale_journals__rv_sales AS r
-    INNER JOIN sale_journals__m_sales AS m ON r.sale_id = m.sale_id
+    INNER JOIN sale_journals__km_sales AS m ON r.sale_id = m.sale_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

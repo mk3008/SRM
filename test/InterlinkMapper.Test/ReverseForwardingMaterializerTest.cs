@@ -1,5 +1,4 @@
 using Carbunql;
-using Carbunql.Clauses;
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
@@ -60,6 +59,7 @@ public class ReverseForwardingMaterializerTest
 		var expect = """
 /*
   :TransactionId = 1
+  :ActionName = 'reverse'
 */
 SELECT
     d.interlink__datasource_id AS DatasourceId,
@@ -67,6 +67,7 @@ SELECT
     d.interlink__key_map AS KeyMapTableName,
     d.interlink__key_relation AS KeyRelationTableName,
     :TransactionId AS TransactionId,
+    :ActionName AS ActionName,
     COUNT(*) AS InsertCount
 FROM
     (

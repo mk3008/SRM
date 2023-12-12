@@ -28,11 +28,7 @@ public class AdditionalForwardingService
 		var material = Materializer.Create(connection, datasource, injector);
 		if (material == null || material.Count == 0) return;
 
-		// create process row
-		var process = CreateProcessRow(datasource, transaction.TransactionId, material.Count);
-		process.ProcessId = connection.Execute(Environment.CreateProcessInsertQuery(process));
-
-		material.ExecuteTransfer(connection, process.ProcessId);
+		material.ExecuteTransfer(connection, transaction.TransactionId);
 	}
 
 	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")

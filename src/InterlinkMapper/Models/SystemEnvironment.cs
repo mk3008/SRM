@@ -536,6 +536,7 @@ public class SystemEnvironment
 		return iq;
 	}
 
+	[Obsolete]
 	public InsertQuery CreateProcessInsertQuery(ProcessRow row)
 	{
 		var table = GetProcessTable();

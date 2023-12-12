@@ -6,12 +6,6 @@ namespace InterlinkMapper.Materializer;
 
 public class ReverseMaterial : MaterializeResult
 {
-	//public required string KeyMapColumn { get; init; }
-
-	//public required string KeyRelationColumn { get; init; }
-
-
-
 	internal SelectQuery CreateProcessRowSelectQuery(long transactionId)
 	{
 		var sq = new SelectQuery();
@@ -25,6 +19,7 @@ public class ReverseMaterial : MaterializeResult
 		sq.GetSelectableItems().ToList().ForEach(x => sq.Order(x.Value));
 
 		sq.Select(PlaceHolderIdentifer, nameof(ProcessRow.TransactionId), transactionId);
+		sq.Select(PlaceHolderIdentifer, nameof(ProcessRow.ActionName), "reverse");
 
 		sq.Select(new FunctionValue("count", "*")).As(nameof(ProcessRow.InsertCount));
 
