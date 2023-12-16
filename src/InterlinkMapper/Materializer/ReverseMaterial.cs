@@ -11,29 +11,29 @@ public class ReverseMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (f, d) = sq.From(SelectQuery).As("d");
 
-		sq.Select(d, ProcessDatasourceIdColumn).As(nameof(ProcessRow.DatasourceId));
-		sq.Select(d, ProcessDestinationIdColumn).As(nameof(ProcessRow.DestinationId));
-		sq.Select(d, KeyMapTableNameColumn).As(nameof(ProcessRow.KeyMapTableName));
-		sq.Select(d, KeyRelationTableNameColumn).As(nameof(ProcessRow.KeyRelationTableName));
+		sq.Select(d, InterlinkDatasourceIdColumn).As(nameof(InterlinkProcessRow.InterlinkDatasourceId));
+		sq.Select(d, InterlinkDestinationIdColumn).As(nameof(InterlinkProcessRow.InterlinkDestinationId));
+		sq.Select(d, KeyMapTableNameColumn).As(nameof(InterlinkProcessRow.KeyMapTableName));
+		sq.Select(d, KeyRelationTableNameColumn).As(nameof(InterlinkProcessRow.KeyRelationTableName));
 		sq.GetSelectableItems().ToList().ForEach(sq.Group);
 		sq.GetSelectableItems().ToList().ForEach(x => sq.Order(x.Value));
 
-		sq.Select(PlaceHolderIdentifer, nameof(ProcessRow.TransactionId), transactionId);
-		sq.Select(PlaceHolderIdentifer, nameof(ProcessRow.ActionName), "reverse");
+		sq.Select(PlaceHolderIdentifer, nameof(InterlinkProcessRow.InterlinkTransactionId), transactionId);
+		sq.Select(PlaceHolderIdentifer, nameof(InterlinkProcessRow.ActionName), "reverse");
 
-		sq.Select(new FunctionValue("count", "*")).As(nameof(ProcessRow.InsertCount));
+		sq.Select(new FunctionValue("count", "*")).As(nameof(InterlinkProcessRow.InsertCount));
 
 		return sq;
 	}
 
 	internal void ExecuteTransfer(IDbConnection connection, long transactionId)
 	{
-		var rows = connection.Query<ProcessRow>(CreateProcessRowSelectQuery(transactionId), commandTimeout: CommandTimeout).ToList();
+		var rows = connection.Query<InterlinkProcessRow>(CreateProcessRowSelectQuery(transactionId), commandTimeout: CommandTimeout).ToList();
 
 		foreach (var row in rows)
 		{
 			// regist process
-			row.ProcessId = connection.ExecuteScalar<long>(CreateProcessInsertQuery(row));
+			row.InterlinkProcessId = connection.ExecuteScalar<long>(CreateProcessInsertQuery(row));
 
 			// transfer datasource
 			var cnt = connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
@@ -48,23 +48,23 @@ public class ReverseMaterial : MaterializeResult
 		}
 	}
 
-	private InsertQuery CreateRelationInsertQuery(ProcessRow row)
+	private InsertQuery CreateRelationInsertQuery(InterlinkProcessRow row)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(CreateMaterialSelectQuery(row)).As("d");
 
-		sq.Select(PlaceHolderIdentifer, ProcessIdColumn, row.ProcessId);
+		sq.Select(PlaceHolderIdentifer, InterlinkProcessIdColumn, row.InterlinkProcessId);
 		sq.Select(d, DestinationIdColumn);
 		sq.Select(d, RootIdColumn);
 		sq.Select(d, OriginIdColumn);
-		sq.Select(d, RemarksColumn);
+		sq.Select(d, InterlinkRemarksColumn);
 
 		sq.Order(d, DestinationIdColumn);
 
 		return sq.ToInsertQuery(row.KeyRelationTableName);
 	}
 
-	private DeleteQuery CreateMapDeleteQuery(ProcessRow row)
+	private DeleteQuery CreateMapDeleteQuery(InterlinkProcessRow row)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(CreateMaterialSelectQuery(row)).As("d");
@@ -74,12 +74,12 @@ public class ReverseMaterial : MaterializeResult
 		return sq.ToDeleteQuery(row.KeyMapTableName);
 	}
 
-	private SelectQuery CreateMaterialSelectQuery(ProcessRow row)
+	private SelectQuery CreateMaterialSelectQuery(InterlinkProcessRow row)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
-		sq.Where(d, ProcessDatasourceIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + ProcessDatasourceIdColumn, row.DatasourceId));
-		sq.Where(d, ProcessDestinationIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + ProcessDestinationIdColumn, row.DestinationId));
+		sq.Where(d, InterlinkDatasourceIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + InterlinkDatasourceIdColumn, row.InterlinkDatasourceId));
+		sq.Where(d, InterlinkDestinationIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + InterlinkDestinationIdColumn, row.InterlinkDestinationId));
 		sq.Where(d, KeyMapTableNameColumn).Equal(new ParameterValue(PlaceHolderIdentifer + KeyMapTableNameColumn, row.KeyMapTableName));
 		sq.Where(d, KeyRelationTableNameColumn).Equal(new ParameterValue(PlaceHolderIdentifer + KeyRelationTableNameColumn, row.KeyRelationTableName));
 

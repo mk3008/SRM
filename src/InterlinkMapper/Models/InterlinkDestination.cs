@@ -2,9 +2,9 @@
 
 namespace InterlinkMapper.Models;
 
-public class DbDestination
+public class InterlinkDestination
 {
-	public long DestinationId { get; set; }
+	public long InterlinkDestinationId { get; set; }
 
 	public DbTable Table { get; set; } = new();
 

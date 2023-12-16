@@ -10,17 +10,17 @@ public class AdditionalMaterial : MaterializeResult
 	internal InsertQuery CreateProcessInsertQuery(long transactionId)
 	{
 		var sq = new SelectQuery();
-		sq.Select(PlaceHolderIdentifer, TransactionIdColumn, transactionId);
-		sq.Select(PlaceHolderIdentifer, ProcessDatasourceIdColumn, ProcessDatasourceIdColumn);
-		sq.Select(PlaceHolderIdentifer, ProcessDestinationIdColumn, ProcessDestinationIdColumn);
-		sq.Select(PlaceHolderIdentifer, KeyMapTableNameColumn, KeyMapTableNameColumn);
-		sq.Select(PlaceHolderIdentifer, KeyRelationTableNameColumn, KeyRelationTableNameColumn);
+		sq.Select(PlaceHolderIdentifer, InterlinkTransactionIdColumn, transactionId);
+		sq.Select(PlaceHolderIdentifer, InterlinkDatasourceIdColumn, InterlinkDatasourceId);
+		sq.Select(PlaceHolderIdentifer, InterlinkDestinationIdColumn, InterlinkDestinationId);
+		sq.Select(PlaceHolderIdentifer, KeyMapTableNameColumn, KeyMapTable);
+		sq.Select(PlaceHolderIdentifer, KeyRelationTableNameColumn, KeyRelationTable);
 		sq.Select(PlaceHolderIdentifer, ActionColumn, "additional");
 		sq.Select(PlaceHolderIdentifer, InsertCountColumn, Count);
 
 		//insert into process_table returning process_id
 		var iq = sq.ToInsertQuery(ProcessTableName);
-		iq.Returning(ProcessIdColumn);
+		iq.Returning(InterlinkProcessIdColumn);
 
 		return iq;
 	}

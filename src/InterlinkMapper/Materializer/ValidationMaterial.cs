@@ -12,7 +12,7 @@ public class ValidationMaterial : MaterializeResult
 		sq.AddComment("since the keymap is assumed to have been deleted in the reverses process, we will not check its existence here.");
 
 		var (f, d) = sq.From(SelectQuery).As("d");
-		var r = f.InnerJoin(ReverseTable).As("r").On(x =>
+		var r = f.InnerJoin(InterlinkRelationTable).As("r").On(x =>
 		{
 			x.Condition(d, DestinationIdColumn).Equal(x.Table, OriginIdColumn);
 		});
@@ -20,7 +20,7 @@ public class ValidationMaterial : MaterializeResult
 		DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
 		sq.Select(r, RootIdColumn);
 		sq.Select(r, OriginIdColumn);
-		sq.Select(d, RemarksColumn);
+		sq.Select(d, InterlinkRemarksColumn);
 
 		sq.Where(d, DatasourceKeyColumns.First()).IsNotNull();
 
@@ -37,7 +37,7 @@ public class ValidationMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
 		sq.Select(d, DestinationIdColumn);
-		sq.Select(d, RemarksColumn);
+		sq.Select(d, InterlinkRemarksColumn);
 
 		return new Material
 		{

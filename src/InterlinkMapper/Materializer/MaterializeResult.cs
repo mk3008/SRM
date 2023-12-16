@@ -13,25 +13,44 @@ public abstract class MaterializeResult
 
 	public required string PlaceHolderIdentifer { get; init; }
 
-	public required string TransactionIdColumn { get; init; }
+	public required string InterlinkTransactionIdColumn { get; init; }
 
-	public required string ProcessIdColumn { get; init; }
+	public required string InterlinkProcessIdColumn { get; init; }
+
+
+	public required string InterlinkDestinationIdColumn { get; init; }
+
+	public required string InterlinkDatasourceIdColumn { get; init; }
+
+	/// <summary>
+	/// Master ID of datasource table
+	/// ex."interlink_datasource_id"
+	/// </summary>
+	public required long InterlinkDatasourceId { get; set; }
+
+	/// <summary>
+	/// Master ID of destination table
+	/// ex."interlink_destination_id"
+	/// </summary>
+	public required long InterlinkDestinationId { get; set; }
+
+	public required string InterlinkRelationTable { get; init; }
 
 	public required string DestinationTable { get; init; }
 
+	/// <summary>
+	/// Column name that stores forwarding destination ID
+	/// ex."sale_id", "shop_id" etc
+	/// </summary>
 	public required string DestinationIdColumn { get; init; }
 
 	public required List<string> DestinationColumns { get; init; }
-
-	public required string RelationTable { get; init; }
 
 	public required string RootIdColumn { get; init; }
 
 	public required string OriginIdColumn { get; init; }
 
-	public required string RemarksColumn { get; init; }
-
-	public required string ReverseTable { get; init; }
+	public required string InterlinkRemarksColumn { get; init; }
 
 	public required int CommandTimeout { get; init; }
 
@@ -49,18 +68,14 @@ public abstract class MaterializeResult
 
 	public required string ProcessTableName { get; init; }
 
-	public required string ProcessDestinationIdColumn { get; init; }
 
-	public required string ProcessDatasourceIdColumn { get; init; }
-
-
-	internal InsertQuery CreateProcessInsertQuery(ProcessRow row)
+	internal InsertQuery CreateProcessInsertQuery(InterlinkProcessRow row)
 	{
 		//select :transaction_id, :destination_name, :datasoruce_name, :keymap_table, :relationmap_table
 		var sq = new SelectQuery();
-		sq.Select(PlaceHolderIdentifer, TransactionIdColumn, row.TransactionId);
-		sq.Select(PlaceHolderIdentifer, ProcessDatasourceIdColumn, row.DatasourceId);
-		sq.Select(PlaceHolderIdentifer, ProcessDestinationIdColumn, row.DestinationId);
+		sq.Select(PlaceHolderIdentifer, InterlinkTransactionIdColumn, row.InterlinkTransactionId);
+		sq.Select(PlaceHolderIdentifer, InterlinkDatasourceIdColumn, row.InterlinkDatasourceId);
+		sq.Select(PlaceHolderIdentifer, InterlinkDestinationIdColumn, row.InterlinkDestinationId);
 		sq.Select(PlaceHolderIdentifer, KeyMapTableNameColumn, row.KeyMapTableName);
 		sq.Select(PlaceHolderIdentifer, KeyRelationTableNameColumn, row.KeyRelationTableName);
 		sq.Select(PlaceHolderIdentifer, ActionColumn, row.ActionName);
@@ -68,7 +83,7 @@ public abstract class MaterializeResult
 
 		//insert into process_table returning process_id
 		var iq = sq.ToInsertQuery(ProcessTableName);
-		iq.Returning(ProcessIdColumn);
+		iq.Returning(InterlinkProcessIdColumn);
 
 		return iq;
 	}
@@ -87,7 +102,7 @@ public abstract class MaterializeResult
 		var (f, d) = sq.From(ct).As("d");
 		var kr = f.LeftJoin(CreateFirstKeyRelationSelectQuery()).As("kr").On(d, DatasourceKeyColumns);
 
-		sq.Select(PlaceHolderIdentifer, ProcessIdColumn, processId);
+		sq.Select(PlaceHolderIdentifer, InterlinkProcessIdColumn, processId);
 		sq.Select(d, DestinationIdColumn);
 		sq.Select(GetCoalesceValue(new ColumnValue(kr, RootIdColumn), new ColumnValue(d, DestinationIdColumn))).As(RootIdColumn);
 
@@ -100,13 +115,13 @@ public abstract class MaterializeResult
 			// Record this document as an original document
 			sq.Select(d, DestinationIdColumn).As(OriginIdColumn);
 		}
-		if (ct.GetColumnNames().Where(x => x.IsEqualNoCase(RemarksColumn)).Any())
+		if (ct.GetColumnNames().Where(x => x.IsEqualNoCase(InterlinkRemarksColumn)).Any())
 		{
-			sq.Select(d, RemarksColumn);
+			sq.Select(d, InterlinkRemarksColumn);
 		}
 		else
 		{
-			sq.Select("null").As(RemarksColumn);
+			sq.Select("null").As(InterlinkRemarksColumn);
 		}
 
 		return sq;

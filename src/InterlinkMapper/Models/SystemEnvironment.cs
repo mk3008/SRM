@@ -10,9 +10,9 @@ public class SystemEnvironment
 
 	public DbEnvironment DbEnvironment { get; set; } = new();
 
-	public TransactionTable GetTansactionTable()
+	public InterlinkTransactionTable GetTansactionTable()
 	{
-		var t = new TransactionTable()
+		var t = new InterlinkTransactionTable()
 		{
 			Definition = new()
 			{
@@ -61,18 +61,18 @@ public class SystemEnvironment
 					},
 				}
 			},
-			TransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
-			DatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
-			DestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
+			InterlinkTransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
+			InterlinkDatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
+			InterlinkDestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
 			ActionColumn = DbTableConfig.ActionNameColumn,
 			ArgumentColumn = DbTableConfig.ArgumentColumn,
 		};
 		return t;
 	}
 
-	public ProcessTable GetProcessTable()
+	public InterlinkProcessTable GetProcessTable()
 	{
-		var t = new ProcessTable()
+		var t = new InterlinkProcessTable()
 		{
 			Definition = new()
 			{
@@ -133,10 +133,10 @@ public class SystemEnvironment
 					},
 				}
 			},
-			ProcessIdColumn = DbTableConfig.InterlinkProcessIdColumn,
-			TransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
-			DatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
-			DestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
+			InterlinkProcessIdColumn = DbTableConfig.InterlinkProcessIdColumn,
+			InterlinkTransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
+			InterlinkDatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
+			InterlinkDestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
 			ActionColumn = DbTableConfig.ActionNameColumn,
 			InsertCountColumn = DbTableConfig.InsertCountColumn,
 			KeyMapTableNameColumn = DbTableConfig.KeyMapTableNameColumn,
@@ -145,12 +145,12 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public RelationTable GetRelationTable(DbDestination d)
+	public InterlinkRelationTable GetRelationTable(InterlinkDestination d)
 	{
 		var rootColumn = string.Format(DbTableConfig.RootIdColumnFormat, d.Sequence.Column);
 		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
 
-		var t = new RelationTable()
+		var t = new InterlinkRelationTable()
 		{
 			Definition = new()
 			{
@@ -173,8 +173,20 @@ public class SystemEnvironment
 					},
 					new ColumnDefinition()
 					{
-						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
+						ColumnName = rootColumn,
 						TypeName = DbEnvironment.NumericTypeName,
+						AllowNull= false,
+					},
+					new ColumnDefinition()
+					{
+						ColumnName = originColumn,
+						TypeName = DbEnvironment.NumericTypeName,
+						AllowNull= false,
+					},
+					new ColumnDefinition()
+					{
+						ColumnName = DbTableConfig.RemarksColumn,
+						TypeName = DbEnvironment.TextTypeName,
 						AllowNull= false,
 					},
 					new ColumnDefinition()
@@ -194,15 +206,16 @@ public class SystemEnvironment
 					}
 				}
 			},
-			ProcessIdColumn = DbTableConfig.InterlinkProcessIdColumn,
-			DestinationIdColumn = d.Sequence.Column,
+			InterlinkProcessIdColumn = DbTableConfig.InterlinkProcessIdColumn,
+			InterlinkDestinationIdColumn = d.Sequence.Column,
 			RootIdColumn = rootColumn,
 			OriginIdColumn = originColumn,
+			RemarksColumn = DbTableConfig.RemarksColumn,
 		};
 		return t;
 	}
 
-	public KeymapTable GetKeyMapTable(DbDatasource d)
+	public KeymapTable GetKeyMapTable(InterlinkDatasource d)
 	{
 		var columndefs = new List<ColumnDefinition>();
 
@@ -257,7 +270,7 @@ If you want to stop the transfer intentionally, please register the destination 
 		return t;
 	}
 
-	public KeyRelationTable GetKeyRelationTable(DbDatasource d)
+	public KeyRelationTable GetKeyRelationTable(InterlinkDatasource d)
 	{
 		var columndefs = new List<ColumnDefinition>
 		{
@@ -315,71 +328,7 @@ If you want to stop the transfer intentionally, please register the destination 
 		return t;
 	}
 
-	public ReverseTable GetReverseTable(DbDestination d)
-	{
-		var rootColumn = string.Format(DbTableConfig.RootIdColumnFormat, d.Sequence.Column);
-		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
-		var t = new ReverseTable()
-		{
-			Definition = new()
-			{
-				SchemaName = DbTableConfig.ControlTableSchemaName,
-				TableName = string.Format(DbTableConfig.ReverseTableNameFormat, d.Table.TableName),
-				ColumnDefinitions = new()
-				{
-					new ColumnDefinition()
-					{
-						ColumnName = d.Sequence.Column,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
-						IsPrimaryKey = true,
-					},
-					new ColumnDefinition()
-					{
-						ColumnName = rootColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
-						IsUniqueKey = false,
-					},
-					new ColumnDefinition()
-					{
-						ColumnName = originColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
-						IsUniqueKey = true,
-					},
-					new ColumnDefinition()
-					{
-						ColumnName = DbTableConfig.RemarksColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull = false,
-						IsUniqueKey = false,
-					},
-					new ColumnDefinition()
-					{
-						ColumnName = DbTableConfig.TimestampColumn,
-						TypeName = DbEnvironment.TimestampTypeName,
-						AllowNull= false,
-						DefaultValue = DbEnvironment.TimestampDefaultValue,
-					},
-				},
-				Indexes = new()
-				{
-					new DbIndexDefinition()
-					{
-						Columns = [rootColumn]
-					}
-				}
-			},
-			RootIdColumn = rootColumn,
-			OriginIdColumn = originColumn,
-			ReverseIdColumn = d.Sequence.Column,
-			RemarksColumn = DbTableConfig.RemarksColumn,
-		};
-		return t;
-	}
-
-	public ReverseRequestTable GetReverseRequestTable(DbDestination d)
+	public ReverseRequestTable GetReverseRequestTable(InterlinkDestination d)
 	{
 		var tablename = string.Format(DbTableConfig.ReverseRequestTableNameFormat, d.Table.TableName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
@@ -430,7 +379,7 @@ If you want to stop the transfer intentionally, please register the destination 
 		return t;
 	}
 
-	public ValidationRequestTable GetValidationRequestTable(DbDatasource d)
+	public ValidationRequestTable GetValidationRequestTable(InterlinkDatasource d)
 	{
 		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
@@ -477,7 +426,7 @@ If you want to stop the transfer intentionally, please register the destination 
 		return t;
 	}
 
-	public InsertRequestTable GetInsertRequestTable(DbDatasource d)
+	public InsertRequestTable GetInsertRequestTable(InterlinkDatasource d)
 	{
 		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
@@ -524,41 +473,19 @@ If you want to stop the transfer intentionally, please register the destination 
 		return t;
 	}
 
-	public InsertQuery CreateTransactionInsertQuery(TransactionRow row)
+	public InsertQuery CreateTransactionInsertQuery(InterlinkTransactionRow row)
 	{
 		var table = GetTansactionTable();
 
 		//select :destination_name, :datasoruce_name
 		var sq = new SelectQuery();
-		sq.Select(DbEnvironment, table.DestinationIdColumn, row.DestinationId);
-		sq.Select(DbEnvironment, table.DatasourceIdColumn, row.DatasourceId);
+		sq.Select(DbEnvironment, table.InterlinkDestinationIdColumn, row.InterlinkDestinationId);
+		sq.Select(DbEnvironment, table.InterlinkDatasourceIdColumn, row.InterlinkDatasourceId);
 		sq.Select(DbEnvironment, table.ArgumentColumn, row.Argument);
 
 		//insert into transaction_table returning transaction_id
 		var iq = sq.ToInsertQuery(table.Definition.TableFullName);
-		iq.Returning(table.TransactionIdColumn);
-
-		return iq;
-	}
-
-	[Obsolete]
-	public InsertQuery CreateProcessInsertQuery(ProcessRow row)
-	{
-		var table = GetProcessTable();
-
-		//select :transaction_id, :destination_name, :datasoruce_name, :keymap_table, :relationmap_table
-		var sq = new SelectQuery();
-		sq.Select(DbEnvironment, table.TransactionIdColumn, row.TransactionId);
-		sq.Select(DbEnvironment, table.DatasourceIdColumn, row.DatasourceId);
-		sq.Select(DbEnvironment, table.DestinationIdColumn, row.DestinationId);
-		sq.Select(DbEnvironment, table.KeyMapTableNameColumn, row.KeyMapTableName);
-		sq.Select(DbEnvironment, table.KeyRelationTableNameColumn, row.KeyRelationTableName);
-		sq.Select(DbEnvironment, table.ActionColumn, row.ActionName);
-		sq.Select(DbEnvironment, table.InsertCountColumn, row.InsertCount);
-
-		//insert into process_table returning process_id
-		var iq = sq.ToInsertQuery(table.Definition.GetTableFullName());
-		iq.Returning(table.ProcessIdColumn);
+		iq.Returning(table.InterlinkTransactionIdColumn);
 
 		return iq;
 	}

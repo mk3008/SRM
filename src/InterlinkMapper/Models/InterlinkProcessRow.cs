@@ -1,14 +1,14 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class ProcessRow
+public class InterlinkProcessRow
 {
-	public long TransactionId { get; set; }
+	public long InterlinkTransactionId { get; set; }
 
-	public long ProcessId { get; set; }
+	public long InterlinkProcessId { get; set; }
 
-	public long DatasourceId { get; set; }
+	public long InterlinkDatasourceId { get; set; }
 
-	public long DestinationId { get; set; }
+	public long InterlinkDestinationId { get; set; }
 
 	public string ActionName { get; set; } = string.Empty;
 

@@ -40,10 +40,10 @@ CREATE TEMPORARY TABLE
     __additional_request
 AS
 SELECT
-    r.sale_journals__ri_sales_id,
+    r.sale_journals__req_i_sales_id,
     r.sale_id
 FROM
-    sale_journals__ri_sales AS r
+    sale_journals__req_i_sales AS r
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -60,14 +60,14 @@ FROM
 
 		var expect = """
 DELETE FROM
-    sale_journals__ri_sales AS d
+    sale_journals__req_i_sales AS d
 WHERE
-    (d.sale_journals__ri_sales_id) IN (
+    (d.sale_journals__req_i_sales_id) IN (
         /* data that has been materialized will be deleted from the original. */
         SELECT
-            r.sale_journals__ri_sales_id
+            r.sale_journals__req_i_sales_id
         FROM
-            sale_journals__ri_sales AS r
+            sale_journals__req_i_sales AS r
         WHERE
             EXISTS (
                 SELECT
@@ -75,7 +75,7 @@ WHERE
                 FROM
                     __additional_request AS x
                 WHERE
-                    x.sale_journals__ri_sales_id = r.sale_journals__ri_sales_id
+                    x.sale_journals__req_i_sales_id = r.sale_journals__req_i_sales_id
             )
     )
 """;
@@ -141,31 +141,31 @@ FROM
 	{
 		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = material.AsPrivateProxy().CreateProcessInsertQuery(1);
+		var query = material.AsPrivateProxy().CreateProcessInsertQuery(10);
 		var expect = """
 /*
-  :interlink__transaction_id = 1
-  :interlink__datasource_id = 'interlink__datasource_id'
-  :interlink__destination_id = 'interlink__destination_id'
-  :interlink__key_map = 'interlink__key_map'
-  :interlink__key_relation = 'interlink__key_relation'
-  :action = 'additional'
-  :insert_count = 1
+    :interlink_transaction_id = 10
+    :interlink_datasource_id = 1
+    :interlink_destination_id = 2
+    :interlink_key_map = 'sale_journals__km_sales'
+    :interlink_key_relation = 'sale_journals__kr_sales'
+    :action = 'additional'
+    :insert_count = 1
 */
 INSERT INTO
-    interlink__process (
-        interlink__transaction_id, interlink__datasource_id, interlink__destination_id, interlink__key_map, interlink__key_relation, action, insert_count
+    interlink_process (
+        interlink_transaction_id, interlink_datasource_id, interlink_destination_id, interlink_key_map, interlink_key_relation, action, insert_count
     )
 SELECT
-    :interlink__transaction_id AS interlink__transaction_id,
-    :interlink__datasource_id AS interlink__datasource_id,
-    :interlink__destination_id AS interlink__destination_id,
-    :interlink__key_map AS interlink__key_map,
-    :interlink__key_relation AS interlink__key_relation,
+    :interlink_transaction_id AS interlink_transaction_id,
+    :interlink_datasource_id AS interlink_datasource_id,
+    :interlink_destination_id AS interlink_destination_id,
+    :interlink_key_map AS interlink_key_map,
+    :interlink_key_relation AS interlink_key_relation,
     :action AS action,
     :insert_count AS insert_count
 RETURNING
-    interlink__process_id
+    interlink_process_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -283,7 +283,7 @@ FROM
 		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1);
 		var expect = """
 /*
-  :interlink__process_id = 1
+  :interlink_process_id = 1
 */
 WITH
     d AS (
@@ -298,11 +298,11 @@ WITH
             __additional_datasource AS t
     )
 SELECT
-    :interlink__process_id AS interlink__process_id,
+    :interlink_process_id AS interlink_process_id,
     d.sale_journal_id,
     COALESCE(kr.root__sale_journal_id, d.sale_journal_id) AS root__sale_journal_id,
     d.sale_journal_id AS origin__sale_journal_id,
-    null AS interlink__remarks
+    null AS interlink_remarks
 FROM
     d
     LEFT JOIN (

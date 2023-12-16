@@ -1,14 +1,14 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class DbDatasource
+public class InterlinkDatasource
 {
-	public long DatasourceId { get; set; }
+	public long InterlinkDatasourceId { get; set; }
 
 	public string DatasourceName { get; set; } = string.Empty;
 
 	public string Description { get; set; } = string.Empty;
 
-	public DbDestination Destination { get; set; } = null!;
+	public InterlinkDestination Destination { get; set; } = null!;
 
 	public string Query { get; set; } = string.Empty;
 

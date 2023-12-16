@@ -19,36 +19,36 @@ public class ReverseForwardingService
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public void Execute(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public void Execute(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		// create transaction row
 		var transaction = CreateTransactionRow(datasource);
-		transaction.TransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
+		transaction.InterlinkTransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
 
 		var material = Materializer.Create(connection, datasource.Destination, injector);
 		if (material == null || material.Count == 0) return;
 
-		material.ExecuteTransfer(connection, transaction.TransactionId);
+		material.ExecuteTransfer(connection, transaction.InterlinkTransactionId);
 	}
 
-	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")
+	private InterlinkTransactionRow CreateTransactionRow(InterlinkDatasource datasource, string argument = "")
 	{
-		var row = new TransactionRow()
+		var row = new InterlinkTransactionRow()
 		{
-			DestinationId = datasource.Destination.DestinationId,
-			DatasourceId = datasource.DatasourceId,
+			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
+			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
 			Argument = argument
 		};
 		return row;
 	}
 
-	private ProcessRow CreateProcessRow(DbDatasource datasource, long transactionId, int insertCount)
+	private InterlinkProcessRow CreateProcessRow(InterlinkDatasource datasource, long transactionId, int insertCount)
 	{
 		var keymap = Environment.GetKeyMapTable(datasource);
-		var row = new ProcessRow()
+		var row = new InterlinkProcessRow()
 		{
 			ActionName = nameof(ReverseMaterializer),
-			TransactionId = transactionId,
+			InterlinkTransactionId = transactionId,
 			InsertCount = insertCount,
 			KeyRelationTableName = keymap.Definition.TableFullName,
 		};

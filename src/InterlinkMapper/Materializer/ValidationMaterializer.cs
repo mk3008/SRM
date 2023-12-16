@@ -22,7 +22,7 @@ public class ValidationMaterializer : IMaterializer
 
 	public string RowNumberColumnName { get; set; } = "row_num";
 
-	public ValidationMaterial? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public ValidationMaterial? Create(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (!datasource.Destination.AllowReverse) throw new NotSupportedException();
 		if (string.IsNullOrEmpty(Environment.DbEnvironment.LengthFunction)) throw new NullReferenceException(nameof(Environment.DbEnvironment.LengthFunction));
@@ -40,13 +40,12 @@ public class ValidationMaterializer : IMaterializer
 		return ToValidationMaterial(datasource, validation);
 	}
 
-	private ValidationMaterial ToValidationMaterial(DbDatasource datasource, Material material)
+	private ValidationMaterial ToValidationMaterial(InterlinkDatasource datasource, Material material)
 	{
 		var process = Environment.GetProcessTable();
 		var relation = Environment.GetRelationTable(datasource.Destination);
 		var keymap = Environment.GetKeyMapTable(datasource);
 		var history = Environment.GetKeyRelationTable(datasource);
-		var reverse = Environment.GetReverseTable(datasource.Destination);
 
 		return new ValidationMaterial
 		{
@@ -55,9 +54,9 @@ public class ValidationMaterializer : IMaterializer
 			SelectQuery = material.SelectQuery,
 
 			DatasourceKeyColumns = datasource.KeyColumns.Select(x => x.ColumnName).ToList(),
-			RootIdColumn = reverse.RootIdColumn,
-			OriginIdColumn = reverse.OriginIdColumn,
-			RemarksColumn = reverse.RemarksColumn,
+			RootIdColumn = relation.RootIdColumn,
+			OriginIdColumn = relation.OriginIdColumn,
+			InterlinkRemarksColumn = relation.RemarksColumn,
 			DestinationTable = datasource.Destination.Table.GetTableFullName(),
 			DestinationColumns = datasource.Destination.Table.Columns,
 			DestinationIdColumn = datasource.Destination.Sequence.Column,
@@ -65,30 +64,32 @@ public class ValidationMaterializer : IMaterializer
 			KeyRelationTable = history.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
-			ProcessIdColumn = process.ProcessIdColumn,
-			RelationTable = relation.Definition.TableFullName,
-			ReverseTable = reverse.Definition.TableFullName,
+			InterlinkProcessIdColumn = process.InterlinkProcessIdColumn,
+			InterlinkRelationTable = relation.Definition.TableFullName,
 
 			KeymapTableNameColumn = process.KeyMapTableNameColumn,
-			TransactionIdColumn = process.TransactionIdColumn,
+			InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
 
 			ActionColumn = process.ActionColumn,
-			ProcessDatasourceIdColumn = process.DatasourceIdColumn,
-			ProcessDestinationIdColumn = process.DestinationIdColumn,
+			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
+			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
 			InsertCountColumn = process.InsertCountColumn,
 			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
 			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
-			ProcessTableName = process.Definition.GetTableFullName()
+			ProcessTableName = process.Definition.GetTableFullName(),
+
+			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
+			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId
 		};
 	}
 
-	private int DeleteOriginRequest(IDbConnection connection, DbDatasource datasource, Material result)
+	private int DeleteOriginRequest(IDbConnection connection, InterlinkDatasource datasource, Material result)
 	{
 		var query = CreateOriginDeleteQuery(datasource, result);
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private CreateTableQuery CreateRequestMaterialQuery(DbDatasource datasource)
+	private CreateTableQuery CreateRequestMaterialQuery(InterlinkDatasource datasource)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
 		var keymap = Environment.GetKeyMapTable(datasource);
@@ -109,7 +110,7 @@ public class ValidationMaterializer : IMaterializer
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
-	private DeleteQuery CreateOriginDeleteQuery(DbDatasource datasource, Material result)
+	private DeleteQuery CreateOriginDeleteQuery(InterlinkDatasource datasource, Material result)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
 		var requestTable = request.Definition.TableFullName;
@@ -135,7 +136,7 @@ public class ValidationMaterializer : IMaterializer
 		return sq.ToDeleteQuery(requestTable);
 	}
 
-	private SelectQuery CreateExpectValueSelectQuery(DbDatasource datasource, Material request)
+	private SelectQuery CreateExpectValueSelectQuery(InterlinkDatasource datasource, Material request)
 	{
 		//var validation = Environment.GetValidationRequestTable(datasource);
 		//var keymap = Environment.GetKeymapTable(datasource);
@@ -150,7 +151,7 @@ public class ValidationMaterializer : IMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateActualValueSelectQuery(DbDatasource datasource, Material request)
+	private SelectQuery CreateActualValueSelectQuery(InterlinkDatasource datasource, Material request)
 	{
 		var validation = Environment.GetValidationRequestTable(datasource);
 		var keymap = Environment.GetKeyMapTable(datasource);
@@ -175,7 +176,7 @@ public class ValidationMaterializer : IMaterializer
 		return sq;
 	}
 
-	private SelectQuery InjectRequestFilter(SelectQuery sq, DbDatasource datasource, Material request)
+	private SelectQuery InjectRequestFilter(SelectQuery sq, InterlinkDatasource datasource, Material request)
 	{
 		sq.AddComment("inject request material filter");
 
@@ -195,9 +196,9 @@ public class ValidationMaterializer : IMaterializer
 		return sq;
 	}
 
-	private SelectQuery CreateDeletedDiffSelectQuery(DbDatasource datasource, Material request)
+	private SelectQuery CreateDeletedDiffSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var reverse = Environment.GetReverseTable(datasource.Destination);
+		var relation = Environment.GetRelationTable(datasource.Destination);
 
 		var op = datasource.Destination.ReverseOption;
 
@@ -222,14 +223,14 @@ public class ValidationMaterializer : IMaterializer
 		sq.Select(e, datasource.Destination.Sequence.Column);
 		datasource.KeyColumns.ForEach(key => sq.Select(a, key.ColumnName));
 
-		sq.Select("'{\"deleted\":true}'").As(reverse.RemarksColumn);
+		sq.Select("'{\"deleted\":true}'").As(relation.RemarksColumn);
 
 		return sq;
 	}
 
-	private SelectQuery CreateUpdatedDiffSubQuery(DbDatasource datasource, Material request)
+	private SelectQuery CreateUpdatedDiffSubQuery(InterlinkDatasource datasource, Material request)
 	{
-		var reverse = Environment.GetReverseTable(datasource.Destination);
+		var relation = Environment.GetRelationTable(datasource.Destination);
 		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
@@ -279,26 +280,26 @@ public class ValidationMaterializer : IMaterializer
 			});
 
 			return new FunctionValue("concat", arg);
-		}).As(reverse.RemarksColumn);
+		}).As(relation.RemarksColumn);
 
 		return sq;
 	}
 
-	private SelectQuery CreateUpdatedDiffSelectQuery(DbDatasource datasource, Material request)
+	private SelectQuery CreateUpdatedDiffSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var reverse = Environment.GetReverseTable(datasource.Destination);
+		var relation = Environment.GetRelationTable(datasource.Destination);
 
 		var sq = new SelectQuery();
 		sq.AddComment("reverse and additional");
 		var (f, d) = sq.From(CreateUpdatedDiffSubQuery(datasource, request)).As("d");
 
 		sq.Select(d);
-		var remarks = sq.GetSelectableItems().Where(x => x.Alias == reverse.RemarksColumn).First();
+		var remarks = sq.GetSelectableItems().Where(x => x.Alias == relation.RemarksColumn).First();
 		sq.SelectClause!.Remove(remarks);
 
 		var length_arg = new ValueCollection
 		{
-			new ColumnValue(d, reverse.RemarksColumn)
+			new ColumnValue(d, relation.RemarksColumn)
 		};
 
 		var length_value = new FunctionValue(Environment.DbEnvironment.LengthFunction, length_arg);
@@ -306,7 +307,7 @@ public class ValidationMaterializer : IMaterializer
 
 		var substring_arg = new ValueCollection
 		{
-			new ColumnValue(d, reverse.RemarksColumn),
+			new ColumnValue(d, relation.RemarksColumn),
 			"1",
 			length_value
 		};
@@ -318,12 +319,12 @@ public class ValidationMaterializer : IMaterializer
 			"']}'"
 		};
 
-		sq.Select(new FunctionValue("concat", concat_arg)).As(reverse.RemarksColumn);
+		sq.Select(new FunctionValue("concat", concat_arg)).As(relation.RemarksColumn);
 
 		return sq;
 	}
 
-	private SelectQuery CreateValidationDatasourceSelectQuery(DbDatasource datasource, Material request)
+	private SelectQuery CreateValidationDatasourceSelectQuery(InterlinkDatasource datasource, Material request)
 	{
 		var sq = CreateDeletedDiffSelectQuery(datasource, request);
 
@@ -332,7 +333,7 @@ public class ValidationMaterializer : IMaterializer
 		return sq;
 	}
 
-	private CreateTableQuery CreateValidationMaterialQuery(DbDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector)
+	private CreateTableQuery CreateValidationMaterialQuery(InterlinkDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
 		var _datasource = sq.With(CreateValidationDatasourceSelectQuery(datasource, request)).As("_target_datasource");

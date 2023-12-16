@@ -58,11 +58,11 @@ WITH
             d.shop_id,
             d.price * -1 AS price,
             d.remarks,
-            rm.interlink__datasource_id,
-            rm.interlink__destination_id,
-            rm.interlink__key_map,
-            rm.interlink__key_relation,
-            rm.interlink__remarks
+            rm.interlink_datasource_id,
+            rm.interlink_destination_id,
+            rm.interlink_key_map,
+            rm.interlink_key_relation,
+            rm.interlink_remarks
         FROM
             (
                 /* destination */
@@ -87,11 +87,11 @@ SELECT
     d.shop_id,
     d.price,
     d.remarks,
-    d.interlink__datasource_id,
-    d.interlink__destination_id,
-    d.interlink__key_map,
-    d.interlink__key_relation,
-    d.interlink__remarks
+    d.interlink_datasource_id,
+    d.interlink_destination_id,
+    d.interlink_key_map,
+    d.interlink_key_relation,
+    d.interlink_remarks
 FROM
     _target_datasource AS d
 """;

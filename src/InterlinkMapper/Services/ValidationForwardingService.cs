@@ -21,21 +21,21 @@ public class ValidationForwardingService
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public void Execute(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public void Execute(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		// create transaction row
 		var transaction = CreateTransactionRow(datasource);
-		transaction.TransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
+		transaction.InterlinkTransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
 
 		var material = Materializer.Create(connection, datasource, injector);
 		if (material == null || material.Count == 0) return;
 
 		//transfer
-		ExecuteReverse(connection, material, datasource.Destination, transaction.TransactionId);
-		ExecuteAdditional(connection, material, datasource, transaction.TransactionId);
+		ExecuteReverse(connection, material, datasource.Destination, transaction.InterlinkTransactionId);
+		ExecuteAdditional(connection, material, datasource, transaction.InterlinkTransactionId);
 	}
 
-	private void ExecuteReverse(IDbConnection connection, ValidationMaterial validation, DbDestination destination, long transactionId)
+	private void ExecuteReverse(IDbConnection connection, ValidationMaterial validation, InterlinkDestination destination, long transactionId)
 	{
 		var request = validation.ToReverseRequestMaterial();
 		var materializer = new ReverseMaterializer(Environment);
@@ -43,7 +43,7 @@ public class ValidationForwardingService
 		material.ExecuteTransfer(connection, transactionId);
 	}
 
-	private void ExecuteAdditional(IDbConnection connection, ValidationMaterial validation, DbDatasource datasource, long transactionId)
+	private void ExecuteAdditional(IDbConnection connection, ValidationMaterial validation, InterlinkDatasource datasource, long transactionId)
 	{
 		var request = validation.ToAdditionalRequestMaterial();
 		var materializer = new AdditionalMaterializer(Environment);
@@ -51,24 +51,24 @@ public class ValidationForwardingService
 		material.ExecuteTransfer(connection, transactionId);
 	}
 
-	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")
+	private InterlinkTransactionRow CreateTransactionRow(InterlinkDatasource datasource, string argument = "")
 	{
-		var row = new TransactionRow()
+		var row = new InterlinkTransactionRow()
 		{
-			DestinationId = datasource.Destination.DestinationId,
-			DatasourceId = datasource.DatasourceId,
+			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
+			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
 			Argument = argument
 		};
 		return row;
 	}
 
-	private ProcessRow CreateProcessRow(DbDatasource datasource, long transactionId, int insertCount)
+	private InterlinkProcessRow CreateProcessRow(InterlinkDatasource datasource, long transactionId, int insertCount)
 	{
 		var keymap = Environment.GetKeyMapTable(datasource);
-		var row = new ProcessRow()
+		var row = new InterlinkProcessRow()
 		{
 			ActionName = nameof(ValidationForwardingService),
-			TransactionId = transactionId,
+			InterlinkTransactionId = transactionId,
 			InsertCount = insertCount,
 			KeyRelationTableName = keymap.Definition.TableFullName,
 		};

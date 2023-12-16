@@ -40,11 +40,11 @@ CREATE TEMPORARY TABLE
     __validation_request
 AS
 SELECT
-    r.sale_journals__rv_sales_id,
+    r.sale_journals__req_v_sales_id,
     m.sale_journal_id,
     m.sale_id
 FROM
-    sale_journals__rv_sales AS r
+    sale_journals__req_v_sales AS r
     INNER JOIN sale_journals__km_sales AS m ON r.sale_id = m.sale_id
 WHERE
     m.sale_journal_id IS NOT null
@@ -64,14 +64,14 @@ WHERE
 
 		var expect = """
 DELETE FROM
-    sale_journals__rv_sales AS d
+    sale_journals__req_v_sales AS d
 WHERE
-    (d.sale_journals__rv_sales_id) IN (
+    (d.sale_journals__req_v_sales_id) IN (
         /* data that has been materialized will be deleted from the original. */
         SELECT
-            r.sale_journals__rv_sales_id
+            r.sale_journals__req_v_sales_id
         FROM
-            sale_journals__rv_sales AS r
+            sale_journals__req_v_sales AS r
         WHERE
             EXISTS (
                 SELECT
@@ -79,7 +79,7 @@ WHERE
                 FROM
                     __validation_request AS x
                 WHERE
-                    x.sale_journals__rv_sales_id = r.sale_journals__rv_sales_id
+                    x.sale_journals__req_v_sales_id = r.sale_journals__req_v_sales_id
             )
     )
 """;
@@ -227,7 +227,7 @@ WITH
 SELECT
     e.sale_journal_id,
     a.sale_id,
-    '{"deleted":true}' AS interlink__remarks
+    '{"deleted":true}' AS interlink_remarks
 FROM
     _expect AS e
     LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -238,7 +238,7 @@ UNION ALL
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
+    CONCAT('{"updated":[', SUBSTRING(d.interlink_remarks, 1, LENGTH(d.interlink_remarks) - 1), ']}') AS interlink_remarks
 FROM
     (
         SELECT
@@ -254,7 +254,7 @@ FROM
                 WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
             END, CASE
                 WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
-            END) AS interlink__remarks
+            END) AS interlink_remarks
         FROM
             _expect AS e
             INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -334,7 +334,7 @@ WITH
         SELECT
             e.sale_journal_id,
             a.sale_id,
-            '{"deleted":true}' AS interlink__remarks
+            '{"deleted":true}' AS interlink_remarks
         FROM
             _expect AS e
             LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -345,7 +345,7 @@ WITH
         SELECT
             d.sale_journal_id,
             d.sale_id,
-            CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
+            CONCAT('{"updated":[', SUBSTRING(d.interlink_remarks, 1, LENGTH(d.interlink_remarks) - 1), ']}') AS interlink_remarks
         FROM
             (
                 SELECT
@@ -361,7 +361,7 @@ WITH
                         WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
                     END, CASE
                         WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
-                    END) AS interlink__remarks
+                    END) AS interlink_remarks
                 FROM
                     _expect AS e
                     INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -372,7 +372,7 @@ WITH
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    d.interlink__remarks
+    d.interlink_remarks
 FROM
     _target_datasource AS d
 """;
@@ -448,7 +448,7 @@ WITH
 SELECT
     e.sale_journal_id,
     a.sale_id,
-    '{"deleted":true}' AS interlink__remarks
+    '{"deleted":true}' AS interlink_remarks
 FROM
     _expect AS e
     LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -459,7 +459,7 @@ UNION ALL
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
+    CONCAT('{"updated":[', SUBSTRING(d.interlink_remarks, 1, LENGTH(d.interlink_remarks) - 1), ']}') AS interlink_remarks
 FROM
     (
         SELECT
@@ -475,7 +475,7 @@ FROM
                 WHEN e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) THEN '"shop_id",'
             END, CASE
                 WHEN e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null) THEN '"price",'
-            END) AS interlink__remarks
+            END) AS interlink_remarks
         FROM
             _expect AS e
             INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -574,7 +574,7 @@ WITH
         SELECT
             e.sale_journal_id,
             a.sale_id,
-            '{"deleted":true}' AS interlink__remarks
+            '{"deleted":true}' AS interlink_remarks
         FROM
             _expect AS e
             LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -585,7 +585,7 @@ WITH
         SELECT
             d.sale_journal_id,
             d.sale_id,
-            CONCAT('{"updated":[', SUBSTRING(d.interlink__remarks, 1, LENGTH(d.interlink__remarks) - 1), ']}') AS interlink__remarks
+            CONCAT('{"updated":[', SUBSTRING(d.interlink_remarks, 1, LENGTH(d.interlink_remarks) - 1), ']}') AS interlink_remarks
         FROM
             (
                 SELECT
@@ -601,7 +601,7 @@ WITH
                         WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
                     END, CASE
                         WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
-                    END) AS interlink__remarks
+                    END) AS interlink_remarks
                 FROM
                     _expect AS e
                     INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
@@ -612,7 +612,7 @@ WITH
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    d.interlink__remarks
+    d.interlink_remarks
 FROM
     _target_datasource AS d
 """;
@@ -635,17 +635,17 @@ SELECT
     d.sale_id,
     r.root__sale_journal_id,
     r.origin__sale_journal_id,
-    d.interlink__remarks
+    d.interlink_remarks
 FROM
     (
         SELECT
             t.sale_journal_id,
             t.sale_id,
-            t.interlink__remarks
+            t.interlink_remarks
         FROM
             __validation_datasource AS t
     ) AS d
-    INNER JOIN sale_journals__reverse AS r ON d.sale_journal_id = r.origin__sale_journal_id
+    INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.origin__sale_journal_id
 WHERE
     d.sale_id IS NOT null
 """;
@@ -665,13 +665,13 @@ WHERE
 		var expect = """
 SELECT
     d.sale_journal_id,
-    d.interlink__remarks
+    d.interlink_remarks
 FROM
     (
         SELECT
             t.sale_journal_id,
             t.sale_id,
-            t.interlink__remarks
+            t.interlink_remarks
         FROM
             __validation_datasource AS t
     ) AS d

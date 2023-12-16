@@ -26,7 +26,7 @@ public class SystemEnvironmentTest
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
-	private DbDatasource GetTestDatasouce()
+	private InterlinkDatasource GetTestDatasouce()
 	{
 		return DatasourceRepository.sales;
 	}
@@ -56,27 +56,27 @@ public class SystemEnvironmentTest
 	//	};
 	//}
 
-	private TransactionRow GetDummyTransactionRow()
+	private InterlinkTransactionRow GetDummyTransactionRow()
 	{
-		return new TransactionRow()
+		return new InterlinkTransactionRow()
 		{
-			DestinationId = 20,
-			DatasourceId = 10,
+			InterlinkDestinationId = 20,
+			InterlinkDatasourceId = 10,
 			Argument = "argument"
 		};
 	}
 
-	private ProcessRow GetDummyProcessRow()
+	private InterlinkProcessRow GetDummyProcessRow()
 	{
 		var keymap = Environment.GetKeyMapTable(GetTestDatasouce());
 		var keyrelation = Environment.GetKeyRelationTable(GetTestDatasouce());
 
-		return new ProcessRow()
+		return new InterlinkProcessRow()
 		{
-			DestinationId = 20,
-			DatasourceId = 10,
+			InterlinkDestinationId = 20,
+			InterlinkDatasourceId = 10,
 			ActionName = "test",
-			TransactionId = 30,
+			InterlinkTransactionId = 30,
 			KeyMapTableName = keymap.Definition.TableName,
 			KeyRelationTableName = keyrelation.Definition.TableName,
 			InsertCount = 100
@@ -90,20 +90,20 @@ public class SystemEnvironmentTest
 
 		var expect = """
 /*
-  :interlink__destination_id = 20
-  :interlink__datasource_id = 10
+  :interlink_destination_id = 20
+  :interlink_datasource_id = 10
   :argument = 'argument'
 */
 INSERT INTO
-    interlink__transaction (
-        interlink__destination_id, interlink__datasource_id, argument
+    interlink_transaction (
+        interlink_destination_id, interlink_datasource_id, argument
     )
 SELECT
-    :interlink__destination_id AS interlink__destination_id,
-    :interlink__datasource_id AS interlink__datasource_id,
+    :interlink_destination_id AS interlink_destination_id,
+    :interlink_datasource_id AS interlink_datasource_id,
     :argument AS argument
 RETURNING
-    interlink__transaction_id
+    interlink_transaction_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

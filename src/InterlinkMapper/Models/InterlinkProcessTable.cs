@@ -1,16 +1,16 @@
 ﻿namespace InterlinkMapper.Models;
 
-public class ProcessTable
+public class InterlinkProcessTable
 {
 	public DbTableDefinition Definition { get; set; } = new();
 
-	public string TransactionIdColumn { get; set; } = string.Empty;
+	public string InterlinkTransactionIdColumn { get; set; } = string.Empty;
 
-	public string ProcessIdColumn { get; set; } = string.Empty;
+	public string InterlinkProcessIdColumn { get; set; } = string.Empty;
 
-	public string DatasourceIdColumn { get; set; } = string.Empty;
+	public string InterlinkDatasourceIdColumn { get; set; } = string.Empty;
 
-	public string DestinationIdColumn { get; set; } = string.Empty;
+	public string InterlinkDestinationIdColumn { get; set; } = string.Empty;
 
 	public string ActionColumn { get; set; } = string.Empty;
 

@@ -5,10 +5,10 @@ namespace InterlinkMapper.Test;
 internal static class DatasourceRepository
 {
 
-	public static DbDatasource sales =>
-		new DbDatasource()
+	public static InterlinkDatasource sales =>
+		new InterlinkDatasource()
 		{
-			DatasourceId = 1,
+			InterlinkDatasourceId = 1,
 			DatasourceName = "sales",
 			Destination = DestinationRepository.sale_journals,
 			KeyColumns = new() {
@@ -31,10 +31,10 @@ from
 	",
 		};
 
-	public static DbDatasource cte_sales =>
-		new DbDatasource()
+	public static InterlinkDatasource cte_sales =>
+		new InterlinkDatasource()
 		{
-			DatasourceId = 1,
+			InterlinkDatasourceId = 1,
 			DatasourceName = "sales",
 			Destination = DestinationRepository.sale_journals,
 			KeyColumns = new() {

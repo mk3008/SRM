@@ -4,9 +4,9 @@ namespace InterlinkMapper.Test;
 
 internal static class DestinationRepository
 {
-	public static DbDestination sale_journals => new DbDestination()
+	public static InterlinkDestination sale_journals => new InterlinkDestination()
 	{
-		DestinationId = 1,
+		InterlinkDestinationId = 2,
 		Table = new()
 		{
 			TableName = "sale_journals",
