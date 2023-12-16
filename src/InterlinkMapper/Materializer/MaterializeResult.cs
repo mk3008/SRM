@@ -5,11 +5,11 @@ namespace InterlinkMapper.Materializer;
 
 public abstract class MaterializeResult
 {
-	public required SelectQuery SelectQuery { get; init; } = null!;
+	public required SelectQuery SelectQuery { get; init; }
 
 	public required int Count { get; init; }
 
-	public required string MaterialName { get; init; } = string.Empty;
+	public required string MaterialName { get; init; }
 
 	public required string PlaceHolderIdentifer { get; init; }
 
@@ -38,7 +38,6 @@ public abstract class MaterializeResult
 	public required string KeyRelationTable { get; init; }
 
 	public required List<string> DatasourceKeyColumns { get; init; }
-
 
 	public required string KeyMapTableNameColumn { get; init; }
 

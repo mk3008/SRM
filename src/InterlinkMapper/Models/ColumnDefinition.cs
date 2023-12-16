@@ -16,6 +16,8 @@ public class ColumnDefinition
 
 	public string DefaultValue { get; set; } = string.Empty;
 
+	public string Comment { get; set; } = string.Empty;
+
 	public string ToCommandText()
 	{
 		var name = ColumnName;

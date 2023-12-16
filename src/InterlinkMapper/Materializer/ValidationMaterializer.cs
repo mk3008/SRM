@@ -33,10 +33,6 @@ public class ValidationMaterializer : IMaterializer
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
-		var deleteRows = CleanUpMaterialRequest(connection, datasource, request);
-
-		// If all requests are deleted, there are no processing targets.
-		if (request.Count == deleteRows) return null;
 
 		var query = CreateValidationMaterialQuery(datasource, request, injector);
 		var validation = this.CreateMaterial(connection, query);
@@ -92,12 +88,6 @@ public class ValidationMaterializer : IMaterializer
 		return connection.Execute(query, commandTimeout: CommandTimeout);
 	}
 
-	private int CleanUpMaterialRequest(IDbConnection connection, DbDatasource datasource, Material result)
-	{
-		var query = CleanUpMaterialRequestQuery(datasource, result);
-		return connection.Execute(query, commandTimeout: CommandTimeout);
-	}
-
 	private CreateTableQuery CreateRequestMaterialQuery(DbDatasource datasource)
 	{
 		var request = Environment.GetValidationRequestTable(datasource);
@@ -111,14 +101,10 @@ public class ValidationMaterializer : IMaterializer
 		sq.Select(m, datasource.Destination.Sequence.Column);
 		datasource.KeyColumns.ForEach(key => sq.Select(m, key.ColumnName));
 
-		//row_number() over(order by m.sale_journal_id) as row_num
-		sq.Select(new FunctionValue("row_number", () =>
-		{
-			var over = new OverClause();
-			over.AddPartition(new ColumnValue(m, datasource.Destination.Sequence.Column));
-			over.AddOrder(new SortableItem(new ColumnValue(r, request.RequestIdColumn)));
-			return over;
-		})).As(RowNumberColumnName);
+		// If the destination sequence value is NULL,
+		// it means the transfer is stopped.
+		// Reverse processing is also not required.
+		sq.Where(m, datasource.Destination.Sequence.Column).IsNotNull();
 
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
@@ -147,23 +133,6 @@ public class ValidationMaterializer : IMaterializer
 		sq.Select(r, requestId);
 
 		return sq.ToDeleteQuery(requestTable);
-	}
-
-	private DeleteQuery CleanUpMaterialRequestQuery(DbDatasource datasource, Material result)
-	{
-		var request = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeyMapTable(datasource);
-
-		var sq = new SelectQuery();
-		sq.AddComment("Delete duplicate rows so that the destination ID is unique");
-
-		var (f, rm) = sq.From(result.MaterialName).As("rm");
-
-		sq.Where(rm, RowNumberColumnName).NotEqual("1");
-
-		sq.Select(rm, request.RequestIdColumn);
-
-		return sq.ToDeleteQuery(result.MaterialName);
 	}
 
 	private SelectQuery CreateExpectValueSelectQuery(DbDatasource datasource, Material request)

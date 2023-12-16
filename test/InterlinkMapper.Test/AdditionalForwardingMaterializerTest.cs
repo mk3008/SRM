@@ -25,7 +25,7 @@ public class AdditionalForwardingMaterializerTest
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly MaterializeServiceProxy Proxy;
+	public readonly AdditionalForwardingMaterializerProxy Proxy;
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
@@ -95,7 +95,7 @@ WHERE
 
 		var expect = """
 CREATE TEMPORARY TABLE
-    __datasource
+    __additional_datasource
 AS
 WITH
     _target_datasource AS (
@@ -197,7 +197,7 @@ FROM
             t.price,
             t.sale_id
         FROM
-            __datasource AS t
+            __additional_datasource AS t
     ) AS d
 """;
 		var actual = query.ToText();
@@ -230,7 +230,7 @@ FROM
             t.price,
             t.sale_id
         FROM
-            __datasource AS t
+            __additional_datasource AS t
     ) AS d
 """;
 		var actual = query.ToText();
@@ -266,7 +266,7 @@ FROM
             t.price,
             t.sale_id
         FROM
-            __datasource AS t
+            __additional_datasource AS t
     ) AS d
 """;
 		var actual = query.ToText();
@@ -295,7 +295,7 @@ WITH
             t.price,
             t.sale_id
         FROM
-            __datasource AS t
+            __additional_datasource AS t
     )
 SELECT
     :interlink__process_id AS interlink__process_id,

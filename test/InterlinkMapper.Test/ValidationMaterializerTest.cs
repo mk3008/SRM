@@ -42,16 +42,12 @@ AS
 SELECT
     r.sale_journals__rv_sales_id,
     m.sale_journal_id,
-    m.sale_id,
-    ROW_NUMBER() OVER(
-        PARTITION BY
-            m.sale_journal_id
-        ORDER BY
-            r.sale_journals__rv_sales_id
-    ) AS row_num
+    m.sale_id
 FROM
     sale_journals__rv_sales AS r
     INNER JOIN sale_journals__km_sales AS m ON r.sale_id = m.sale_id
+WHERE
+    m.sale_journal_id IS NOT null
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -85,33 +81,6 @@ WHERE
                 WHERE
                     x.sale_journals__rv_sales_id = r.sale_journals__rv_sales_id
             )
-    )
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void TestCleanUpMaterialRequestQuery()
-	{
-		var datasource = DatasourceRepository.sales;
-		var request = MaterialRepository.ValidationRequestMeterial;
-		var query = Proxy.CleanUpMaterialRequestQuery(datasource, request);
-
-		var expect = """
-DELETE FROM
-    __validation_request AS d
-WHERE
-    (d.sale_journals__rv_sales_id) IN (
-        /* Delete duplicate rows so that the destination ID is unique */
-        SELECT
-            rm.sale_journals__rv_sales_id
-        FROM
-            __validation_request AS rm
-        WHERE
-            rm.row_num <> 1
     )
 """;
 		var actual = query.ToText();
@@ -654,10 +623,10 @@ FROM
 	}
 
 	[Fact]
-	public void TestToAdditionalMaterial()
+	public void TestToAdditionalRequestMaterial()
 	{
 		var material = MaterialRepository.ValidationMaterial;
-		var additional = material.ToAdditionalMaterial();
+		var additional = material.ToAdditionalRequestMaterial();
 		var query = additional.SelectQuery;
 
 		var expect = """
@@ -687,10 +656,10 @@ WHERE
 	}
 
 	[Fact]
-	public void TestToReverseMaterial()
+	public void TestToReverseRequestMaterial()
 	{
 		var material = MaterialRepository.ValidationMaterial;
-		var reverse = material.ToReverseMaterial();
+		var reverse = material.ToReverseRequestMaterial();
 		var query = reverse.SelectQuery;
 
 		var expect = """

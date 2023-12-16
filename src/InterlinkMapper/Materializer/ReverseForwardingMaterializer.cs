@@ -15,6 +15,10 @@ public class ReverseForwardingMaterializer : IMaterializer
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
+	public string RequestMaterialName { get; set; } = "__reverse_request";
+
+	public string DatasourceMaterialName { get; set; } = "__reverse_datasource";
+
 	public ReverseMaterial? Create(IDbConnection connection, DbDestination destination, Func<SelectQuery, SelectQuery>? injector)
 	{
 		if (!destination.AllowReverse) throw new NotSupportedException();
@@ -27,6 +31,14 @@ public class ReverseForwardingMaterializer : IMaterializer
 		DeleteOriginRequest(connection, destination, request);
 
 		var query = CreateReverseMaterialQuery(destination, request, injector);
+		var reverse = this.CreateMaterial(connection, query);
+
+		return ToReverseMaterial(destination, reverse);
+	}
+
+	public ReverseMaterial Create(IDbConnection connection, DbDestination destination, Material request)
+	{
+		var query = CreateReverseMaterialQuery(destination, request);
 		var reverse = this.CreateMaterial(connection, query);
 
 		return ToReverseMaterial(destination, reverse);
@@ -102,8 +114,7 @@ public class ReverseForwardingMaterializer : IMaterializer
 		sq.Where(r, relation.DestinationIdColumn).Equal(r, relation.OriginIdColumn);
 		sq.Where(reverse, relation.DestinationIdColumn).IsNull();
 
-		var name = "__reverse_request";
-		return sq.ToCreateTableQuery(name);
+		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(DbDestination destination, Material result)
@@ -172,6 +183,11 @@ public class ReverseForwardingMaterializer : IMaterializer
 		return sq;
 	}
 
+	private CreateTableQuery CreateReverseMaterialQuery(DbDestination destination, Material request)
+	{
+		return CreateReverseMaterialQuery(destination, request, null);
+	}
+
 	private CreateTableQuery CreateReverseMaterialQuery(DbDestination destination, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
@@ -187,7 +203,7 @@ public class ReverseForwardingMaterializer : IMaterializer
 			sq = injector(sq);
 		}
 
-		return sq.ToCreateTableQuery("__reverse_datasource");
+		return sq.ToCreateTableQuery(DatasourceMaterialName);
 	}
 }
 

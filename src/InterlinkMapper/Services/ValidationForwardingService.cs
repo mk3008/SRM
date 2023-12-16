@@ -3,6 +3,7 @@ using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using PrivateProxy;
 using System.Data;
+using System.Diagnostics;
 
 namespace InterlinkMapper.Services;
 
@@ -29,17 +30,25 @@ public class ValidationForwardingService
 		var material = Materializer.Create(connection, datasource, injector);
 		if (material == null || material.Count == 0) return;
 
-		// create process row
-		var process = CreateProcessRow(datasource, transaction.TransactionId, material.Count);
-		process.ProcessId = connection.Execute(Environment.CreateProcessInsertQuery(process));
+		//transfer
+		ExecuteReverse(connection, material, datasource.Destination, transaction.TransactionId);
+		ExecuteAdditional(connection, material, datasource, transaction.TransactionId);
+	}
 
-		// reverse transfer
-		material.ToReverseMaterial().ExecuteTransfer(connection, process.ProcessId);
+	private void ExecuteReverse(IDbConnection connection, ValidationMaterial validation, DbDestination destination, long transactionId)
+	{
+		var request = validation.ToReverseRequestMaterial();
+		var materializer = new ReverseForwardingMaterializer(Environment);
+		var material = materializer.Create(connection, destination, request);
+		material.ExecuteTransfer(connection, transactionId);
+	}
 
-		// * additional transfer
-		// Before performing additional transfers,
-		// perform a reverse transfer first to release the keymap.
-		material.ToAdditionalMaterial().ExecuteTransfer(connection, process.ProcessId);
+	private void ExecuteAdditional(IDbConnection connection, ValidationMaterial validation, DbDatasource datasource, long transactionId)
+	{
+		var request = validation.ToAdditionalRequestMaterial();
+		var materializer = new AdditionalForwardingMaterializer(Environment);
+		var material = materializer.Create(connection, datasource, request);
+		material.ExecuteTransfer(connection, transactionId);
 	}
 
 	private TransactionRow CreateTransactionRow(DbDatasource datasource, string argument = "")

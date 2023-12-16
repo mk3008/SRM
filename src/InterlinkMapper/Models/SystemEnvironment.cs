@@ -1,4 +1,6 @@
-﻿namespace InterlinkMapper.Models;
+﻿using Microsoft.Win32;
+
+namespace InterlinkMapper.Models;
 
 public class SystemEnvironment
 {
@@ -202,16 +204,8 @@ public class SystemEnvironment
 
 	public KeymapTable GetKeyMapTable(DbDatasource d)
 	{
-		var columndefs = new List<ColumnDefinition>
-		{
-			new ColumnDefinition()
-			{
-				ColumnName = d.Destination.Sequence.Column,
-				TypeName = DbEnvironment.NumericTypeName,
-				AllowNull = false,
-				IsPrimaryKey = true,
-			}
-		};
+		var columndefs = new List<ColumnDefinition>();
+
 		d.KeyColumns.ForEach(x =>
 		{
 			columndefs.Add(new ColumnDefinition()
@@ -219,8 +213,19 @@ public class SystemEnvironment
 				ColumnName = x.ColumnName,
 				TypeName = x.TypeName,
 				AllowNull = false,
+				IsPrimaryKey = true,
 			});
 		});
+
+		columndefs.Add(new ColumnDefinition()
+		{
+			ColumnName = d.Destination.Sequence.Column,
+			TypeName = DbEnvironment.NumericTypeName,
+			AllowNull = true,
+			Comment = @"destination sequence is nullable.
+If you want to stop the transfer intentionally, please register the destination sequence as NULL."
+		});
+
 		columndefs.Add(new ColumnDefinition()
 		{
 			ColumnName = DbTableConfig.TimestampColumn,
@@ -241,7 +246,7 @@ public class SystemEnvironment
 					new DbIndexDefinition()
 					{
 						IndexNumber = 1,
-						Columns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
+						Columns = { d.Destination.Sequence.Column },
 						IsUnique= true,
 					}
 				}

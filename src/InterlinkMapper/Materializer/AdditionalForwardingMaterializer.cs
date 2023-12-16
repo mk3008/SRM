@@ -13,21 +13,32 @@ public class AdditionalForwardingMaterializer : IMaterializer
 		Environment = environment;
 	}
 
-	public string RowNumberColumnName { get; set; } = "row_num";
-
 	private SystemEnvironment Environment { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
+
+	public string RequestMaterialName { get; set; } = "__additional_request";
+
+	public string DatasourceMaterialName { get; set; } = "__additional_datasource";
 
 	public AdditionalMaterial? Create(IDbConnection connection, DbDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
 		var request = this.CreateMaterial(connection, requestMaterialQuery);
+
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
 
 		var query = CreateAdditionalMaterialQuery(datasource, request, injector);
+		var additional = this.CreateMaterial(connection, query);
+
+		return ToAdditionalMaterial(datasource, additional);
+	}
+
+	public AdditionalMaterial Create(IDbConnection connection, DbDatasource datasource, Material request)
+	{
+		var query = CreateAdditionalMaterialQuery(datasource, request);
 		var additional = this.CreateMaterial(connection, query);
 
 		return ToAdditionalMaterial(datasource, additional);
@@ -95,8 +106,7 @@ public class AdditionalForwardingMaterializer : IMaterializer
 			sq.Select(r, key.ColumnName);
 		});
 
-		var name = "__additional_request";
-		return sq.ToCreateTableQuery(name);
+		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(DbDatasource datasource, Material result)
@@ -162,7 +172,12 @@ public class AdditionalForwardingMaterializer : IMaterializer
 		return sq;
 	}
 
-	private CreateTableQuery CreateAdditionalMaterialQuery(DbDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector)
+	private CreateTableQuery CreateAdditionalMaterialQuery(DbDatasource datasource, Material request)
+	{
+		return CreateAdditionalMaterialQuery(datasource, request, null);
+	}
+
+	private CreateTableQuery CreateAdditionalMaterialQuery(DbDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		var sq = new SelectQuery();
 		var _datasource = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As("_target_datasource");
@@ -176,9 +191,9 @@ public class AdditionalForwardingMaterializer : IMaterializer
 			sq = injector(sq);
 		}
 
-		return sq.ToCreateTableQuery("__datasource");
+		return sq.ToCreateTableQuery(DatasourceMaterialName);
 	}
 }
 
 [GeneratePrivateProxy(typeof(AdditionalForwardingMaterializer))]
-public partial struct MaterializeServiceProxy;
+public partial struct AdditionalForwardingMaterializerProxy;
