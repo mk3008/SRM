@@ -16,7 +16,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 
 	private SelectQuery GetAdditionalRequestQuery()
 	{
-		var m = new AdditionalForwardingMaterializer(environment);
+		var m = new AdditionalMaterializer(environment);
 		return m.AsPrivateProxy().CreateRequestMaterialQuery(DatasourceRepository.sales).ToSelectQuery();
 	}
 
@@ -30,7 +30,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 
 	private SelectQuery GetReverseRequestQuery()
 	{
-		var m = new ReverseForwardingMaterializer(environment);
+		var m = new ReverseMaterializer(environment);
 		return m.AsPrivateProxy().CreateRequestMaterialQuery(DestinationRepository.sale_journals).ToSelectQuery();
 	}
 
@@ -58,7 +58,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = AdditionalRequestMeterial;
-		var service = new AdditionalForwardingMaterializer(environment);
+		var service = new AdditionalMaterializer(environment);
 		var query = service.AsPrivateProxy().CreateAdditionalMaterialQuery(
 			datasource,
 			request,
@@ -79,7 +79,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 	{
 		var destination = DestinationRepository.sale_journals;
 		var request = ReverseRequestMeterial;
-		var service = new ReverseForwardingMaterializer(environment);
+		var service = new ReverseMaterializer(environment);
 		var query = service.AsPrivateProxy().CreateReverseMaterialQuery(
 			destination,
 			request,

@@ -17,7 +17,7 @@ public class MaterialInsertableTest
 			DbConnetionConfig = new DummyDB(),
 		};
 
-		Proxy = new ReverseForwardingMaterializer(Environment).AsPrivateProxy();
+		Proxy = new ReverseMaterializer(Environment).AsPrivateProxy();
 		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
@@ -27,7 +27,7 @@ public class MaterialInsertableTest
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
-	public readonly ReverseForwardingMaterializerProxy Proxy;
+	public readonly ReverseMaterializerProxy Proxy;
 
 	//	[Fact]
 	//	public void KeyMap_CreateInsertQueryFrom()

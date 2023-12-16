@@ -10,12 +10,12 @@ public class AdditionalForwardingService
 	public AdditionalForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Materializer = new AdditionalForwardingMaterializer(Environment);
+		Materializer = new AdditionalMaterializer(Environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private AdditionalForwardingMaterializer Materializer { get; init; }
+	private AdditionalMaterializer Materializer { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 

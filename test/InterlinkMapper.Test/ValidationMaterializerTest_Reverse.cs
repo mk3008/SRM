@@ -17,7 +17,7 @@ public class ValidationMaterializerTest_Reverse
 			DbConnetionConfig = new DummyDB(),
 		};
 
-		Proxy = new ReverseForwardingMaterializer(Environment).AsPrivateProxy();
+		Proxy = new ReverseMaterializer(Environment).AsPrivateProxy();
 		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
@@ -25,7 +25,7 @@ public class ValidationMaterializerTest_Reverse
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly ReverseForwardingMaterializerProxy Proxy;
+	public readonly ReverseMaterializerProxy Proxy;
 
 	public readonly DummyMaterialRepository MaterialRepository;
 

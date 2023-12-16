@@ -10,12 +10,12 @@ public class ReverseForwardingService
 	public ReverseForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Materializer = new ReverseForwardingMaterializer(Environment);
+		Materializer = new ReverseMaterializer(Environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private ReverseForwardingMaterializer Materializer { get; init; }
+	private ReverseMaterializer Materializer { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
@@ -47,7 +47,7 @@ public class ReverseForwardingService
 		var keymap = Environment.GetKeyMapTable(datasource);
 		var row = new ProcessRow()
 		{
-			ActionName = nameof(ReverseForwardingMaterializer),
+			ActionName = nameof(ReverseMaterializer),
 			TransactionId = transactionId,
 			InsertCount = insertCount,
 			KeyRelationTableName = keymap.Definition.TableFullName,

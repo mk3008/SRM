@@ -17,7 +17,7 @@ public class AdditionalForwardingMaterializerTest
 			DbConnetionConfig = new DummyDB(),
 		};
 
-		Proxy = new AdditionalForwardingMaterializer(Environment).AsPrivateProxy();
+		Proxy = new AdditionalMaterializer(Environment).AsPrivateProxy();
 		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
@@ -25,7 +25,7 @@ public class AdditionalForwardingMaterializerTest
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly AdditionalForwardingMaterializerProxy Proxy;
+	public readonly AdditionaMaterializerProxy Proxy;
 
 	public readonly DummyMaterialRepository MaterialRepository;
 

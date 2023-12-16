@@ -6,9 +6,9 @@ using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class AdditionalForwardingMaterializer : IMaterializer
+public class AdditionalMaterializer : IMaterializer
 {
-	public AdditionalForwardingMaterializer(SystemEnvironment environment)
+	public AdditionalMaterializer(SystemEnvironment environment)
 	{
 		Environment = environment;
 	}
@@ -195,5 +195,5 @@ public class AdditionalForwardingMaterializer : IMaterializer
 	}
 }
 
-[GeneratePrivateProxy(typeof(AdditionalForwardingMaterializer))]
-public partial struct AdditionalForwardingMaterializerProxy;
+[GeneratePrivateProxy(typeof(AdditionalMaterializer))]
+public partial struct AdditionaMaterializerProxy;

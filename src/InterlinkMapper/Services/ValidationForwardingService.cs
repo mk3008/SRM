@@ -38,7 +38,7 @@ public class ValidationForwardingService
 	private void ExecuteReverse(IDbConnection connection, ValidationMaterial validation, DbDestination destination, long transactionId)
 	{
 		var request = validation.ToReverseRequestMaterial();
-		var materializer = new ReverseForwardingMaterializer(Environment);
+		var materializer = new ReverseMaterializer(Environment);
 		var material = materializer.Create(connection, destination, request);
 		material.ExecuteTransfer(connection, transactionId);
 	}
@@ -46,7 +46,7 @@ public class ValidationForwardingService
 	private void ExecuteAdditional(IDbConnection connection, ValidationMaterial validation, DbDatasource datasource, long transactionId)
 	{
 		var request = validation.ToAdditionalRequestMaterial();
-		var materializer = new AdditionalForwardingMaterializer(Environment);
+		var materializer = new AdditionalMaterializer(Environment);
 		var material = materializer.Create(connection, datasource, request);
 		material.ExecuteTransfer(connection, transactionId);
 	}

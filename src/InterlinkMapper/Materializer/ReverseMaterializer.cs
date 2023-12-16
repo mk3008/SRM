@@ -4,9 +4,9 @@ using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class ReverseForwardingMaterializer : IMaterializer
+public class ReverseMaterializer : IMaterializer
 {
-	public ReverseForwardingMaterializer(SystemEnvironment environment)
+	public ReverseMaterializer(SystemEnvironment environment)
 	{
 		Environment = environment;
 	}
@@ -207,5 +207,5 @@ public class ReverseForwardingMaterializer : IMaterializer
 	}
 }
 
-[GeneratePrivateProxy(typeof(ReverseForwardingMaterializer))]
-public partial struct ReverseForwardingMaterializerProxy;
+[GeneratePrivateProxy(typeof(ReverseMaterializer))]
+public partial struct ReverseMaterializerProxy;
