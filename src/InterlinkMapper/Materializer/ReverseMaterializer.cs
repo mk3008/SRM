@@ -46,8 +46,8 @@ public class ReverseMaterializer : IMaterializer
 
 	private ReverseMaterial ToReverseMaterial(InterlinkDestination destination, Material material)
 	{
-		var process = Environment.GetProcessTable();
-		var relation = Environment.GetRelationTable(destination);
+		var process = Environment.GetInterlinkProcessTable();
+		var relation = Environment.GetInterlinkRelationTable(destination);
 
 		return new ReverseMaterial
 		{
@@ -66,7 +66,7 @@ public class ReverseMaterializer : IMaterializer
 			InterlinkRelationTable = relation.Definition.TableFullName,
 			DatasourceKeyColumns = null!,
 			KeyRelationTable = null!,
-			ActionColumn = process.ActionColumn,
+			ActionColumn = process.ActionNameColumn,
 			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
 			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
 			InsertCountColumn = process.InsertCountColumn,
@@ -88,8 +88,8 @@ public class ReverseMaterializer : IMaterializer
 	private CreateTableQuery CreateRequestMaterialQuery(InterlinkDestination destination)
 	{
 		var request = Environment.GetReverseRequestTable(destination);
-		var relation = Environment.GetRelationTable(destination);
-		var process = Environment.GetProcessTable();
+		var relation = Environment.GetInterlinkRelationTable(destination);
+		var process = Environment.GetInterlinkProcessTable();
 
 		var sq = new SelectQuery();
 		sq.AddComment("Only original slips can be reversed.(where id = origin_id)");
@@ -145,8 +145,8 @@ public class ReverseMaterializer : IMaterializer
 
 	private SelectQuery CreateReverseDatasourceSelectQuery(InterlinkDestination destination, Material request)
 	{
-		var relation = Environment.GetRelationTable(destination);
-		var process = Environment.GetProcessTable();
+		var relation = Environment.GetInterlinkRelationTable(destination);
+		var process = Environment.GetInterlinkProcessTable();
 		var op = destination.ReverseOption;
 
 		var sq = new SelectQuery();

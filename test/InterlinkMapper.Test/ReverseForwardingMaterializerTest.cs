@@ -151,7 +151,7 @@ WHERE
 		var query = Proxy.CreateOriginDeleteQuery(destination, requestMaterial);
 
 		var expect = """
-DELETE FROM
+ DELETE FROM
     sale_journals__req_reverse AS d
 WHERE
     (d.sale_journals__req_reverse_id) IN (

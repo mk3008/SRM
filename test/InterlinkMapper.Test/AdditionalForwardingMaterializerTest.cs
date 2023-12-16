@@ -141,28 +141,24 @@ FROM
 	{
 		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = material.AsPrivateProxy().CreateProcessInsertQuery(10);
+		var query = material.AsPrivateProxy().CreateProcessInsertQuery(1);
 		var expect = """
 /*
-    :interlink_transaction_id = 10
-    :interlink_datasource_id = 1
-    :interlink_destination_id = 2
-    :interlink_key_map = 'sale_journals__km_sales'
-    :interlink_key_relation = 'sale_journals__kr_sales'
-    :action = 'additional'
-    :insert_count = 1
+  :interlink_transaction_id = 1
+  :interlink_key_map = 'sale_journals__km_sales'
+  :interlink_key_relation = 'sale_journals__kr_sales'
+  :action_name = 'additional'
+  :insert_count = 1
 */
 INSERT INTO
     interlink_process (
-        interlink_transaction_id, interlink_datasource_id, interlink_destination_id, interlink_key_map, interlink_key_relation, action, insert_count
+        interlink_transaction_id, interlink_key_map, interlink_key_relation, action_name, insert_count
     )
 SELECT
     :interlink_transaction_id AS interlink_transaction_id,
-    :interlink_datasource_id AS interlink_datasource_id,
-    :interlink_destination_id AS interlink_destination_id,
     :interlink_key_map AS interlink_key_map,
     :interlink_key_relation AS interlink_key_relation,
-    :action AS action,
+    :action_name AS action_name,
     :insert_count AS insert_count
 RETURNING
     interlink_process_id

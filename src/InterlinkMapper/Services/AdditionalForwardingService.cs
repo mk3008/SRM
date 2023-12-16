@@ -45,7 +45,7 @@ public class AdditionalForwardingService
 	private InterlinkProcessRow CreateProcessRow(InterlinkDatasource datasource, long transactionId, int insertCount)
 	{
 		var keymap = Environment.GetKeyMapTable(datasource);
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 		var row = new InterlinkProcessRow()
 		{
 			ActionName = nameof(AdditionalForwardingService),

@@ -42,8 +42,8 @@ public class ValidationMaterializer : IMaterializer
 
 	private ValidationMaterial ToValidationMaterial(InterlinkDatasource datasource, Material material)
 	{
-		var process = Environment.GetProcessTable();
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var process = Environment.GetInterlinkProcessTable();
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 		var keymap = Environment.GetKeyMapTable(datasource);
 		var history = Environment.GetKeyRelationTable(datasource);
 
@@ -70,7 +70,7 @@ public class ValidationMaterializer : IMaterializer
 			KeymapTableNameColumn = process.KeyMapTableNameColumn,
 			InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
 
-			ActionColumn = process.ActionColumn,
+			ActionColumn = process.ActionNameColumn,
 			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
 			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
 			InsertCountColumn = process.InsertCountColumn,
@@ -198,7 +198,7 @@ public class ValidationMaterializer : IMaterializer
 
 	private SelectQuery CreateDeletedDiffSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 
 		var op = datasource.Destination.ReverseOption;
 
@@ -230,7 +230,7 @@ public class ValidationMaterializer : IMaterializer
 
 	private SelectQuery CreateUpdatedDiffSubQuery(InterlinkDatasource datasource, Material request)
 	{
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
@@ -287,7 +287,7 @@ public class ValidationMaterializer : IMaterializer
 
 	private SelectQuery CreateUpdatedDiffSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 
 		var sq = new SelectQuery();
 		sq.AddComment("reverse and additional");

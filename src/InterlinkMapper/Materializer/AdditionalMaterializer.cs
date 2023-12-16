@@ -46,8 +46,8 @@ public class AdditionalMaterializer : IMaterializer
 
 	private AdditionalMaterial ToAdditionalMaterial(InterlinkDatasource datasource, Material material)
 	{
-		var process = Environment.GetProcessTable();
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var process = Environment.GetInterlinkProcessTable();
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 		var keymap = Environment.GetKeyMapTable(datasource);
 		var history = Environment.GetKeyRelationTable(datasource);
 
@@ -70,7 +70,7 @@ public class AdditionalMaterializer : IMaterializer
 			InterlinkProcessIdColumn = process.InterlinkProcessIdColumn,
 			InterlinkRelationTable = relation.Definition.TableFullName,
 			NumericType = Environment.DbEnvironment.NumericTypeName,
-			ActionColumn = process.ActionColumn,
+			ActionColumn = process.ActionNameColumn,
 			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
 			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
 			InsertCountColumn = process.InsertCountColumn,
@@ -157,7 +157,7 @@ public class AdditionalMaterializer : IMaterializer
 	{
 		sq.AddComment("inject request material filter");
 
-		var relation = Environment.GetRelationTable(datasource.Destination);
+		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
 		var f = sq.FromClause!;
 		var d = f.Root;
 

@@ -10,7 +10,7 @@ public class SystemEnvironment
 
 	public DbEnvironment DbEnvironment { get; set; } = new();
 
-	public InterlinkTransactionTable GetTansactionTable()
+	public InterlinkTransactionTable GetInterlinkTansactionTable()
 	{
 		var t = new InterlinkTransactionTable()
 		{
@@ -23,7 +23,7 @@ public class SystemEnvironment
 					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkTransactionIdColumn,
-						ColumnType = DbEnvironment.NumericTypeName,
+						ColumnType = DbEnvironment.AutoNumberTypeName,
 						IsNullable = false,
 						IsPrimaryKey = true,
 						IsAutoNumber = true,
@@ -64,13 +64,13 @@ public class SystemEnvironment
 			InterlinkTransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
 			InterlinkDatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
 			InterlinkDestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
-			ActionColumn = DbTableConfig.ActionNameColumn,
+			ActionNameColumn = DbTableConfig.ActionNameColumn,
 			ArgumentColumn = DbTableConfig.ArgumentColumn,
 		};
 		return t;
 	}
 
-	public InterlinkProcessTable GetProcessTable()
+	public InterlinkProcessTable GetInterlinkProcessTable()
 	{
 		var t = new InterlinkProcessTable()
 		{
@@ -83,7 +83,7 @@ public class SystemEnvironment
 					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
-						ColumnType = DbEnvironment.NumericTypeName,
+						ColumnType = DbEnvironment.AutoNumberTypeName,
 						IsNullable= false,
 						IsPrimaryKey = true,
 						IsAutoNumber = true,
@@ -126,6 +126,12 @@ public class SystemEnvironment
 					},
 					new DbColumnDefinition()
 					{
+						ColumnName = DbTableConfig.KeyRelationTableNameColumn,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
+					},
+					new DbColumnDefinition()
+					{
 						ColumnName = DbTableConfig.TimestampColumn,
 						ColumnType = DbEnvironment.TimestampTypeName,
 						IsNullable= false,
@@ -137,7 +143,7 @@ public class SystemEnvironment
 			InterlinkTransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
 			InterlinkDatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
 			InterlinkDestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
-			ActionColumn = DbTableConfig.ActionNameColumn,
+			ActionNameColumn = DbTableConfig.ActionNameColumn,
 			InsertCountColumn = DbTableConfig.InsertCountColumn,
 			KeyMapTableNameColumn = DbTableConfig.KeyMapTableNameColumn,
 			KeyRelationTableNameColumn = DbTableConfig.KeyRelationTableNameColumn,
@@ -145,7 +151,7 @@ public class SystemEnvironment
 		return t;
 	}
 
-	public InterlinkRelationTable GetRelationTable(InterlinkDestination d)
+	public InterlinkRelationTable GetInterlinkRelationTable(InterlinkDestination d)
 	{
 		var rootColumn = string.Format(DbTableConfig.RootIdColumnFormat, d.Sequence.Column);
 		var originColumn = string.Format(DbTableConfig.OriginIdColumnFormat, d.Sequence.Column);
@@ -234,6 +240,7 @@ public class SystemEnvironment
 			ColumnName = d.Destination.Sequence.Column,
 			ColumnType = DbEnvironment.NumericTypeName,
 			IsNullable = true,
+			IsUniqueKey = true,
 			Comment = @"destination sequence is nullable.
 If you want to stop the transfer intentionally, please register the destination sequence as NULL."
 		});
@@ -341,7 +348,7 @@ If you want to stop the transfer intentionally, please register the destination 
 					new DbColumnDefinition()
 					{
 						ColumnName = idcolumn,
-						ColumnType = DbEnvironment.NumericTypeName,
+						ColumnType = DbEnvironment.AutoNumberTypeName,
 						IsNullable = false,
 						IsPrimaryKey = true,
 						IsAutoNumber = true,
@@ -386,7 +393,7 @@ If you want to stop the transfer intentionally, please register the destination 
 			new DbColumnDefinition()
 			{
 				ColumnName = idcolumn,
-				ColumnType = DbEnvironment.NumericTypeName,
+				ColumnType = DbEnvironment.AutoNumberTypeName,
 				IsNullable = false,
 				IsPrimaryKey = true,
 				IsAutoNumber = true,
@@ -433,7 +440,7 @@ If you want to stop the transfer intentionally, please register the destination 
 			new DbColumnDefinition()
 			{
 				ColumnName = idcolumn,
-				ColumnType = DbEnvironment.NumericTypeName,
+				ColumnType = DbEnvironment.AutoNumberTypeName,
 				IsNullable = false,
 				IsPrimaryKey = true,
 				IsAutoNumber = true,
@@ -472,7 +479,7 @@ If you want to stop the transfer intentionally, please register the destination 
 
 	public InsertQuery CreateTransactionInsertQuery(InterlinkTransactionRow row)
 	{
-		var table = GetTansactionTable();
+		var table = GetInterlinkTansactionTable();
 
 		//select :destination_name, :datasoruce_name
 		var sq = new SelectQuery();

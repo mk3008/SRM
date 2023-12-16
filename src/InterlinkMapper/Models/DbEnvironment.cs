@@ -4,6 +4,8 @@ public class DbEnvironment
 {
 	public string PlaceHolderIdentifer { get; set; } = ":";
 
+	public string AutoNumberTypeName { get; set; } = "serial8";
+
 	public string NumericTypeName { get; set; } = "int8";
 
 	public string TextTypeName { get; set; } = "text";

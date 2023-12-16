@@ -14,7 +14,7 @@ public class InterlinkProcessTable
 
 	public required string InterlinkDestinationIdColumn { get; set; }
 
-	public required string ActionColumn { get; set; }
+	public required string ActionNameColumn { get; set; }
 
 	public required string InsertCountColumn { get; set; }
 

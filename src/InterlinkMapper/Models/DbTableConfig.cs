@@ -18,7 +18,7 @@ public class DbTableConfig
 
 	public string ArgumentColumn { get; set; } = "argument";
 
-	public string ActionNameColumn { get; set; } = "action";
+	public string ActionNameColumn { get; set; } = "action_name";
 
 	public string RemarksColumn { get; set; } = "interlink_remarks";
 

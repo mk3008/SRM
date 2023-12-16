@@ -1,12 +1,15 @@
-﻿using InterlinkMapper.Models;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Npgsql;
 using RedOrb;
 using Testcontainers.PostgreSql;
 
-namespace InterlinkMapper.Test;
+namespace PostgresTest;
 
-public class PostgresDB : IAsyncLifetime, IDbConnetionSetting
+/*
+https://testcontainers.com/guides/getting-started-with-testcontainers-for-dotnet/
+ */
+
+public class PostgresDB : IAsyncLifetime
 {
 	private readonly PostgreSqlContainer Container = new PostgreSqlBuilder().WithImage("postgres:15-alpine").Build();
 
@@ -20,19 +23,11 @@ public class PostgresDB : IAsyncLifetime, IDbConnetionSetting
 		return Container.DisposeAsync().AsTask();
 	}
 
-	public ILogger? Logger { get; set; }
-
 	public LoggingDbConnection ConnectionOpenAsNew(ILogger logger)
 	{
 		var cn = new NpgsqlConnection(Container.GetConnectionString());
 		var lcn = new LoggingDbConnection(cn, logger);
 		lcn.Open();
 		return lcn;
-	}
-
-	public LoggingDbConnection ConnectionOpenAsNew()
-	{
-		if (Logger == null) throw new NullReferenceException(nameof(Logger));
-		return ConnectionOpenAsNew(Logger);
 	}
 }
