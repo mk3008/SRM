@@ -1,22 +1,24 @@
-﻿namespace InterlinkMapper.Models;
+﻿using RedOrb;
+
+namespace InterlinkMapper.Models;
 
 public class InterlinkProcessTable
 {
-	public DbTableDefinition Definition { get; set; } = new();
+	public required DbTableDefinition Definition { get; set; }
 
-	public string InterlinkTransactionIdColumn { get; set; } = string.Empty;
+	public required string InterlinkTransactionIdColumn { get; set; }
 
-	public string InterlinkProcessIdColumn { get; set; } = string.Empty;
+	public required string InterlinkProcessIdColumn { get; set; }
 
-	public string InterlinkDatasourceIdColumn { get; set; } = string.Empty;
+	public required string InterlinkDatasourceIdColumn { get; set; }
 
-	public string InterlinkDestinationIdColumn { get; set; } = string.Empty;
+	public required string InterlinkDestinationIdColumn { get; set; }
 
-	public string ActionColumn { get; set; } = string.Empty;
+	public required string ActionColumn { get; set; }
 
-	public string InsertCountColumn { get; set; } = string.Empty;
+	public required string InsertCountColumn { get; set; }
 
-	public string KeyMapTableNameColumn { get; set; } = string.Empty;
+	public required string KeyMapTableNameColumn { get; set; }
 
-	public string KeyRelationTableNameColumn { get; set; } = string.Empty;
+	public required string KeyRelationTableNameColumn { get; set; }
 }

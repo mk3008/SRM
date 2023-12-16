@@ -2,16 +2,6 @@
 
 public class DbTableConfig
 {
-	//public DbTableDefinition TransactionTable { get; set; } = new();
-
-	//public DbTableDefinition ProcessTable { get; set; } = new();
-
-	//public DbTableDefinition ProcessResultTable { get; set; } = new();
-
-	//public DbTableDefinition DestinationTable { get; set; } = new();
-
-	//public DbTableDefinition DatasourceTable { get; set; } = new();
-
 	public string ControlTableSchemaName { get; set; } = string.Empty;
 
 	public string InterlinkTransactionTableName { get; set; } = "interlink_transaction";

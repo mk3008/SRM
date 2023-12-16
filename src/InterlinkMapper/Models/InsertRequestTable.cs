@@ -1,10 +1,12 @@
-﻿namespace InterlinkMapper.Models;
+﻿using RedOrb;
+
+namespace InterlinkMapper.Models;
 
 public class InsertRequestTable : IRequestTable
 {
-	public DbTableDefinition Definition { get; set; } = new();
+	public required DbTableDefinition Definition { get; set; }
 
-	public string RequestIdColumn { get; set; } = string.Empty;
+	public required string RequestIdColumn { get; set; }
 
-	public List<string> DatasourceKeyColumns { get; set; } = new();
+	public required List<string> DatasourceKeyColumns { get; set; }
 }

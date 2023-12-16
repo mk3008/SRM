@@ -1,4 +1,6 @@
-﻿namespace InterlinkMapper.Models;
+﻿using RedOrb;
+
+namespace InterlinkMapper.Models;
 
 public class InterlinkRelationTable
 {

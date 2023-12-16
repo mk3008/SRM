@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+﻿using RedOrb;
 
 namespace InterlinkMapper.Models;
 
@@ -20,43 +20,43 @@ public class SystemEnvironment
 				TableName = DbTableConfig.InterlinkTransactionTableName,
 				ColumnDefinitions = new()
 				{
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkTransactionIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable = false,
 						IsPrimaryKey = true,
 						IsAutoNumber = true,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkDatasourceIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkDestinationIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.ActionNameColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.ArgumentColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.TimestampColumn,
-						TypeName = DbEnvironment.TimestampTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TimestampTypeName,
+						IsNullable= false,
 						DefaultValue = DbEnvironment.TimestampDefaultValue,
 					},
 				}
@@ -80,55 +80,55 @@ public class SystemEnvironment
 				TableName = DbTableConfig.InterlinkProcessTableName,
 				ColumnDefinitions = new()
 				{
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 						IsPrimaryKey = true,
 						IsAutoNumber = true,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkTransactionIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkDatasourceIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkDestinationIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.ActionNameColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InsertCountColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.KeyMapTableNameColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.TimestampColumn,
-						TypeName = DbEnvironment.TimestampTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TimestampTypeName,
+						IsNullable= false,
 						DefaultValue = DbEnvironment.TimestampDefaultValue,
 					},
 				}
@@ -158,42 +158,42 @@ public class SystemEnvironment
 				TableName = string.Format(DbTableConfig.RelationTableNameFormat, d.Table.TableName),
 				ColumnDefinitions = new()
 				{
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = d.Sequence.Column,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 						IsPrimaryKey = true,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.InterlinkProcessIdColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = rootColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = originColumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.RemarksColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable= false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.TimestampColumn,
-						TypeName = DbEnvironment.TimestampTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TimestampTypeName,
+						IsNullable= false,
 						DefaultValue = DbEnvironment.TimestampDefaultValue,
 					},
 				},
@@ -201,8 +201,7 @@ public class SystemEnvironment
 				{
 					new DbIndexDefinition()
 					{
-						IndexNumber = 1,
-						Columns = new() { DbTableConfig.InterlinkProcessIdColumn }
+						Identifers = new() { DbTableConfig.InterlinkProcessIdColumn }
 					}
 				}
 			},
@@ -217,33 +216,33 @@ public class SystemEnvironment
 
 	public KeymapTable GetKeyMapTable(InterlinkDatasource d)
 	{
-		var columndefs = new List<ColumnDefinition>();
+		var columndefs = new List<DbColumnDefinition>();
 
 		d.KeyColumns.ForEach(x =>
 		{
-			columndefs.Add(new ColumnDefinition()
+			columndefs.Add(new DbColumnDefinition()
 			{
 				ColumnName = x.ColumnName,
-				TypeName = x.TypeName,
-				AllowNull = false,
+				ColumnType = x.TypeName,
+				IsNullable = false,
 				IsPrimaryKey = true,
 			});
 		});
 
-		columndefs.Add(new ColumnDefinition()
+		columndefs.Add(new DbColumnDefinition()
 		{
 			ColumnName = d.Destination.Sequence.Column,
-			TypeName = DbEnvironment.NumericTypeName,
-			AllowNull = true,
+			ColumnType = DbEnvironment.NumericTypeName,
+			IsNullable = true,
 			Comment = @"destination sequence is nullable.
 If you want to stop the transfer intentionally, please register the destination sequence as NULL."
 		});
 
-		columndefs.Add(new ColumnDefinition()
+		columndefs.Add(new DbColumnDefinition()
 		{
 			ColumnName = DbTableConfig.TimestampColumn,
-			TypeName = DbEnvironment.TimestampTypeName,
-			AllowNull = false,
+			ColumnType = DbEnvironment.TimestampTypeName,
+			IsNullable = false,
 			DefaultValue = DbEnvironment.TimestampDefaultValue,
 		});
 
@@ -258,8 +257,7 @@ If you want to stop the transfer intentionally, please register the destination 
 				{
 					new DbIndexDefinition()
 					{
-						IndexNumber = 1,
-						Columns = { d.Destination.Sequence.Column },
+						Identifers = { d.Destination.Sequence.Column },
 						IsUnique= true,
 					}
 				}
@@ -272,37 +270,37 @@ If you want to stop the transfer intentionally, please register the destination 
 
 	public KeyRelationTable GetKeyRelationTable(InterlinkDatasource d)
 	{
-		var columndefs = new List<ColumnDefinition>
+		var columndefs = new List<DbColumnDefinition>
 		{
-			new ColumnDefinition()
+			new DbColumnDefinition()
 			{
 				ColumnName = d.Destination.Sequence.Column,
-				TypeName = DbEnvironment.NumericTypeName,
-				AllowNull = false,
+				ColumnType = DbEnvironment.NumericTypeName,
+				IsNullable = false,
 				IsPrimaryKey = true,
 			}
 		};
 		d.KeyColumns.ForEach(x =>
 		{
-			columndefs.Add(new ColumnDefinition()
+			columndefs.Add(new DbColumnDefinition()
 			{
 				ColumnName = x.ColumnName,
-				TypeName = x.TypeName,
-				AllowNull = false,
+				ColumnType = x.TypeName,
+				IsNullable = false,
 			});
 		});
-		columndefs.Add(new ColumnDefinition()
+		columndefs.Add(new DbColumnDefinition()
 		{
 			ColumnName = DbTableConfig.RemarksColumn,
-			TypeName = DbEnvironment.TextTypeName,
-			AllowNull = true,
+			ColumnType = DbEnvironment.TextTypeName,
+			IsNullable = true,
 			IsPrimaryKey = false,
 		});
-		columndefs.Add(new ColumnDefinition()
+		columndefs.Add(new DbColumnDefinition()
 		{
 			ColumnName = DbTableConfig.TimestampColumn,
-			TypeName = DbEnvironment.TimestampTypeName,
-			AllowNull = false,
+			ColumnType = DbEnvironment.TimestampTypeName,
+			IsNullable = false,
 			DefaultValue = DbEnvironment.TimestampDefaultValue,
 		});
 		var t = new KeyRelationTable()
@@ -316,8 +314,7 @@ If you want to stop the transfer intentionally, please register the destination 
 				{
 					new DbIndexDefinition()
 					{
-						IndexNumber = 1,
-						Columns = d.KeyColumns.Select(x => x.ColumnName).ToList(),
+						Identifers = d.KeyColumns.Select(x => x.ColumnName).ToList(),
 					}
 				}
 			},
@@ -341,33 +338,33 @@ If you want to stop the transfer intentionally, please register the destination 
 				TableName = tablename,
 				ColumnDefinitions = new()
 				{
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = idcolumn,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable = false,
 						IsPrimaryKey = true,
 						IsAutoNumber = true,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = d.Sequence.Column,
-						TypeName = DbEnvironment.NumericTypeName,
-						AllowNull = false,
+						ColumnType = DbEnvironment.NumericTypeName,
+						IsNullable = false,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.RemarksColumn,
-						TypeName = DbEnvironment.TextTypeName,
-						AllowNull = false,
+						ColumnType = DbEnvironment.TextTypeName,
+						IsNullable = false,
 						IsUniqueKey = false,
 						DefaultValue = string.Empty,
 					},
-					new ColumnDefinition()
+					new DbColumnDefinition()
 					{
 						ColumnName = DbTableConfig.TimestampColumn,
-						TypeName = DbEnvironment.TimestampTypeName,
-						AllowNull= false,
+						ColumnType = DbEnvironment.TimestampTypeName,
+						IsNullable = false,
 						DefaultValue = DbEnvironment.TimestampDefaultValue,
 					},
 				}
@@ -384,31 +381,31 @@ If you want to stop the transfer intentionally, please register the destination 
 		var tablename = string.Format(DbTableConfig.ValidateRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
-		var columndefs = new List<ColumnDefinition>
+		var columndefs = new List<DbColumnDefinition>
 		{
-			new ColumnDefinition()
+			new DbColumnDefinition()
 			{
 				ColumnName = idcolumn,
-				TypeName = DbEnvironment.NumericTypeName,
-				AllowNull = false,
+				ColumnType = DbEnvironment.NumericTypeName,
+				IsNullable = false,
 				IsPrimaryKey = true,
 				IsAutoNumber = true,
 			}
 		};
 		d.KeyColumns.ForEach(x =>
 		{
-			columndefs.Add(new ColumnDefinition()
+			columndefs.Add(new DbColumnDefinition()
 			{
 				ColumnName = x.ColumnName,
-				TypeName = x.TypeName,
-				AllowNull = false,
+				ColumnType = x.TypeName,
+				IsNullable = false,
 			});
 		});
-		columndefs.Add(new ColumnDefinition()
+		columndefs.Add(new DbColumnDefinition()
 		{
 			ColumnName = DbTableConfig.TimestampColumn,
-			TypeName = DbEnvironment.TimestampTypeName,
-			AllowNull = false,
+			ColumnType = DbEnvironment.TimestampTypeName,
+			IsNullable = false,
 			DefaultValue = DbEnvironment.TimestampDefaultValue,
 		});
 
@@ -431,31 +428,31 @@ If you want to stop the transfer intentionally, please register the destination 
 		var tablename = string.Format(DbTableConfig.InsertRequestTableNameFormat, d.Destination.Table.TableName, d.KeyName);
 		var idcolumn = string.Format(DbTableConfig.RequestIdColumnFormat, tablename);
 
-		var columndefs = new List<ColumnDefinition>
+		var columndefs = new List<DbColumnDefinition>
 		{
-			new ColumnDefinition()
+			new DbColumnDefinition()
 			{
 				ColumnName = idcolumn,
-				TypeName = DbEnvironment.NumericTypeName,
-				AllowNull = false,
+				ColumnType = DbEnvironment.NumericTypeName,
+				IsNullable = false,
 				IsPrimaryKey = true,
 				IsAutoNumber = true,
 			}
 		};
 		d.KeyColumns.ForEach(x =>
 		{
-			columndefs.Add(new ColumnDefinition()
+			columndefs.Add(new DbColumnDefinition()
 			{
 				ColumnName = x.ColumnName,
-				TypeName = x.TypeName,
-				AllowNull = false,
+				ColumnType = x.TypeName,
+				IsNullable = false,
 			});
 		});
-		columndefs.Add(new ColumnDefinition()
+		columndefs.Add(new DbColumnDefinition()
 		{
 			ColumnName = DbTableConfig.TimestampColumn,
-			TypeName = DbEnvironment.TimestampTypeName,
-			AllowNull = false,
+			ColumnType = DbEnvironment.TimestampTypeName,
+			IsNullable = false,
 			DefaultValue = DbEnvironment.TimestampDefaultValue,
 		});
 

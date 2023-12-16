@@ -57,8 +57,8 @@ public class ValidationMaterializer : IMaterializer
 			RootIdColumn = relation.RootIdColumn,
 			OriginIdColumn = relation.OriginIdColumn,
 			InterlinkRemarksColumn = relation.RemarksColumn,
-			DestinationTable = datasource.Destination.Table.GetTableFullName(),
-			DestinationColumns = datasource.Destination.Table.Columns,
+			DestinationTable = datasource.Destination.Table.TableFullName,
+			DestinationColumns = datasource.Destination.Table.ColumnNames,
 			DestinationIdColumn = datasource.Destination.Sequence.Column,
 			KeymapTable = keymap.Definition.TableFullName,
 			KeyRelationTable = history.Definition.TableFullName,
@@ -76,7 +76,7 @@ public class ValidationMaterializer : IMaterializer
 			InsertCountColumn = process.InsertCountColumn,
 			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
 			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
-			ProcessTableName = process.Definition.GetTableFullName(),
+			ProcessTableName = process.Definition.TableFullName,
 
 			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
 			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId
@@ -215,7 +215,7 @@ public class ValidationMaterializer : IMaterializer
 
 		var validationColumns = e.GetColumnNames()
 			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
-			.Where(x => datasource.Destination.Table.Columns.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.Where(x => datasource.Destination.Table.ColumnNames.Contains(x, StringComparer.OrdinalIgnoreCase))
 			.ToList();
 
 		sq.Where(a, key).IsNull();
@@ -244,7 +244,7 @@ public class ValidationMaterializer : IMaterializer
 
 		var validationColumns = e.GetColumnNames()
 			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
-			.Where(x => datasource.Destination.Table.Columns.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.Where(x => datasource.Destination.Table.ColumnNames.Contains(x, StringComparer.OrdinalIgnoreCase))
 			.ToList();
 
 		sq.Where(() =>

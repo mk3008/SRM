@@ -10,11 +10,11 @@ public class InterlinkProcessRow
 
 	public long InterlinkDestinationId { get; set; }
 
-	public string ActionName { get; set; } = string.Empty;
+	public required string ActionName { get; set; }
 
 	public long InsertCount { get; set; }
 
-	public string KeyMapTableName { get; set; } = string.Empty;
+	public required string KeyMapTableName { get; set; }
 
-	public string KeyRelationTableName { get; set; } = string.Empty;
+	public required string KeyRelationTableName { get; set; }
 }

@@ -4,20 +4,20 @@ namespace InterlinkMapper.Test;
 
 internal static class DestinationRepository
 {
-	public static InterlinkDestination sale_journals => new InterlinkDestination()
+	public static InterlinkDestination sale_journals => new()
 	{
 		InterlinkDestinationId = 2,
 		Table = new()
 		{
 			TableName = "sale_journals",
-			Columns = new() {
-						"sale_journal_id",
-						"journal_closing_date",
-						"sale_date",
-						"shop_id",
-						"price",
-						"remarks"
-					}
+			ColumnNames = new() {
+				"sale_journal_id",
+				"journal_closing_date",
+				"sale_date",
+				"shop_id",
+				"price",
+				"remarks"
+			}
 		},
 		Sequence = new()
 		{
@@ -28,7 +28,6 @@ internal static class DestinationRepository
 		{
 			ExcludedColumns = ["remarks"],
 			ReverseColumns = ["price"]
-		}
-
+		},
 	};
 }

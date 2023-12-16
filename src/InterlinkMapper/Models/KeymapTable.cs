@@ -1,10 +1,12 @@
-﻿namespace InterlinkMapper.Models;
+﻿using RedOrb;
+
+namespace InterlinkMapper.Models;
 
 public class KeymapTable : IMaterialInsertable
 {
-	public DbTableDefinition Definition { get; set; } = new();
+	public required DbTableDefinition Definition { get; set; }
 
-	public string DestinationIdColumn { get; set; } = string.Empty;
+	public required string DestinationIdColumn { get; set; } = string.Empty;
 
-	public List<string> DatasourceKeyColumns { get; set; } = new();
+	public required List<string> DatasourceKeyColumns { get; set; }
 }

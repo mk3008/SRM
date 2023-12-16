@@ -1,14 +1,16 @@
-﻿namespace InterlinkMapper.Models;
+﻿using RedOrb;
+
+namespace InterlinkMapper.Models;
 
 public class ReverseTable : IMaterialInsertable
 {
-	public DbTableDefinition Definition { get; set; } = new();
+	public required DbTableDefinition Definition { get; set; }
 
-	public string RootIdColumn { get; set; } = string.Empty;
+	public required string RootIdColumn { get; set; }
 
-	public string OriginIdColumn { get; set; } = string.Empty;
+	public required string OriginIdColumn { get; set; }
 
-	public string ReverseIdColumn { get; set; } = string.Empty;
+	public required string ReverseIdColumn { get; set; }
 
-	public string RemarksColumn { get; set; } = string.Empty;
+	public required string RemarksColumn { get; set; }
 }

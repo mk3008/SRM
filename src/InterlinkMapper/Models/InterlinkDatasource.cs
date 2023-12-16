@@ -4,17 +4,17 @@ public class InterlinkDatasource
 {
 	public long InterlinkDatasourceId { get; set; }
 
-	public string DatasourceName { get; set; } = string.Empty;
+	public required string DatasourceName { get; set; }
 
 	public string Description { get; set; } = string.Empty;
 
-	public InterlinkDestination Destination { get; set; } = null!;
+	public required InterlinkDestination Destination { get; set; }
 
-	public string Query { get; set; } = string.Empty;
+	public required string Query { get; set; }
 
-	public string KeyName { get; set; } = string.Empty;
+	public required string KeyName { get; set; }
 
-	public List<KeyColumn> KeyColumns { get; set; } = new();
+	public required List<KeyColumn> KeyColumns { get; set; }
 
 	public SelectQuery ToSelectQuery()
 	{

@@ -1,16 +1,18 @@
-﻿namespace InterlinkMapper.Models;
+﻿using RedOrb;
+
+namespace InterlinkMapper.Models;
 
 public class InterlinkTransactionTable
 {
-	public DbTableDefinition Definition { get; set; } = new();
+	public required DbTableDefinition Definition { get; set; }
 
-	public string InterlinkTransactionIdColumn { get; set; } = string.Empty;
+	public required string InterlinkTransactionIdColumn { get; set; }
 
-	public string InterlinkDatasourceIdColumn { get; set; } = string.Empty;
+	public required string InterlinkDatasourceIdColumn { get; set; }
 
-	public string InterlinkDestinationIdColumn { get; set; } = string.Empty;
+	public required string InterlinkDestinationIdColumn { get; set; }
 
-	public string ActionColumn { get; set; } = string.Empty;
+	public required string ActionColumn { get; set; }
 
-	public string ArgumentColumn { get; set; } = string.Empty;
+	public required string ArgumentColumn { get; set; }
 }
