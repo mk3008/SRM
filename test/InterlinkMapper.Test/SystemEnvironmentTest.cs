@@ -63,7 +63,7 @@ public class SystemEnvironmentTest
 		{
 			InterlinkDestinationId = 20,
 			InterlinkDatasourceId = 10,
-			ActionName = "test",
+			ServiceName = "test",
 			Argument = "argument"
 		};
 	}
@@ -94,17 +94,17 @@ public class SystemEnvironmentTest
 /*
   :interlink_destination_id = 20
   :interlink_datasource_id = 10
-  :action_name = 'test'
+  :service_name = 'test'
   :argument = 'argument'
 */
 INSERT INTO
     interlink_transaction (
-        interlink_destination_id, interlink_datasource_id, action_name, argument
+        interlink_destination_id, interlink_datasource_id, service_name, argument
     )
 SELECT
     :interlink_destination_id AS interlink_destination_id,
     :interlink_datasource_id AS interlink_datasource_id,
-    :action_name AS action_name,
+    :service_name AS service_name,
     :argument AS argument
 RETURNING
     interlink_transaction_id

@@ -42,7 +42,7 @@ public class SystemEnvironment
 					},
 					new DbColumnDefinition()
 					{
-						ColumnName = DbTableConfig.ActionNameColumn,
+						ColumnName = DbTableConfig.ServiceNameColumn,
 						ColumnType = DbEnvironment.TextTypeName,
 						IsNullable= false,
 					},
@@ -64,7 +64,7 @@ public class SystemEnvironment
 			InterlinkTransactionIdColumn = DbTableConfig.InterlinkTransactionIdColumn,
 			InterlinkDatasourceIdColumn = DbTableConfig.InterlinkDatasourceIdColumn,
 			InterlinkDestinationIdColumn = DbTableConfig.InterlinkDestinationIdColumn,
-			ActionNameColumn = DbTableConfig.ActionNameColumn,
+			ServiceNameColumn = DbTableConfig.ServiceNameColumn,
 			ArgumentColumn = DbTableConfig.ArgumentColumn,
 		};
 		return t;
@@ -485,7 +485,7 @@ If you want to stop the transfer intentionally, please register the destination 
 		var sq = new SelectQuery();
 		sq.Select(DbEnvironment, table.InterlinkDestinationIdColumn, row.InterlinkDestinationId);
 		sq.Select(DbEnvironment, table.InterlinkDatasourceIdColumn, row.InterlinkDatasourceId);
-		sq.Select(DbEnvironment, table.ActionNameColumn, row.ActionName);
+		sq.Select(DbEnvironment, table.ServiceNameColumn, row.ServiceName);
 		sq.Select(DbEnvironment, table.ArgumentColumn, row.Argument);
 
 		//insert into transaction_table returning transaction_id

@@ -12,7 +12,7 @@ public class InterlinkTransactionTable
 
 	public required string InterlinkDestinationIdColumn { get; set; }
 
-	public required string ActionNameColumn { get; set; }
+	public required string ServiceNameColumn { get; set; }
 
 	public required string ArgumentColumn { get; set; }
 }

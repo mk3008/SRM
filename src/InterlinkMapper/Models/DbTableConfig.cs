@@ -18,6 +18,8 @@ public class DbTableConfig
 
 	public string ArgumentColumn { get; set; } = "argument";
 
+	public string ServiceNameColumn { get; set; } = "service_name";
+
 	public string ActionNameColumn { get; set; } = "action_name";
 
 	public string RemarksColumn { get; set; } = "interlink_remarks";

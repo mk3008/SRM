@@ -57,7 +57,7 @@ public class ValidationForwardingService
 		{
 			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
 			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
-			ActionName = nameof(ValidationForwardingService),
+			ServiceName = nameof(ValidationForwardingService),
 			Argument = argument
 		};
 		return row;

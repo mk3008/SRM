@@ -37,7 +37,7 @@ public class ReverseForwardingService
 		{
 			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
 			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
-			ActionName = nameof(ReverseForwardingService),
+			ServiceName = nameof(ReverseForwardingService),
 			Argument = argument
 		};
 		return row;

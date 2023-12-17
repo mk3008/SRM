@@ -8,7 +8,7 @@ public class InterlinkTransactionRow
 
 	public long InterlinkDestinationId { get; set; }
 
-	public required string ActionName { get; set; }
+	public required string ServiceName { get; set; }
 
 	public required string Argument { get; set; } = string.Empty;
 }

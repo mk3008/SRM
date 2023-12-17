@@ -134,7 +134,7 @@ from
 		Assert.Single(trans);
 		Assert.Equal(1, trans[0].interlink_destination_id);
 		Assert.Equal(1, trans[0].interlink_datasource_id);
-		Assert.Equal("AdditionalForwardingService", trans[0].action_name);
+		Assert.Equal("AdditionalForwardingService", trans[0].service_name);
 		Assert.Equal("", trans[0].argument);
 
 		//validate interlink process
