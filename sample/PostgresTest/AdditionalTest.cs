@@ -8,9 +8,9 @@ using Xunit.Abstractions;
 
 namespace PostgresTest;
 
-public class UnitTest1 : IClassFixture<PostgresDB>
+public class AdditionalTest : IClassFixture<PostgresDB>
 {
-	public UnitTest1(PostgresDB postgresDB, ITestOutputHelper output)
+	public AdditionalTest(PostgresDB postgresDB, ITestOutputHelper output)
 	{
 		PostgresDB = postgresDB;
 		Logger = new UnitTestLogger() { Output = output };
@@ -99,7 +99,7 @@ from
 	}
 
 	[Fact]
-	public void AdditionalTest()
+	public void Default()
 	{
 		using var cn = PostgresDB.ConnectionOpenAsNew(Logger);
 		using var trn = cn.BeginTransaction();
@@ -114,7 +114,7 @@ from
 
 		// execute transfer
 		var service = new AdditionalForwardingService(Environment);
-		service.Execute(cn, DatasourceRepository.NetMembers, injector: null);
+		service.Execute(cn, DatasourceRepository.NetMembers);
 
 		// validate
 		var actualcnt = cn.ExecuteScalar<int>("select count(*) from customer");
@@ -128,5 +128,54 @@ from
 		// The request will be deleted once the transfer process is complete.
 		Assert.NotEqual(0, beforerequest);
 		Assert.Equal(0, afterrequest);
+
+		//validate interlink transaction
+		var trans = cn.Query("select * from interlink.interlink_transaction").ToList();
+		Assert.Single(trans);
+		Assert.Equal(1, trans[0].interlink_destination_id);
+		Assert.Equal(1, trans[0].interlink_datasource_id);
+		Assert.Equal("AdditionalForwardingService", trans[0].action_name);
+		Assert.Equal("", trans[0].argument);
+
+		//validate interlink process
+		var proc = cn.Query("select * from interlink.interlink_process").ToList();
+		Assert.Single(proc);
+		Assert.Equal(1, proc[0].interlink_transaction_id);
+		Assert.Equal(1, proc[0].interlink_destination_id);
+		Assert.Equal(1, proc[0].interlink_datasource_id);
+		Assert.Equal("interlink.customer__key_m_net_member", proc[0].interlink_key_map);
+		Assert.Equal("interlink.customer__key_r_net_member", proc[0].interlink_key_relation);
+		Assert.Equal("additional", proc[0].action_name);
+
+		//validate interlink relation
+		var rels = cn.Query("select r.* from interlink.customer__relation r inner join customer d on r.customer_id = d.customer_id").ToList();
+		Assert.NotEmpty(rels);
+		foreach (var rel in rels)
+		{
+			Assert.Equal(1, rel.interlink_process_id);
+			Assert.Equal(rel.customer_id, rel.root__customer_id);
+			Assert.Equal(rel.customer_id, rel.origin__customer_id);
+		}
+
+		//validate key relation
+		var keyrels = cn.Query("select r.* from interlink.customer__key_r_net_member r inner join customer d on r.customer_id = d.customer_id").ToList();
+		Assert.NotEmpty(rels);
+
+		//validate key map
+		var keymaps = cn.Query("select r.* from interlink.customer__key_m_net_member r inner join customer d on r.customer_id = d.customer_id").ToList();
+		Assert.NotEmpty(keymaps);
+
+		//validate destination
+		var dests = cn.Query(
+"""
+select 
+	d.*
+from
+	customer d
+	inner join interlink.customer__relation r on d.customer_id = r.customer_id
+	inner join interlink.interlink_process p on r.interlink_process_id = p.interlink_process_id
+	inner join interlink.interlink_transaction t on p.interlink_transaction_id = t.interlink_transaction_id
+""").ToList();
+		Assert.NotEmpty(dests);
 	}
 }

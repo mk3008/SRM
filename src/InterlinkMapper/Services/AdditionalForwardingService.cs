@@ -19,6 +19,11 @@ public class AdditionalForwardingService
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
+	public void Execute(IDbConnection connection, InterlinkDatasource datasource)
+	{
+		Execute(connection, datasource, null);
+	}
+
 	public void Execute(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		// create transaction row
