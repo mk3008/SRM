@@ -302,7 +302,7 @@ SELECT
     d.sale_journal_id,
     COALESCE(kr.root__sale_journal_id, d.sale_journal_id) AS root__sale_journal_id,
     d.sale_journal_id AS origin__sale_journal_id,
-    null AS interlink_remarks
+    '' AS interlink_remarks
 FROM
     d
     LEFT JOIN (

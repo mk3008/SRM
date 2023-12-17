@@ -94,15 +94,17 @@ public class SystemEnvironmentTest
 /*
   :interlink_destination_id = 20
   :interlink_datasource_id = 10
+  :action_name = 'test'
   :argument = 'argument'
 */
 INSERT INTO
     interlink_transaction (
-        interlink_destination_id, interlink_datasource_id, argument
+        interlink_destination_id, interlink_datasource_id, action_name, argument
     )
 SELECT
     :interlink_destination_id AS interlink_destination_id,
     :interlink_datasource_id AS interlink_datasource_id,
+    :action_name AS action_name,
     :argument AS argument
 RETURNING
     interlink_transaction_id
