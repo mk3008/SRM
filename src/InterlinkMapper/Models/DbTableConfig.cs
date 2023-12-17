@@ -32,9 +32,9 @@ public class DbTableConfig
 
 	public string RelationTableNameFormat { get; set; } = "{0}__relation";
 
-	public string KeyMapTableNameFormat { get; set; } = "{0}__km_{1}";
+	public string KeyMapTableNameFormat { get; set; } = "{0}__key_m_{1}";
 
-	public string KeyRelationTableNameFormat { get; set; } = "{0}__kr_{1}";
+	public string KeyRelationTableNameFormat { get; set; } = "{0}__key_r_{1}";
 
 	public string RootIdColumnFormat { get; set; } = "root__{0}";
 

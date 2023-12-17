@@ -37,6 +37,7 @@ public class AdditionalForwardingService
 		{
 			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
 			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
+			ActionName = nameof(AdditionalForwardingService),
 			Argument = argument
 		};
 		return row;

@@ -1,6 +1,7 @@
 using Carbunql;
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
+using InterlinkMapper.Services;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
@@ -62,6 +63,7 @@ public class SystemEnvironmentTest
 		{
 			InterlinkDestinationId = 20,
 			InterlinkDatasourceId = 10,
+			ActionName = "test",
 			Argument = "argument"
 		};
 	}

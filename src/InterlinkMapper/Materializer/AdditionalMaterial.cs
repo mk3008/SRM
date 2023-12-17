@@ -55,7 +55,7 @@ public class AdditionalMaterial : MaterializeResult
 		var processId = connection.ExecuteScalar<long>(CreateProcessInsertQuery(transactionId));
 
 		// transfer datasource
-		var cnt = connection.Execute(CreateRelationInsertSelectQuery(processId), commandTimeout: CommandTimeout);
+		var cnt = connection.Execute(CreateRelationInsertQuery(processId), commandTimeout: CommandTimeout);
 		if (cnt != Count) throw new InvalidOperationException();
 		cnt = connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
 		if (cnt != Count) throw new InvalidOperationException();

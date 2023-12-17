@@ -45,7 +45,7 @@ SELECT
     m.sale_id
 FROM
     sale_journals__req_v_sales AS r
-    INNER JOIN sale_journals__km_sales AS m ON r.sale_id = m.sale_id
+    INNER JOIN sale_journals__key_m_sales AS m ON r.sale_id = m.sale_id
 WHERE
     m.sale_journal_id IS NOT null
 """;

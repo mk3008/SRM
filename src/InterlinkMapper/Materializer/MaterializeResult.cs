@@ -88,11 +88,11 @@ public abstract class MaterializeResult
 		return iq;
 	}
 
-	//internal InsertQuery CreateRelationInsertQuery(long processId)
-	//{
-	//	var sq = CreateRelationInsertSelectQuery(processId);
-	//	return sq.ToInsertQuery(RelationTable);
-	//}
+	internal InsertQuery CreateRelationInsertQuery(long processId)
+	{
+		var sq = CreateRelationInsertSelectQuery(processId);
+		return sq.ToInsertQuery(InterlinkRelationTable);
+	}
 
 	internal SelectQuery CreateRelationInsertSelectQuery(long processId)
 	{
@@ -121,7 +121,7 @@ public abstract class MaterializeResult
 		}
 		else
 		{
-			sq.Select("null").As(InterlinkRemarksColumn);
+			sq.Select("''").As(InterlinkRemarksColumn);
 		}
 
 		return sq;

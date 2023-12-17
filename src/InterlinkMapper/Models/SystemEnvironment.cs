@@ -485,6 +485,7 @@ If you want to stop the transfer intentionally, please register the destination 
 		var sq = new SelectQuery();
 		sq.Select(DbEnvironment, table.InterlinkDestinationIdColumn, row.InterlinkDestinationId);
 		sq.Select(DbEnvironment, table.InterlinkDatasourceIdColumn, row.InterlinkDatasourceId);
+		sq.Select(DbEnvironment, table.ActionNameColumn, row.ActionName);
 		sq.Select(DbEnvironment, table.ArgumentColumn, row.Argument);
 
 		//insert into transaction_table returning transaction_id

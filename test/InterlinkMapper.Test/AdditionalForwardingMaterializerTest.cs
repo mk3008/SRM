@@ -147,8 +147,8 @@ FROM
   :interlink_transaction_id = 1
   :interlink_datasource_id = 1
   :interlink_destination_id = 2
-  :interlink_key_map = 'sale_journals__km_sales'
-  :interlink_key_relation = 'sale_journals__kr_sales'
+  :interlink_key_map = 'sale_journals__key_m_sales'
+  :interlink_key_relation = 'sale_journals__key_r_sales'
   :action_name = 'additional'
   :insert_count = 1
 */
@@ -181,7 +181,7 @@ RETURNING
 		var query = material.AsPrivateProxy().CreateKeyRelationInsertQuery();
 		var expect = """
 INSERT INTO
-    sale_journals__kr_sales (
+    sale_journals__key_r_sales (
         sale_journal_id, sale_id
     )
 SELECT
@@ -214,7 +214,7 @@ FROM
 		var query = material.AsPrivateProxy().CreateKeyMapInsertQuery();
 		var expect = """
 INSERT INTO
-    sale_journals__km_sales (
+    sale_journals__key_m_sales (
         sale_journal_id, sale_id
     )
 SELECT
@@ -322,7 +322,7 @@ FROM
                             kr.sale_journal_id
                     ) AS _row_num
                 FROM
-                    sale_journals__kr_sales AS kr
+                    sale_journals__key_r_sales AS kr
                     INNER JOIN d ON kr.sale_id = d.sale_id
             ) AS kr
         WHERE

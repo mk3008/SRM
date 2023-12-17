@@ -253,11 +253,11 @@ FROM
 /*
   :interlink_datasource_id = 1
   :interlink_destination_id = 2
-  :interlink_key_map = 'sale_journals__km_sales'
-  :interlink_key_relation = 'sale_journals__kr_sales'
+  :interlink_key_map = 'sale_journals__key_m_sales'
+  :interlink_key_relation = 'sale_journals__key_r_sales'
 */
 DELETE FROM
-    sale_journals__km_sales AS d
+    sale_journals__key_m_sales AS d
 WHERE
     (d.sale_journal_id) IN (
         SELECT
@@ -321,12 +321,12 @@ WHERE
 /*
   :interlink_datasource_id = 1
   :interlink_destination_id = 2
-  :interlink_key_map = 'sale_journals__km_sales'
-  :interlink_key_relation = 'sale_journals__kr_sales'
+  :interlink_key_map = 'sale_journals__key_m_sales'
+  :interlink_key_relation = 'sale_journals__key_r_sales'
   :interlink_process_id = 4
 */
 INSERT INTO
-    sale_journals__kr_sales (
+    sale_journals__key_r_sales (
         interlink_process_id, sale_journal_id, root__sale_journal_id, origin__sale_journal_id, interlink_remarks
     )
 SELECT
