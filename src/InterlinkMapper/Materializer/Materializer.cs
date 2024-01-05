@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using InterlinkMapper.Models;
+using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
@@ -9,7 +10,7 @@ internal interface IMaterializer
 
 internal static class IMaterializerExtension
 {
-	internal static Material CreateMaterial(this IMaterializer materializer, IDbConnection connection, CreateTableQuery query)
+	internal static Material CreateMaterial(this IMaterializer materializer, IDbConnection connection, InterlinkTransaction transaction, CreateTableQuery query)
 	{
 		var tableName = query.TableFullName;
 
@@ -18,9 +19,10 @@ internal static class IMaterializerExtension
 
 		return new Material
 		{
-			Count = rows,
+			InterlinkTransaction = transaction,
 			MaterialName = tableName,
 			SelectQuery = query.ToSelectQuery(),
+			Count = rows,
 		};
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using InterlinkMapper.Models;
+using RedOrb;
 
 namespace InterlinkMapper;
 
@@ -20,6 +21,6 @@ public static class SelectQueryExtension
 
 	public static void Select(this SelectQuery source, Sequence sequence)
 	{
-		source.Select(sequence.Command).As(sequence.Column);
+		source.Select(sequence.CommandText).As(sequence.ColumnName);
 	}
 }

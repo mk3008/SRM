@@ -6,12 +6,18 @@ namespace InterlinkMapper.Test;
 
 public class DummyMaterialRepository(SystemEnvironment environment)
 {
+
+	private InterlinkDestination DummyDestination => DestinationRepository.sale_journals;
+
+	private InterlinkTransaction DummyTransaction => SystemRepository.GetDummyTransaction(DummyDestination);
+
 	public Material AdditionalRequestMeterial =>
 		new Material()
 		{
 			MaterialName = "__additional_request",
 			Count = 1,
 			SelectQuery = GetAdditionalRequestQuery(),
+			InterlinkTransaction = DummyTransaction
 		};
 
 	private SelectQuery GetAdditionalRequestQuery()
@@ -25,7 +31,8 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		{
 			MaterialName = "__reverse_request",
 			Count = 1,
-			SelectQuery = GetReverseRequestQuery()
+			SelectQuery = GetReverseRequestQuery(),
+			InterlinkTransaction = DummyTransaction
 		};
 
 	private SelectQuery GetReverseRequestQuery()
@@ -39,7 +46,8 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		{
 			MaterialName = "__validation_request",
 			Count = 1,
-			SelectQuery = GetValidationRequestQuery()
+			SelectQuery = GetValidationRequestQuery(),
+			InterlinkTransaction = DummyTransaction
 		};
 
 	private SelectQuery GetValidationRequestQuery()
@@ -70,6 +78,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			Count = 1,
 			MaterialName = query.TableFullName,
 			SelectQuery = query.ToSelectQuery(),
+			InterlinkTransaction = DummyTransaction
 		};
 
 		return service.AsPrivateProxy().ToAdditionalMaterial(datasource, material);
@@ -91,9 +100,10 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			Count = 1,
 			MaterialName = query.TableFullName,
 			SelectQuery = query.ToSelectQuery(),
+			InterlinkTransaction = DummyTransaction,
 		};
 
-		return service.AsPrivateProxy().ToReverseMaterial(destination, material);
+		return service.AsPrivateProxy().ToReverseMaterial(material);
 	}
 
 	private ValidationMaterial CreateValidationMaterial()
@@ -112,6 +122,7 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 			Count = 1,
 			MaterialName = query.TableFullName,
 			SelectQuery = query.ToSelectQuery(),
+			InterlinkTransaction = DummyTransaction
 		};
 
 		return service.AsPrivateProxy().ToValidationMaterial(datasource, material);

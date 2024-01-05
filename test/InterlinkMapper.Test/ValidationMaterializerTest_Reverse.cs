@@ -59,10 +59,7 @@ WITH
             d.price * -1 AS price,
             d.remarks,
             rm.interlink_datasource_id,
-            rm.interlink_destination_id,
-            rm.interlink_key_map,
-            rm.interlink_key_relation,
-            rm.interlink_remarks
+            'force' AS interlink_remarks
         FROM
             (
                 /* destination */
@@ -88,9 +85,6 @@ SELECT
     d.price,
     d.remarks,
     d.interlink_datasource_id,
-    d.interlink_destination_id,
-    d.interlink_key_map,
-    d.interlink_key_relation,
     d.interlink_remarks
 FROM
     _target_datasource AS d

@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidateTest", "ValidateTes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InterlinkMapper.Test", "..\test\InterlinkMapper.Test\InterlinkMapper.Test.csproj", "{F4C151F1-8590-4044-83C6-C70D3C7B73B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresTest", "..\sample\PostgresTest\PostgresTest.csproj", "{71F3A475-48D7-4CB2-8786-48F168DE9B89}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostgresTest", "..\sample\PostgresTest\PostgresTest.csproj", "{71F3A475-48D7-4CB2-8786-48F168DE9B89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

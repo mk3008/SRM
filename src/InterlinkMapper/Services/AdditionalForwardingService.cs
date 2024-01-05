@@ -1,6 +1,6 @@
-﻿using Dapper;
-using InterlinkMapper.Materializer;
+﻿using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
+using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Services;
@@ -26,40 +26,25 @@ public class AdditionalForwardingService
 
 	public void Execute(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		// create transaction row
-		var transaction = CreateTransactionRow(datasource);
-		transaction.InterlinkTransactionId = connection.Execute(Environment.CreateTransactionInsertQuery(transaction));
+		if (datasource.Destination == null) throw new NullReferenceException(nameof(datasource.Destination));
 
-		var material = Materializer.Create(connection, datasource, injector);
+		var transaction = CreateTransactionAsNew(datasource.Destination);
+		connection.Save(transaction);
+
+		var material = Materializer.Create(connection, transaction, datasource, injector);
 		if (material == null || material.Count == 0) return;
 
-		material.ExecuteTransfer(connection, transaction.InterlinkTransactionId);
+		material.ExecuteTransfer(connection);
 	}
 
-	private InterlinkTransactionRow CreateTransactionRow(InterlinkDatasource datasource, string argument = "")
+	private InterlinkTransaction CreateTransactionAsNew(InterlinkDestination destination, string argument = "")
 	{
-		var row = new InterlinkTransactionRow()
+		var tran = new InterlinkTransaction()
 		{
-			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
-			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
+			InterlinkDestination = destination,
 			ServiceName = nameof(AdditionalForwardingService),
 			Argument = argument
 		};
-		return row;
-	}
-
-	private InterlinkProcessRow CreateProcessRow(InterlinkDatasource datasource, long transactionId, int insertCount)
-	{
-		var keymap = Environment.GetKeyMapTable(datasource);
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
-		var row = new InterlinkProcessRow()
-		{
-			ActionName = nameof(AdditionalForwardingService),
-			InterlinkTransactionId = transactionId,
-			InsertCount = insertCount,
-			KeyMapTableName = keymap.Definition.TableFullName,
-			KeyRelationTableName = relation.Definition.TableFullName,
-		};
-		return row;
+		return tran;
 	}
 }

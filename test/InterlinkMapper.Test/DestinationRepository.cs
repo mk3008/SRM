@@ -7,7 +7,8 @@ internal static class DestinationRepository
 	public static InterlinkDestination sale_journals => new()
 	{
 		InterlinkDestinationId = 2,
-		Table = new()
+		TableFullName = "sale_journals",
+		DbTable = new()
 		{
 			TableName = "sale_journals",
 			ColumnNames = new() {
@@ -19,10 +20,10 @@ internal static class DestinationRepository
 				"remarks"
 			}
 		},
-		Sequence = new()
+		DbSequence = new()
 		{
-			Column = "sale_journal_id",
-			Command = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
+			ColumnName = "sale_journal_id",
+			CommandText = "nextval('sale_journals_sale_journal_id_seq'::regclass)"
 		},
 		ReverseOption = new()
 		{

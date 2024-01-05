@@ -1,93 +1,83 @@
 ﻿using InterlinkMapper.Models;
 using PrivateProxy;
+using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
 public class ReverseMaterial : MaterializeResult
 {
-	internal SelectQuery CreateProcessRowSelectQuery(long transactionId)
+	public required int Count { get; set; }
+
+	internal void ExecuteTransfer(IDbConnection connection)
 	{
-		var sq = new SelectQuery();
-		var (f, d) = sq.From(SelectQuery).As("d");
+		var datasources = SelectDatasources(connection);
 
-		sq.Select(d, InterlinkDatasourceIdColumn).As(nameof(InterlinkProcessRow.InterlinkDatasourceId));
-		sq.Select(d, InterlinkDestinationIdColumn).As(nameof(InterlinkProcessRow.InterlinkDestinationId));
-		sq.Select(d, KeyMapTableNameColumn).As(nameof(InterlinkProcessRow.KeyMapTableName));
-		sq.Select(d, KeyRelationTableNameColumn).As(nameof(InterlinkProcessRow.KeyRelationTableName));
-		sq.GetSelectableItems().ToList().ForEach(sq.Group);
-		sq.GetSelectableItems().ToList().ForEach(x => sq.Order(x.Value));
-
-		sq.Select(PlaceHolderIdentifer, nameof(InterlinkProcessRow.InterlinkTransactionId), transactionId);
-		sq.Select(PlaceHolderIdentifer, nameof(InterlinkProcessRow.ActionName), "reverse");
-
-		sq.Select(new FunctionValue("count", "*")).As(nameof(InterlinkProcessRow.InsertCount));
-
-		return sq;
-	}
-
-	internal void ExecuteTransfer(IDbConnection connection, long transactionId)
-	{
-		var rows = connection.Query<InterlinkProcessRow>(CreateProcessRowSelectQuery(transactionId), commandTimeout: CommandTimeout).ToList();
-
-		foreach (var row in rows)
+		foreach (var datasource in datasources)
 		{
-			// regist process
-			row.InterlinkProcessId = connection.ExecuteScalar<long>(CreateProcessInsertQuery(row));
+			var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
 
-			// transfer datasource
-			var cnt = connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
-			if (cnt != row.InsertCount) throw new InvalidOperationException();
+			var sq = new SelectQuery();
+			var (f, d) = sq.From(SelectQuery).As("d");
+			var keymap = f.InnerJoin(datasource.GetKeyMapTable(Environment).Definition.GetTableFullName()).As("keymap").On(x =>
+			{
+				x.Condition(d, OriginIdColumn).Equal(x.Table, datasource.Destination.DbSequence.ColumnName);
+			});
+			sq.Where(d, source.GetSequence().ColumnName).Equal(datasource.InterlinkDatasourceId.ToString());
+			sq.Select(d);
+			datasource.KeyColumns.ForEach(x => sq.Select(keymap, x.ColumnName));
 
-			// create system relation mapping
-			cnt = connection.Execute(CreateMapDeleteQuery(row), commandTimeout: CommandTimeout);
-			if (cnt != row.InsertCount) throw new InvalidOperationException();
+			var m = new DatasourceReverseMaterial
+			{
+				CommandTimeout = CommandTimeout,
+				DestinationColumns = DestinationColumns,
+				DestinationSeqColumn = DestinationSeqColumn,
+				DestinationTable = DestinationTable,
+				Environment = Environment,
+				InterlinkDatasource = datasource,
+				InterlinkDatasourceIdColumn = InterlinkDatasourceIdColumn,
+				InterlinkProcessIdColumn = InterlinkProcessIdColumn,
+				InterlinkRelationTable = InterlinkRelationTable,
+				InterlinkRemarksColumn = InterlinkRemarksColumn,
+				InterlinkTransaction = InterlinkTransaction,
+				MaterialName = MaterialName,
+				OriginIdColumn = OriginIdColumn,
+				PlaceHolderIdentifer = PlaceHolderIdentifer,
+				RootIdColumn = RootIdColumn,
+				SelectQuery = sq,
+			};
 
-			cnt = connection.Execute(CreateRelationInsertQuery(row), commandTimeout: CommandTimeout);
-			if (cnt != row.InsertCount) throw new InvalidOperationException();
+			m.ExecuteTransfer(connection);
 		}
 	}
 
-	private InsertQuery CreateRelationInsertQuery(InterlinkProcessRow row)
+	private List<InterlinkDatasource> SelectDatasources(IDbConnection connection)
 	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(CreateMaterialSelectQuery(row)).As("d");
+		var proc = ObjectRelationMapper.FindFirst<InterlinkProcess>();
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
 
-		sq.Select(PlaceHolderIdentifer, InterlinkProcessIdColumn, row.InterlinkProcessId);
-		sq.Select(d, DestinationIdColumn);
-		sq.Select(d, RootIdColumn);
-		sq.Select(d, OriginIdColumn);
-		sq.Select(d, InterlinkRemarksColumn);
+		return connection.Load<InterlinkDatasource>(sq =>
+		{
+			var seqName = source.GetSequence().ColumnName;
 
-		sq.Order(d, DestinationIdColumn);
+			var xsq = new SelectQuery();
+			xsq.AddComment("filterd by request");
+			var (f, x) = xsq.From(SelectQuery).As("x");
+			xsq.Select(x, seqName);
+			xsq.Where(sq.FromClause!, seqName).Equal(x, seqName);
 
-		return sq.ToInsertQuery(row.KeyRelationTableName);
-	}
-
-	private DeleteQuery CreateMapDeleteQuery(InterlinkProcessRow row)
-	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(CreateMaterialSelectQuery(row)).As("d");
-
-		sq.Select(d, OriginIdColumn).As(DestinationIdColumn);
-
-		return sq.ToDeleteQuery(row.KeyMapTableName);
-	}
-
-	private SelectQuery CreateMaterialSelectQuery(InterlinkProcessRow row)
-	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(SelectQuery).As("d");
-		sq.Where(d, InterlinkDatasourceIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + InterlinkDatasourceIdColumn, row.InterlinkDatasourceId));
-		sq.Where(d, InterlinkDestinationIdColumn).Equal(new ParameterValue(PlaceHolderIdentifer + InterlinkDestinationIdColumn, row.InterlinkDestinationId));
-		sq.Where(d, KeyMapTableNameColumn).Equal(new ParameterValue(PlaceHolderIdentifer + KeyMapTableNameColumn, row.KeyMapTableName));
-		sq.Where(d, KeyRelationTableNameColumn).Equal(new ParameterValue(PlaceHolderIdentifer + KeyRelationTableNameColumn, row.KeyRelationTableName));
-
-		sq.Select(d);
-
-		return sq;
+			sq.Where(xsq.ToExists());
+		});
 	}
 }
 
 [GeneratePrivateProxy(typeof(ReverseMaterial))]
 public partial struct ReverseMaterialProxy;
+
+public static class DbColumnDefinitionsExtension
+{
+	public static DbColumnDefinition FindFirstByColumn(this IEnumerable<DbColumnDefinition> source, string columnName)
+	{
+		return source.Where(x => x.ColumnName.IsEqualNoCase(columnName)).First();
+	}
+}

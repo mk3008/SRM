@@ -1,41 +1,45 @@
-﻿using PrivateProxy;
+﻿using InterlinkMapper.Models;
+using PrivateProxy;
+using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
 public class AdditionalMaterial : MaterializeResult
 {
-	public required string KeyMapTable { get; init; }
+	public required InterlinkDatasource InterlinkDatasource { get; set; }
 
-	internal InsertQuery CreateProcessInsertQuery(long transactionId)
-	{
-		var sq = new SelectQuery();
-		sq.Select(PlaceHolderIdentifer, InterlinkTransactionIdColumn, transactionId);
-		sq.Select(PlaceHolderIdentifer, InterlinkDatasourceIdColumn, InterlinkDatasourceId);
-		sq.Select(PlaceHolderIdentifer, InterlinkDestinationIdColumn, InterlinkDestinationId);
-		sq.Select(PlaceHolderIdentifer, KeyMapTableNameColumn, KeyMapTable);
-		sq.Select(PlaceHolderIdentifer, KeyRelationTableNameColumn, KeyRelationTable);
-		sq.Select(PlaceHolderIdentifer, ActionColumn, "additional");
-		sq.Select(PlaceHolderIdentifer, InsertCountColumn, Count);
+	public required List<string> DatasourceKeyColumns { get; set; }
 
-		//insert into process_table returning process_id
-		var iq = sq.ToInsertQuery(ProcessTableName);
-		iq.Returning(InterlinkProcessIdColumn);
+	public required string KeyRelationTableFullName { get; set; }
 
-		return iq;
-	}
+	public required string KeyMapTableFullName { get; init; }
 
 	public required string NumericType { get; init; }
+
+	public required int Count { get; set; }
+
+	internal InterlinkProcess CreateProcessAsNew()
+	{
+		var row = new InterlinkProcess()
+		{
+			InterlinkTransaction = InterlinkTransaction,
+			InterlinkDatasource = InterlinkDatasource,
+			ActionName = nameof(AdditionalMaterial),
+			InsertCount = Count,
+		};
+		return row;
+	}
 
 	internal InsertQuery CreateKeyMapInsertQuery()
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
 
-		sq.Select(d, DestinationIdColumn);
+		sq.Select(d, DestinationSeqColumn);
 		DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
 
-		return sq.ToInsertQuery(KeyMapTable);
+		return sq.ToInsertQuery(KeyMapTableFullName);
 	}
 
 	internal InsertQuery CreateKeyRelationInsertQuery()
@@ -43,19 +47,20 @@ public class AdditionalMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
 
-		sq.Select(d, DestinationIdColumn);
+		sq.Select(d, DestinationSeqColumn);
 		DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
 
-		return sq.ToInsertQuery(KeyRelationTable);
+		return sq.ToInsertQuery(KeyRelationTableFullName);
 	}
 
-	public void ExecuteTransfer(IDbConnection connection, long transactionId)
+	public void ExecuteTransfer(IDbConnection connection)
 	{
 		// regist process
-		var processId = connection.ExecuteScalar<long>(CreateProcessInsertQuery(transactionId));
+		var process = CreateProcessAsNew();
+		connection.Save(process);
 
 		// transfer datasource
-		var cnt = connection.Execute(CreateRelationInsertQuery(processId), commandTimeout: CommandTimeout);
+		var cnt = connection.Execute(CreateRelationInsertQuery(process.InterlinkProcessId, KeyRelationTableFullName, DatasourceKeyColumns), commandTimeout: CommandTimeout);
 		if (cnt != Count) throw new InvalidOperationException();
 		cnt = connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);
 		if (cnt != Count) throw new InvalidOperationException();

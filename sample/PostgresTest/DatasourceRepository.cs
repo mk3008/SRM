@@ -4,12 +4,19 @@ namespace PostgresTest;
 
 internal static class DatasourceRepository
 {
+	public static IEnumerable<InterlinkDatasource> GetAll()
+	{
+		yield return NetMembers;
+		yield return CorporateCustomers;
+		yield return Sales;
+	}
+
 	public static InterlinkDatasource NetMembers =>
 		new()
 		{
-			InterlinkDatasourceId = 1,
+			InterlinkDatasourceId = 0,
 			DatasourceName = "NetMembers",
-			Destination = DestinationRepository.Customers,
+			Destination = null!,
 			KeyColumns = new() {
 				new KeyColumn {
 					ColumnName = "net_member_id",
@@ -27,21 +34,7 @@ select
 from
 	net_member as nm
 """,
-			Description =
-"""
---online shop customers
-create table if not exists net_member (
-    net_member_id serial8 not null, 
-    user_name text not null, 
-    created_at timestamp not null default current_timestamp, 
-    primary key(net_member_id)
-)
-;
-insert into net_member (user_name)
-select
-    'user ' || generate_series(1, 10)
-;
-"""
+			Description = ""
 		};
 
 	public static InterlinkDatasource CorporateCustomers =>
@@ -49,7 +42,7 @@ select
 		{
 			InterlinkDatasourceId = 2,
 			DatasourceName = "CorporateCustomers",
-			Destination = DestinationRepository.Customers,
+			Destination = null!,
 			KeyColumns = new() {
 				new KeyColumn {
 					ColumnName = "corporate_customer_id",
@@ -67,20 +60,32 @@ select
 from
 	corporate_customer as cc
 """,
-			Description =
+			Description = ""
+		};
+
+	public static InterlinkDatasource Sales =>
+		new()
+		{
+			InterlinkDatasourceId = 3,
+			DatasourceName = "Sales",
+			Destination = null!,
+			KeyColumns = new() {
+				new KeyColumn {
+					ColumnName = "sale_id",
+					TypeName = "int8"
+				}
+			},
+			KeyName = "sale",
+			Query =
 """
---Corporate customers
-create table if not exists corporate_customer (
-    corporate_customer_id serial8 not null, 
-    company_name text not null, 
-    created_at timestamp not null default current_timestamp, 
-    primary key(corporate_customer_id)
-)
-;
-insert into corporate_customer (company_name)
 select
-    'company ' || generate_series(1, 10)
-;
-"""
+	s.sale_date
+	, s.price
+	--key
+	, s.sale_id		
+from
+	sale as s
+""",
+			Description = ""
 		};
 }

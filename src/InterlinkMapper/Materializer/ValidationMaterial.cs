@@ -2,9 +2,13 @@
 
 public class ValidationMaterial : MaterializeResult
 {
-	public required string KeymapTable { get; init; }
+	public required List<string> DatasourceKeyColumns { get; set; }
 
-	public required string KeymapTableNameColumn { get; init; }
+	public required string KeyMapTableFullName { get; set; }
+
+	public required string KeyRelationTableFullName { get; set; }
+
+	//public required string KeymapTableNameColumn { get; set; }
 
 	public Material ToAdditionalRequestMaterial()
 	{
@@ -14,7 +18,7 @@ public class ValidationMaterial : MaterializeResult
 		var (f, d) = sq.From(SelectQuery).As("d");
 		var r = f.InnerJoin(InterlinkRelationTable).As("r").On(x =>
 		{
-			x.Condition(d, DestinationIdColumn).Equal(x.Table, OriginIdColumn);
+			x.Condition(d, DestinationSeqColumn).Equal(x.Table, OriginIdColumn);
 		});
 
 		DatasourceKeyColumns.ForEach(key => sq.Select(d, key));
@@ -26,9 +30,10 @@ public class ValidationMaterial : MaterializeResult
 
 		return new Material
 		{
-			Count = Count,
+			Count = -1,
 			MaterialName = MaterialName,
 			SelectQuery = sq,
+			InterlinkTransaction = InterlinkTransaction,
 		};
 	}
 
@@ -36,14 +41,15 @@ public class ValidationMaterial : MaterializeResult
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
-		sq.Select(d, DestinationIdColumn);
+		sq.Select(d, DestinationSeqColumn);
 		sq.Select(d, InterlinkRemarksColumn);
 
 		return new Material
 		{
-			Count = Count,
+			Count = -1,
 			MaterialName = MaterialName,
 			SelectQuery = sq,
+			InterlinkTransaction = InterlinkTransaction
 		};
 	}
 }

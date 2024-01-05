@@ -1,6 +1,7 @@
 ﻿using Carbunql.Tables;
 using InterlinkMapper.Models;
 using PrivateProxy;
+using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
@@ -22,34 +23,41 @@ public class ValidationMaterializer : IMaterializer
 
 	public string RowNumberColumnName { get; set; } = "row_num";
 
-	public ValidationMaterial? Create(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public ValidationMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		if (!datasource.Destination.AllowReverse) throw new NotSupportedException();
+		var destination = transaction.InterlinkDestination;
+
+		if (!destination.AllowReverse) throw new NotSupportedException();
 		if (string.IsNullOrEmpty(Environment.DbEnvironment.LengthFunction)) throw new NullReferenceException(nameof(Environment.DbEnvironment.LengthFunction));
 
 		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
-		var request = this.CreateMaterial(connection, requestMaterialQuery);
+		var request = this.CreateMaterial(connection, transaction, requestMaterialQuery);
 
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
 
 		var query = CreateValidationMaterialQuery(datasource, request, injector);
-		var validation = this.CreateMaterial(connection, query);
+		var validation = this.CreateMaterial(connection, transaction, query);
 
 		return ToValidationMaterial(datasource, validation);
 	}
 
 	private ValidationMaterial ToValidationMaterial(InterlinkDatasource datasource, Material material)
 	{
-		var process = Environment.GetInterlinkProcessTable();
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
-		var keymap = Environment.GetKeyMapTable(datasource);
-		var history = Environment.GetKeyRelationTable(datasource);
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
+		var sourceId = source.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkDatasource.InterlinkDatasourceId)).First();
+
+		var proc = ObjectRelationMapper.FindFirst<InterlinkProcess>();
+		var procId = proc.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkProcess.InterlinkProcessId)).First();
+
+		var relation = datasource.Destination.GetInterlinkRelationTable(Environment);
+		var keymap = datasource.GetKeyMapTable(Environment);
+		var keyrelation = datasource.GetKeyRelationTable(Environment);
 
 		return new ValidationMaterial
 		{
-			Count = material.Count,
+			//Count = material.Count,
 			MaterialName = material.MaterialName,
 			SelectQuery = material.SelectQuery,
 
@@ -57,29 +65,30 @@ public class ValidationMaterializer : IMaterializer
 			RootIdColumn = relation.RootIdColumn,
 			OriginIdColumn = relation.OriginIdColumn,
 			InterlinkRemarksColumn = relation.RemarksColumn,
-			DestinationTable = datasource.Destination.Table.TableFullName,
-			DestinationColumns = datasource.Destination.Table.ColumnNames,
-			DestinationIdColumn = datasource.Destination.Sequence.Column,
-			KeymapTable = keymap.Definition.TableFullName,
-			KeyRelationTable = history.Definition.TableFullName,
+			DestinationTable = datasource.Destination.DbTable.TableFullName,
+			DestinationColumns = datasource.Destination.DbTable.ColumnNames,
+			DestinationSeqColumn = datasource.Destination.DbSequence.ColumnName,
+			KeyMapTableFullName = keymap.Definition.TableFullName,
+			KeyRelationTableFullName = keyrelation.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
-			InterlinkProcessIdColumn = process.InterlinkProcessIdColumn,
+			InterlinkProcessIdColumn = procId.ColumnName,
 			InterlinkRelationTable = relation.Definition.TableFullName,
 
-			KeymapTableNameColumn = process.KeyMapTableNameColumn,
-			InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
+			//KeymapTableNameColumn = process.KeyMapTableNameColumn,
+			//InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
 
-			ActionColumn = process.ActionNameColumn,
-			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
-			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
-			InsertCountColumn = process.InsertCountColumn,
-			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
-			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
-			ProcessTableName = process.Definition.TableFullName,
+			//ActionColumn = process.ActionNameColumn,
+			InterlinkDatasourceIdColumn = sourceId.ColumnName,
+			//InsertCountColumn = process.InsertCountColumn,
+			//KeyMapTableNameColumn = process.KeyMapTableNameColumn,
+			//KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
+			//ProcessTableName = process.Definition.TableFullName,
 
-			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
-			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId
+			//InterlinkDatasourceId = datasource.InterlinkDatasourceId,
+			//InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
+			InterlinkTransaction = material.InterlinkTransaction,
+			Environment = Environment,
 		};
 	}
 
@@ -91,28 +100,28 @@ public class ValidationMaterializer : IMaterializer
 
 	private CreateTableQuery CreateRequestMaterialQuery(InterlinkDatasource datasource)
 	{
-		var request = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeyMapTable(datasource);
+		var request = datasource.GetValidationRequestTable(Environment);
+		var keymap = datasource.GetKeyMapTable(Environment);
 
 		var sq = new SelectQuery();
 		var (f, r) = sq.From(request.Definition.TableFullName).As("r");
 		var m = f.InnerJoin(keymap.Definition.TableFullName).As("m").On(r, datasource.KeyColumns.Select(x => x.ColumnName));
 
 		sq.Select(r, request.RequestIdColumn);
-		sq.Select(m, datasource.Destination.Sequence.Column);
+		sq.Select(m, datasource.Destination.DbSequence.ColumnName);
 		datasource.KeyColumns.ForEach(key => sq.Select(m, key.ColumnName));
 
 		// If the destination sequence value is NULL,
 		// it means the transfer is stopped.
 		// Reverse processing is also not required.
-		sq.Where(m, datasource.Destination.Sequence.Column).IsNotNull();
+		sq.Where(m, datasource.Destination.DbSequence.ColumnName).IsNotNull();
 
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(InterlinkDatasource datasource, Material result)
 	{
-		var request = Environment.GetValidationRequestTable(datasource);
+		var request = datasource.GetValidationRequestTable(Environment);
 		var requestTable = request.Definition.TableFullName;
 		var requestId = request.RequestIdColumn;
 
@@ -145,7 +154,7 @@ public class ValidationMaterializer : IMaterializer
 		sq.AddComment("inject request material filter");
 
 		var (f, d) = sq.From(datasource.Destination.ToSelectQuery()).As("d");
-		f.InnerJoin(request.MaterialName).As("rm").On(d, datasource.Destination.Sequence.Column);
+		f.InnerJoin(request.MaterialName).As("rm").On(d, datasource.Destination.DbSequence.ColumnName);
 		sq.Select(d);
 
 		return sq;
@@ -153,8 +162,8 @@ public class ValidationMaterializer : IMaterializer
 
 	private SelectQuery CreateActualValueSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var validation = Environment.GetValidationRequestTable(datasource);
-		var keymap = Environment.GetKeyMapTable(datasource);
+		var validation = datasource.GetValidationRequestTable(Environment);
+		var keymap = datasource.GetKeyMapTable(Environment);
 
 		var ds = datasource.ToSelectQuery();
 		var raw = ds.GetCommonTables().Where(x => x.Alias == "__raw").FirstOrDefault();
@@ -180,7 +189,7 @@ public class ValidationMaterializer : IMaterializer
 	{
 		sq.AddComment("inject request material filter");
 
-		var keymap = Environment.GetKeyMapTable(datasource);
+		var keymap = datasource.GetKeyMapTable(Environment);
 		var f = sq.FromClause!;
 		var d = f.Root;
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(x =>
@@ -191,14 +200,14 @@ public class ValidationMaterializer : IMaterializer
 			});
 		});
 
-		sq.Select(rm, datasource.Destination.Sequence.Column);
+		sq.Select(rm, datasource.Destination.DbSequence.ColumnName);
 
 		return sq;
 	}
 
 	private SelectQuery CreateDeletedDiffSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
+		var relation = datasource.Destination.GetInterlinkRelationTable(Environment);
 
 		var op = datasource.Destination.ReverseOption;
 
@@ -211,16 +220,16 @@ public class ValidationMaterializer : IMaterializer
 		var key = datasource.KeyColumns.First().ColumnName;
 
 		var (f, e) = sq.From(expect).As("e");
-		var a = f.LeftJoin(actual).As("a").On(e, datasource.Destination.Sequence.Column);
+		var a = f.LeftJoin(actual).As("a").On(e, datasource.Destination.DbSequence.ColumnName);
 
 		var validationColumns = e.GetColumnNames()
 			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
-			.Where(x => datasource.Destination.Table.ColumnNames.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.Where(x => datasource.Destination.DbTable.ColumnNames.Contains(x, StringComparer.OrdinalIgnoreCase))
 			.ToList();
 
 		sq.Where(a, key).IsNull();
 
-		sq.Select(e, datasource.Destination.Sequence.Column);
+		sq.Select(e, datasource.Destination.DbSequence.ColumnName);
 		datasource.KeyColumns.ForEach(key => sq.Select(a, key.ColumnName));
 
 		sq.Select("'{\"deleted\":true}'").As(relation.RemarksColumn);
@@ -230,7 +239,7 @@ public class ValidationMaterializer : IMaterializer
 
 	private SelectQuery CreateUpdatedDiffSubQuery(InterlinkDatasource datasource, Material request)
 	{
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
+		var relation = datasource.Destination.GetInterlinkRelationTable(Environment);
 		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
@@ -240,11 +249,11 @@ public class ValidationMaterializer : IMaterializer
 		var key = datasource.KeyColumns.First().ColumnName;
 
 		var (f, e) = sq.From(expect).As("e");
-		var a = f.InnerJoin(actual).As("a").On(e, datasource.Destination.Sequence.Column);
+		var a = f.InnerJoin(actual).As("a").On(e, datasource.Destination.DbSequence.ColumnName);
 
 		var validationColumns = e.GetColumnNames()
 			.Where(x => !op.ExcludedColumns.Contains(x, StringComparer.OrdinalIgnoreCase))
-			.Where(x => datasource.Destination.Table.ColumnNames.Contains(x, StringComparer.OrdinalIgnoreCase))
+			.Where(x => datasource.Destination.DbTable.ColumnNames.Contains(x, StringComparer.OrdinalIgnoreCase))
 			.ToList();
 
 		sq.Where(() =>
@@ -261,7 +270,7 @@ public class ValidationMaterializer : IMaterializer
 			return condition;
 		});
 
-		sq.Select(e, datasource.Destination.Sequence.Column);
+		sq.Select(e, datasource.Destination.DbSequence.ColumnName);
 		datasource.KeyColumns.ForEach(key => sq.Select(a, key.ColumnName));
 
 		//diff info
@@ -287,7 +296,7 @@ public class ValidationMaterializer : IMaterializer
 
 	private SelectQuery CreateUpdatedDiffSelectQuery(InterlinkDatasource datasource, Material request)
 	{
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
+		var relation = datasource.Destination.GetInterlinkRelationTable(Environment);
 
 		var sq = new SelectQuery();
 		sq.AddComment("reverse and additional");
@@ -338,7 +347,7 @@ public class ValidationMaterializer : IMaterializer
 		var sq = new SelectQuery();
 		var _datasource = sq.With(CreateValidationDatasourceSelectQuery(datasource, request)).As("_target_datasource");
 
-		var (f, d) = sq.From(_datasource).As("d");
+		var (_, d) = sq.From(_datasource).As("d");
 
 		sq.Select(d);
 

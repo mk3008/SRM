@@ -2,6 +2,7 @@
 
 namespace InterlinkMapper.Models;
 
+[Obsolete]
 public class InterlinkProcessTable
 {
 	public required DbTableDefinition Definition { get; set; }
@@ -11,8 +12,6 @@ public class InterlinkProcessTable
 	public required string InterlinkProcessIdColumn { get; set; }
 
 	public required string InterlinkDatasourceIdColumn { get; set; }
-
-	public required string InterlinkDestinationIdColumn { get; set; }
 
 	public required string ActionNameColumn { get; set; }
 

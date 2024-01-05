@@ -12,10 +12,10 @@ internal static class DatasourceRepository
 			DatasourceName = "sales",
 			Destination = DestinationRepository.sale_journals,
 			KeyColumns = new() {
-					new () {
-						ColumnName = "sale_id",
-						TypeName = "int8"
-					}
+				new () {
+					ColumnName = "sale_id",
+					TypeName = "int8"
+				}
 			},
 			KeyName = "sales",
 			Query = @"
@@ -34,14 +34,14 @@ from
 	public static InterlinkDatasource cte_sales =>
 		new InterlinkDatasource()
 		{
-			InterlinkDatasourceId = 1,
+			InterlinkDatasourceId = 2,
 			DatasourceName = "sales",
 			Destination = DestinationRepository.sale_journals,
 			KeyColumns = new() {
-					new () {
-						ColumnName = "sale_id",
-						TypeName = "int8"
-					}
+				new () {
+					ColumnName = "sale_id",
+					TypeName = "int8"
+				}
 			},
 			KeyName = "sales",
 			Query = @"

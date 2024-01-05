@@ -136,42 +136,40 @@ FROM
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
-	[Fact]
-	public void TestCreateProcessInsertQuery()
-	{
-		var material = MaterialRepository.AdditinalMeterial;
+	//	[Fact]
+	//	public void TestCreateProcessInsertQuery()
+	//	{
+	//		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = material.AsPrivateProxy().CreateProcessInsertQuery(1);
-		var expect = """
-/*
-  :interlink_transaction_id = 1
-  :interlink_datasource_id = 1
-  :interlink_destination_id = 2
-  :interlink_key_map = 'sale_journals__key_m_sales'
-  :interlink_key_relation = 'sale_journals__key_r_sales'
-  :action_name = 'additional'
-  :insert_count = 1
-*/
-INSERT INTO
-    interlink_process (
-        interlink_transaction_id, interlink_datasource_id, interlink_destination_id, interlink_key_map, interlink_key_relation, action_name, insert_count
-    )
-SELECT
-    :interlink_transaction_id AS interlink_transaction_id,
-    :interlink_datasource_id AS interlink_datasource_id,
-    :interlink_destination_id AS interlink_destination_id,
-    :interlink_key_map AS interlink_key_map,
-    :interlink_key_relation AS interlink_key_relation,
-    :action_name AS action_name,
-    :insert_count AS insert_count
-RETURNING
-    interlink_process_id
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
+	//		var query = material.AsPrivateProxy().CreateProcessInsertQuery(1);
+	//		var expect = """
+	///*
+	//  :interlink_transaction_id = 1
+	//  :interlink_datasource_id = 1
+	//  :interlink_key_map = 'sale_journals__key_m_sales'
+	//  :interlink_key_relation = 'sale_journals__key_r_sales'
+	//  :action_name = 'additional'
+	//  :insert_count = 1
+	//*/
+	//INSERT INTO
+	//    interlink_process (
+	//        interlink_transaction_id, interlink_datasource_id, interlink_key_map, interlink_key_relation, action_name, insert_count
+	//    )
+	//SELECT
+	//    :interlink_transaction_id AS interlink_transaction_id,
+	//    :interlink_datasource_id AS interlink_datasource_id,
+	//    :interlink_key_map AS interlink_key_map,
+	//    :interlink_key_relation AS interlink_key_relation,
+	//    :action_name AS action_name,
+	//    :insert_count AS insert_count
+	//RETURNING
+	//    interlink_process_id
+	//""";
+	//		var actual = query.ToText();
+	//		Logger.LogInformation(actual);
 
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
+	//		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	//	}
 
 	[Fact]
 	public void TestCreateKeyRelationInsertQuery()
@@ -280,11 +278,8 @@ FROM
 	{
 		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1);
+		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1, material.KeyRelationTableFullName, material.DatasourceKeyColumns);
 		var expect = """
-/*
-  :interlink_process_id = 1
-*/
 WITH
     d AS (
         SELECT
@@ -298,7 +293,7 @@ WITH
             __additional_datasource AS t
     )
 SELECT
-    :interlink_process_id AS interlink_process_id,
+    1 AS interlink_process_id,
     d.sale_journal_id,
     COALESCE(kr.root__sale_journal_id, d.sale_journal_id) AS root__sale_journal_id,
     d.sale_journal_id AS origin__sale_journal_id,

@@ -1,5 +1,6 @@
 ﻿using InterlinkMapper.Models;
 using PrivateProxy;
+using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
@@ -19,35 +20,48 @@ public class ReverseMaterializer : IMaterializer
 
 	public string DatasourceMaterialName { get; set; } = "__reverse_datasource";
 
-	public ReverseMaterial? Create(IDbConnection connection, InterlinkDestination destination, Func<SelectQuery, SelectQuery>? injector)
+	public ReverseMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, Func<SelectQuery, SelectQuery>? injector)
 	{
+		var destination = transaction.InterlinkDestination;
+
 		if (!destination.AllowReverse) throw new NotSupportedException();
 
 		var requestMaterialQuery = CreateRequestMaterialQuery(destination);
-		var request = this.CreateMaterial(connection, requestMaterialQuery);
+		var request = this.CreateMaterial(connection, transaction, requestMaterialQuery);
 
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, destination, request);
 
 		var query = CreateReverseMaterialQuery(destination, request, injector);
-		var reverse = this.CreateMaterial(connection, query);
+		var reverse = this.CreateMaterial(connection, transaction, query);
 
-		return ToReverseMaterial(destination, reverse);
+		return ToReverseMaterial(reverse);
 	}
 
-	public ReverseMaterial Create(IDbConnection connection, InterlinkDestination destination, Material request)
+	public ReverseMaterial Create(IDbConnection connection, InterlinkTransaction transaction, Material request)
 	{
+		var destination = transaction.InterlinkDestination;
+
 		var query = CreateReverseMaterialQuery(destination, request);
-		var reverse = this.CreateMaterial(connection, query);
+		var reverse = this.CreateMaterial(connection, transaction, query);
 
-		return ToReverseMaterial(destination, reverse);
+		return ToReverseMaterial(reverse);
 	}
 
-	private ReverseMaterial ToReverseMaterial(InterlinkDestination destination, Material material)
+	private ReverseMaterial ToReverseMaterial(Material material)
 	{
-		var process = Environment.GetInterlinkProcessTable();
-		var relation = Environment.GetInterlinkRelationTable(destination);
+		var transaction = material.InterlinkTransaction;
+
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
+		var sourceId = source.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkDatasource.InterlinkDatasourceId)).First();
+
+		var proc = ObjectRelationMapper.FindFirst<InterlinkProcess>();
+		var procId = proc.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkProcess.InterlinkProcessId)).First();
+
+		var relation = transaction.InterlinkDestination.GetInterlinkRelationTable(Environment);
+
+		var destination = transaction.InterlinkDestination;
 
 		return new ReverseMaterial
 		{
@@ -57,25 +71,26 @@ public class ReverseMaterializer : IMaterializer
 			RootIdColumn = relation.RootIdColumn,
 			OriginIdColumn = relation.OriginIdColumn,
 			InterlinkRemarksColumn = relation.RemarksColumn,
-			DestinationTable = destination.Table.TableFullName,
-			DestinationColumns = destination.Table.ColumnNames,
-			DestinationIdColumn = destination.Sequence.Column,
+			DestinationTable = destination.DbTable.TableFullName,
+			DestinationColumns = destination.DbTable.ColumnNames,
+			DestinationSeqColumn = destination.DbSequence.ColumnName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
-			InterlinkProcessIdColumn = process.InterlinkProcessIdColumn,
+			InterlinkProcessIdColumn = procId.ColumnName,
 			InterlinkRelationTable = relation.Definition.TableFullName,
-			DatasourceKeyColumns = null!,
-			KeyRelationTable = null!,
-			ActionColumn = process.ActionNameColumn,
-			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
-			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
-			InsertCountColumn = process.InsertCountColumn,
-			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
-			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
-			ProcessTableName = process.Definition.TableFullName,
-			InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
-			InterlinkDatasourceId = 0!,
-			InterlinkDestinationId = destination.InterlinkDestinationId
+			//DatasourceKeyColumns = source.GetPrimaryKeys().Select(x => x.ColumnName).ToList(),
+			//KeyRelationTable = null!,
+			//ActionColumn = process.ActionNameColumn,
+			InterlinkDatasourceIdColumn = sourceId.ColumnName,
+			//InsertCountColumn = process.InsertCountColumn,
+			//KeyMapTableNameColumn = process.KeyMapTableNameColumn,
+			//KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
+			//ProcessTableName = process.Definition.TableFullName,
+			//InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
+			//InterlinkDatasourceId = 0!,
+			//InterlinkDestinationId = destination.InterlinkDestinationId,
+			InterlinkTransaction = transaction,
+			Environment = Environment
 		};
 	}
 
@@ -87,39 +102,37 @@ public class ReverseMaterializer : IMaterializer
 
 	private CreateTableQuery CreateRequestMaterialQuery(InterlinkDestination destination)
 	{
-		var request = Environment.GetReverseRequestTable(destination);
-		var relation = Environment.GetInterlinkRelationTable(destination);
-		var process = Environment.GetInterlinkProcessTable();
+		var request = destination.GetReverseRequestTable(Environment);
+		var relation = destination.GetInterlinkRelationTable(Environment);
+		var process = ObjectRelationMapper.FindFirst<InterlinkProcess>();
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
 
 		var sq = new SelectQuery();
 		sq.AddComment("Only original slips can be reversed.(where id = origin_id)");
 		sq.AddComment("Only unprocessed slips can be reversed.(where reverse is null)");
 		var (f, d) = sq.From(request.Definition.TableFullName).As("d");
 		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, request.DestinationIdColumn);
-		var reverse = f.LeftJoin(relation.Definition.TableFullName).As("reverse").On(x =>
+		var rev = f.LeftJoin(relation.Definition.TableFullName).As("rev").On(x =>
 		{
 			x.Condition(r, relation.InterlinkDestinationIdColumn).Equal(x.Table, relation.OriginIdColumn);
+			x.Condition(x.Table, relation.InterlinkDestinationIdColumn).NotEqual(x.Table, relation.RootIdColumn);
 		});
-		var p = f.InnerJoin(process.Definition.TableFullName).As("p").On(r, relation.InterlinkProcessIdColumn);
+		var p = f.InnerJoin(process.TableFullName).As("p").On(r, relation.InterlinkProcessIdColumn);
 
-		sq.Select(r, request.RequestIdColumn);
+		sq.Select(d, request.RequestIdColumn);
 		sq.Select(r, request.DestinationIdColumn);
 		sq.Select(r, relation.RootIdColumn);
-		sq.Select(r, request.RemarksColumn);
-		sq.Select(p, process.InterlinkDatasourceIdColumn);
-		sq.Select(p, process.InterlinkDestinationIdColumn);
-		sq.Select(p, process.KeyMapTableNameColumn);
-		sq.Select(p, process.KeyRelationTableNameColumn);
+		sq.Select(p, source.GetSequence().ColumnName);
 
 		sq.Where(r, relation.InterlinkDestinationIdColumn).Equal(r, relation.OriginIdColumn);
-		sq.Where(reverse, relation.InterlinkDestinationIdColumn).IsNull();
+		sq.Where(rev, relation.InterlinkDestinationIdColumn).IsNull();
 
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}
 
 	private DeleteQuery CreateOriginDeleteQuery(InterlinkDestination destination, Material result)
 	{
-		var request = Environment.GetReverseRequestTable(destination);
+		var request = destination.GetReverseRequestTable(Environment);
 		var requestTable = request.Definition.TableFullName;
 		var requestId = request.RequestIdColumn;
 
@@ -145,21 +158,21 @@ public class ReverseMaterializer : IMaterializer
 
 	private SelectQuery CreateReverseDatasourceSelectQuery(InterlinkDestination destination, Material request)
 	{
-		var relation = Environment.GetInterlinkRelationTable(destination);
-		var process = Environment.GetInterlinkProcessTable();
+		var relation = destination.GetInterlinkRelationTable(Environment);
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
 		var op = destination.ReverseOption;
 
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");
 		var (f, d) = sq.From(destination.ToSelectQuery()).As("d");
-		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.Sequence.Column);
+		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.DbSequence.ColumnName);
 
 		sq.Select(rm, relation.RootIdColumn);
 
 		sq.Select(d);
 
 		//Rename the existing ID column and select it as the original ID
-		var originIdSelectItem = sq.GetSelectableItems().Where(x => x.Alias.IsEqualNoCase(destination.Sequence.Column)).First();
+		var originIdSelectItem = sq.GetSelectableItems().Where(x => x.Alias.IsEqualNoCase(destination.DbSequence.ColumnName)).First();
 		originIdSelectItem.SetAlias(relation.OriginIdColumn);
 
 		//reverse sign
@@ -173,11 +186,8 @@ public class ReverseMaterializer : IMaterializer
 			}
 		};
 
-		sq.Select(rm, process.InterlinkDatasourceIdColumn);
-		sq.Select(rm, process.InterlinkDestinationIdColumn);
-		sq.Select(rm, process.KeyMapTableNameColumn);
-		sq.Select(rm, process.KeyRelationTableNameColumn);
-		sq.Select(rm, relation.RemarksColumn);
+		sq.Select(rm, source.GetSequence().ColumnName);
+		sq.Select("'force'").As(relation.RemarksColumn);//interlink remarks
 
 		return sq;
 	}
@@ -194,7 +204,7 @@ public class ReverseMaterializer : IMaterializer
 
 		var (f, d) = sq.From(_datasource).As("d");
 
-		sq.Select(destination.Sequence);
+		sq.Select(destination.DbSequence);
 		sq.Select(d);
 
 		if (injector != null)

@@ -2,6 +2,7 @@
 using InterlinkMapper;
 using InterlinkMapper.Models;
 using PrivateProxy;
+using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
@@ -21,35 +22,40 @@ public class AdditionalMaterializer : IMaterializer
 
 	public string DatasourceMaterialName { get; set; } = "__additional_datasource";
 
-	public AdditionalMaterial? Create(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
+	public AdditionalMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
-		var request = this.CreateMaterial(connection, requestMaterialQuery);
+		var request = this.CreateMaterial(connection, transaction, requestMaterialQuery);
 
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
 
 		var query = CreateAdditionalMaterialQuery(datasource, request, injector);
-		var additional = this.CreateMaterial(connection, query);
+		var additional = this.CreateMaterial(connection, transaction, query);
 
 		return ToAdditionalMaterial(datasource, additional);
 	}
 
-	public AdditionalMaterial Create(IDbConnection connection, InterlinkDatasource datasource, Material request)
+	public AdditionalMaterial Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Material request)
 	{
 		var query = CreateAdditionalMaterialQuery(datasource, request);
-		var additional = this.CreateMaterial(connection, query);
+		var additional = this.CreateMaterial(connection, transaction, query);
 
 		return ToAdditionalMaterial(datasource, additional);
 	}
 
 	private AdditionalMaterial ToAdditionalMaterial(InterlinkDatasource datasource, Material material)
 	{
-		var process = Environment.GetInterlinkProcessTable();
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
-		var keymap = Environment.GetKeyMapTable(datasource);
-		var history = Environment.GetKeyRelationTable(datasource);
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
+		var sourceId = source.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkDatasource.InterlinkDatasourceId)).First();
+
+		var proc = ObjectRelationMapper.FindFirst<InterlinkProcess>();
+		var procId = proc.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkProcess.InterlinkProcessId)).First();
+
+		var relation = datasource.Destination.GetInterlinkRelationTable(Environment);
+		var keymap = datasource.GetKeyMapTable(Environment);
+		var keyrelation = datasource.GetKeyRelationTable(Environment);
 
 		return new AdditionalMaterial
 		{
@@ -60,26 +66,27 @@ public class AdditionalMaterializer : IMaterializer
 			RootIdColumn = relation.RootIdColumn,
 			OriginIdColumn = relation.OriginIdColumn,
 			InterlinkRemarksColumn = relation.RemarksColumn,
-			DestinationTable = datasource.Destination.Table.TableFullName,
-			DestinationColumns = datasource.Destination.Table.ColumnNames,
-			DestinationIdColumn = datasource.Destination.Sequence.Column,
-			KeyMapTable = keymap.Definition.TableFullName,
-			KeyRelationTable = history.Definition.TableFullName,
+			DestinationTable = datasource.Destination.DbTable.TableFullName,
+			DestinationColumns = datasource.Destination.DbTable.ColumnNames,
+			DestinationSeqColumn = datasource.Destination.DbSequence.ColumnName,
+			KeyMapTableFullName = keymap.Definition.TableFullName,
+			KeyRelationTableFullName = keyrelation.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
-			InterlinkProcessIdColumn = process.InterlinkProcessIdColumn,
+			InterlinkProcessIdColumn = procId.ColumnName,
 			InterlinkRelationTable = relation.Definition.TableFullName,
 			NumericType = Environment.DbEnvironment.NumericTypeName,
-			ActionColumn = process.ActionNameColumn,
-			InterlinkDestinationIdColumn = process.InterlinkDestinationIdColumn,
-			InterlinkDatasourceIdColumn = process.InterlinkDatasourceIdColumn,
-			InsertCountColumn = process.InsertCountColumn,
-			KeyMapTableNameColumn = process.KeyMapTableNameColumn,
-			KeyRelationTableNameColumn = process.KeyRelationTableNameColumn,
-			ProcessTableName = process.Definition.TableFullName,
-			InterlinkTransactionIdColumn = process.InterlinkTransactionIdColumn,
-			InterlinkDatasourceId = datasource.InterlinkDatasourceId,
-			InterlinkDestinationId = datasource.Destination.InterlinkDestinationId
+			//ActionColumn = proc.ActionNameColumn,
+			InterlinkDatasourceIdColumn = sourceId.ColumnName,
+			//InsertCountColumn = proc.InsertCountColumn,
+			//KeyMapTableNameColumn = proc.KeyMapTableNameColumn,
+			//KeyRelationTableNameColumn = proc.KeyRelationTableNameColumn,
+			//ProcessTableName = proc.Definition.TableFullName,
+			InterlinkTransaction = material.InterlinkTransaction,
+			//InterlinkDatasourceId = datasource.InterlinkDatasourceId,
+			//InterlinkDestinationId = datasource.Destination.InterlinkDestinationId,
+			InterlinkDatasource = datasource,
+			Environment = Environment,
 		};
 	}
 
@@ -91,8 +98,8 @@ public class AdditionalMaterializer : IMaterializer
 
 	private CreateTableQuery CreateRequestMaterialQuery(InterlinkDatasource datasource)
 	{
-		var request = Environment.GetInsertRequestTable(datasource);
-		var keyhistory = Environment.GetKeyRelationTable(datasource);
+		var request = datasource.GetInsertRequestTable(Environment);
+		var relation = datasource.GetKeyRelationTable(Environment);
 
 		var sq = new SelectQuery();
 		var (f, r) = sq.From(request.Definition.TableFullName).As("r");
@@ -111,7 +118,7 @@ public class AdditionalMaterializer : IMaterializer
 
 	private DeleteQuery CreateOriginDeleteQuery(InterlinkDatasource datasource, Material result)
 	{
-		var request = Environment.GetInsertRequestTable(datasource);
+		var request = datasource.GetInsertRequestTable(Environment);
 		var requestTable = request.Definition.TableFullName;
 		var requestId = request.RequestIdColumn;
 
@@ -157,7 +164,7 @@ public class AdditionalMaterializer : IMaterializer
 	{
 		sq.AddComment("inject request material filter");
 
-		var relation = Environment.GetInterlinkRelationTable(datasource.Destination);
+		var relation = datasource.Destination.GetInterlinkRelationTable(Environment);
 		var f = sq.FromClause!;
 		var d = f.Root;
 
@@ -182,8 +189,8 @@ public class AdditionalMaterializer : IMaterializer
 		var sq = new SelectQuery();
 		var _datasource = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As("_target_datasource");
 
-		var (f, d) = sq.From(_datasource).As("d");
-		sq.Select(datasource.Destination.Sequence);
+		var (_, d) = sq.From(_datasource).As("d");
+		sq.Select(datasource.Destination.DbSequence);
 		sq.Select(d);
 
 		if (injector != null)

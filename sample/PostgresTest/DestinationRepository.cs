@@ -4,38 +4,76 @@ namespace PostgresTest;
 
 internal static class DestinationRepository
 {
-	public static InterlinkDestination Customers => new()
+	public static IEnumerable<InterlinkDestination> GetAll()
 	{
-		InterlinkDestinationId = 1,
-		Table = new()
+		yield return Customers;
+		yield return SaleJournals;
+	}
+
+	public static InterlinkDestination Customers => Getustomers();
+
+	private static InterlinkDestination Getustomers()
+	{
+		var destination = new InterlinkDestination()
 		{
-			TableName = "customer",
-			ColumnNames = new() {
+			TableFullName = "Name",
+			DbTable = new()
+			{
+				TableName = "customer",
+				ColumnNames = new() {
 				"customer_id",
 				"customer_type",
 				"customer_name",
 			}
-		},
-		Sequence = new()
+			},
+			DbSequence = new()
+			{
+				ColumnName = "customer_id",
+				CommandText = "nextval('customer_customer_id_seq'::regclass)"
+			},
+			ReverseOption = new()
+			{
+				ExcludedColumns = ["customer_type"],
+				ReverseColumns = new()
+			},
+			Description = ""
+		};
+
+		destination.Datasources.Add(DatasourceRepository.NetMembers);
+		destination.Datasources.Add(DatasourceRepository.CorporateCustomers);
+
+		return destination;
+	}
+
+	public static InterlinkDestination SaleJournals => GetSaleJournals();
+
+	private static InterlinkDestination GetSaleJournals()
+	{
+		var destination = new InterlinkDestination
 		{
-			Column = "customer_id",
-			Command = "nextval('customer_customer_id_seq'::regclass)"
-		},
-		ReverseOption = new()
-		{
-			ExcludedColumns = ["customer_type"],
-			ReverseColumns = new()
-		},
-		Description =
-"""
---Table to manage all customers
-create table if not exists customer (
-	customer_id serial8 not null, 
-	customer_type int4 not null, 
-	customer_name text not null, 
-	created_at timestamp not null default current_timestamp, 
-	primary key(customer_id)
-);
-"""
-	};
+			TableFullName = "sale_journal",
+			DbTable = new()
+			{
+				TableName = "sale_journal",
+				ColumnNames = new() {
+				"sale_journal_id",
+				"sale_date",
+				"price",
+			}
+			},
+			DbSequence = new()
+			{
+				ColumnName = "sale_journal_id",
+				CommandText = "nextval('sale_journal_sale_journal_id_seq'::regclass)"
+			},
+			ReverseOption = new()
+			{
+				ReverseColumns = ["price"]
+			},
+		};
+
+		destination.Datasources.Add(DatasourceRepository.Sales);
+
+		return destination;
+	}
 }
