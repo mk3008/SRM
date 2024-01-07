@@ -8,7 +8,7 @@ public class InterlinkRelationTable
 
 	public required string InterlinkProcessIdColumn { get; init; }
 
-	public required string InterlinkDestinationIdColumn { get; init; }
+	public required string DestinationIdColumn { get; init; }
 
 	public required string RootIdColumn { get; init; }
 

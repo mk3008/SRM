@@ -22,7 +22,7 @@ public class InterlinkDatasource
 	[DbColumn("text")]
 	public required string Query { get; set; }
 
-	[DbColumn("text", IsUniqueKey = true)]
+	[DbColumn("text")]
 	public required string KeyName { get; set; }
 
 	[DbColumn("text")]

@@ -94,21 +94,65 @@ public class ReverseForwardingMaterializerTest
 CREATE TEMPORARY TABLE
     __reverse_request
 AS
-/* Only original slips can be reversed.(where id = origin_id) */
-/* Only unprocessed slips can be reversed.(where reverse is null) */
 SELECT
-    d.sale_journals__req_reverse_id,
-    r.sale_journal_id,
-    r.root__sale_journal_id,
-    p.interlink_datasource_id
+    req.sale_journals__req_reverse_id,
+    rel.sale_journal_id,
+    rel.root__sale_journal_id,
+    rel.origin__sale_journal_id,
+    proc.interlink_datasource_id
 FROM
-    sale_journals__req_reverse AS d
-    INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.sale_journal_id
-    LEFT JOIN sale_journals__relation AS rev ON r.sale_journal_id = rev.origin__sale_journal_id AND rev.sale_journal_id <> rev.root__sale_journal_id
-    INNER JOIN interlink.interlink_process AS p ON r.interlink_process_id = p.interlink_process_id
+    sale_journals__req_reverse AS req
+    INNER JOIN sale_journals__relation AS rel ON req.sale_journal_id = rel.sale_journal_id
+    INNER JOIN interlink.interlink_process AS proc ON rel.interlink_process_id = proc.interlink_process_id
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void TestCelanUpRequestMaterialQuery()
+	{
+		var destination = DestinationRepository.sale_journals;
+		var material = MaterialRepository.ReverseRequestMeterial;
+		var query = Proxy.CreateCleanUpRequestMaterialQuery(material, destination);
+
+		var expect = """
+DELETE FROM
+    __reverse_request AS d
 WHERE
-    r.sale_journal_id = r.origin__sale_journal_id
-    AND rev.sale_journal_id IS null
+    (d.sale_journals__req_reverse_id) IN (
+        /* Exclude irreversible data. */
+        SELECT
+            d.sale_journals__req_reverse_id
+        FROM
+            (
+                SELECT
+                    d.sale_journals__req_reverse_id,
+                    d.origin__sale_journal_id,
+                    d.sale_journal_id,
+                    ROW_NUMBER() OVER(
+                        PARTITION BY
+                            d.root__sale_journal_id
+                        ORDER BY
+                            d.sale_journal_id DESC
+                    ) AS row_num
+                FROM
+                    (
+                        SELECT
+                            t.sale_journals__req_reverse_id,
+                            t.sale_journal_id,
+                            t.root__sale_journal_id,
+                            t.origin__sale_journal_id,
+                            t.interlink_datasource_id
+                        FROM
+                            __reverse_request AS t
+                    ) AS d
+            ) AS d
+        WHERE
+            NOT (d.row_num = 1 AND d.origin__sale_journal_id = d.sale_journal_id)
+    )
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -125,7 +169,7 @@ WHERE
 		var query = Proxy.CreateOriginDeleteQuery(destination, requestMaterial);
 
 		var expect = """
- DELETE FROM
+DELETE FROM
     sale_journals__req_reverse AS d
 WHERE
     (d.sale_journals__req_reverse_id) IN (

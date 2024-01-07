@@ -136,6 +136,39 @@ FROM
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
 
+	[Fact]
+	public void TestCleanUpRequestMaterialQuery()
+	{
+		var datasource = DatasourceRepository.sales;
+		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
+
+		var query = Proxy.CreateCleanUpRequestMaterialQuery(requestMaterial, datasource);
+
+		var expect = """
+DELETE FROM
+    __additional_request AS d
+WHERE
+    (d.sale_journals__req_i_sales_id) IN (
+        /* The data existing in KeyMap has been transformed, so delete it. */
+        SELECT
+            d.sale_journals__req_i_sales_id
+        FROM
+            (
+                SELECT
+                    t.sale_journals__req_i_sales_id,
+                    t.sale_id
+                FROM
+                    __additional_request AS t
+            ) AS d
+            INNER JOIN sale_journals__key_m_sales AS keymap ON d.sale_id = keymap.sale_id
+    )
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
 	//	[Fact]
 	//	public void TestCreateProcessInsertQuery()
 	//	{

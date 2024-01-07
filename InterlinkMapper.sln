@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InterlinkMapper.Test", "tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostgresTest", "sample\PostgresTest\PostgresTest.csproj", "{71F3A475-48D7-4CB2-8786-48F168DE9B89}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresSample", "sample\PostgresSample\PostgresSample.csproj", "{1664615D-04A4-4966-B5D6-6B8C781C72AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{71F3A475-48D7-4CB2-8786-48F168DE9B89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71F3A475-48D7-4CB2-8786-48F168DE9B89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71F3A475-48D7-4CB2-8786-48F168DE9B89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1664615D-04A4-4966-B5D6-6B8C781C72AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1664615D-04A4-4966-B5D6-6B8C781C72AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1664615D-04A4-4966-B5D6-6B8C781C72AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1664615D-04A4-4966-B5D6-6B8C781C72AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

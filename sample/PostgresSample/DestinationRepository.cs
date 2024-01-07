@@ -1,6 +1,6 @@
 ﻿using InterlinkMapper.Models;
 
-namespace PostgresTest;
+namespace PostgresSample;
 
 internal static class DestinationRepository
 {

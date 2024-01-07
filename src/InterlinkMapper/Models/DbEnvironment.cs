@@ -31,7 +31,7 @@ public class DbEnvironment
 	/// <example>
 	/// is not distinct from
 	/// </example>
-	public string NullSafeEqualityOperator { get; set; } = "is not distinct from";
+	public string NullSafeEqualityOperator { get; set; } = "is distinct from";
 
 	public int CommandTimeout { get; set; } = 60 * 15;
 }

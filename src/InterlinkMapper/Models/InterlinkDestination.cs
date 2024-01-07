@@ -6,6 +6,7 @@ using RedOrb.Attributes;
 namespace InterlinkMapper.Models;
 
 [GeneratePropertyBind(nameof(Datasources), nameof(InterlinkDatasource.Destination))]
+[DbIndex(isUnique: true, nameof(TableFullName))]
 [DbTable]
 public partial class InterlinkDestination
 {
@@ -106,7 +107,7 @@ public partial class InterlinkDestination
 				}
 			},
 			InterlinkProcessIdColumn = procId.ColumnName,
-			InterlinkDestinationIdColumn = DbSequence.ColumnName,
+			DestinationIdColumn = DbSequence.ColumnName,
 			RootIdColumn = rootColumn,
 			OriginIdColumn = originColumn,
 			RemarksColumn = env.DbTableConfig.RemarksColumn,

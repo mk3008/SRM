@@ -245,21 +245,21 @@ FROM
             e.sale_journal_id,
             a.sale_id,
             CONCAT(CASE
-                WHEN e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id THEN '"sale_journal_id",'
+                WHEN e.sale_journal_id IS DISTINCT FROM a.sale_journal_id THEN '"sale_journal_id",'
             END, CASE
-                WHEN e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date THEN '"journal_closing_date",'
+                WHEN e.journal_closing_date IS DISTINCT FROM a.journal_closing_date THEN '"journal_closing_date",'
             END, CASE
-                WHEN e.sale_date IS NOT DISTINCT FROM a.sale_date THEN '"sale_date",'
+                WHEN e.sale_date IS DISTINCT FROM a.sale_date THEN '"sale_date",'
             END, CASE
-                WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
+                WHEN e.shop_id IS DISTINCT FROM a.shop_id THEN '"shop_id",'
             END, CASE
-                WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
+                WHEN e.price IS DISTINCT FROM a.price THEN '"price",'
             END) AS interlink_remarks
         FROM
             _expect AS e
             INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
-            false OR e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date OR e.sale_date IS NOT DISTINCT FROM a.sale_date OR e.shop_id IS NOT DISTINCT FROM a.shop_id OR e.price IS NOT DISTINCT FROM a.price
+            false OR e.sale_journal_id IS DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS DISTINCT FROM a.journal_closing_date OR e.sale_date IS DISTINCT FROM a.sale_date OR e.shop_id IS DISTINCT FROM a.shop_id OR e.price IS DISTINCT FROM a.price
     ) AS d
 """;
 		var actual = query.ToText();
@@ -352,21 +352,21 @@ WITH
                     e.sale_journal_id,
                     a.sale_id,
                     CONCAT(CASE
-                        WHEN e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id THEN '"sale_journal_id",'
+                        WHEN e.sale_journal_id IS DISTINCT FROM a.sale_journal_id THEN '"sale_journal_id",'
                     END, CASE
-                        WHEN e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date THEN '"journal_closing_date",'
+                        WHEN e.journal_closing_date IS DISTINCT FROM a.journal_closing_date THEN '"journal_closing_date",'
                     END, CASE
-                        WHEN e.sale_date IS NOT DISTINCT FROM a.sale_date THEN '"sale_date",'
+                        WHEN e.sale_date IS DISTINCT FROM a.sale_date THEN '"sale_date",'
                     END, CASE
-                        WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
+                        WHEN e.shop_id IS DISTINCT FROM a.shop_id THEN '"shop_id",'
                     END, CASE
-                        WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
+                        WHEN e.price IS DISTINCT FROM a.price THEN '"price",'
                     END) AS interlink_remarks
                 FROM
                     _expect AS e
                     INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
                 WHERE
-                    false OR e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date OR e.sale_date IS NOT DISTINCT FROM a.sale_date OR e.shop_id IS NOT DISTINCT FROM a.shop_id OR e.price IS NOT DISTINCT FROM a.price
+                    false OR e.sale_journal_id IS DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS DISTINCT FROM a.journal_closing_date OR e.sale_date IS DISTINCT FROM a.sale_date OR e.shop_id IS DISTINCT FROM a.shop_id OR e.price IS DISTINCT FROM a.price
             ) AS d
     )
 SELECT
@@ -592,21 +592,21 @@ WITH
                     e.sale_journal_id,
                     a.sale_id,
                     CONCAT(CASE
-                        WHEN e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id THEN '"sale_journal_id",'
+                        WHEN e.sale_journal_id IS DISTINCT FROM a.sale_journal_id THEN '"sale_journal_id",'
                     END, CASE
-                        WHEN e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date THEN '"journal_closing_date",'
+                        WHEN e.journal_closing_date IS DISTINCT FROM a.journal_closing_date THEN '"journal_closing_date",'
                     END, CASE
-                        WHEN e.sale_date IS NOT DISTINCT FROM a.sale_date THEN '"sale_date",'
+                        WHEN e.sale_date IS DISTINCT FROM a.sale_date THEN '"sale_date",'
                     END, CASE
-                        WHEN e.shop_id IS NOT DISTINCT FROM a.shop_id THEN '"shop_id",'
+                        WHEN e.shop_id IS DISTINCT FROM a.shop_id THEN '"shop_id",'
                     END, CASE
-                        WHEN e.price IS NOT DISTINCT FROM a.price THEN '"price",'
+                        WHEN e.price IS DISTINCT FROM a.price THEN '"price",'
                     END) AS interlink_remarks
                 FROM
                     _expect AS e
                     INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
                 WHERE
-                    false OR e.sale_journal_id IS NOT DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS NOT DISTINCT FROM a.journal_closing_date OR e.sale_date IS NOT DISTINCT FROM a.sale_date OR e.shop_id IS NOT DISTINCT FROM a.shop_id OR e.price IS NOT DISTINCT FROM a.price
+                    false OR e.sale_journal_id IS DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS DISTINCT FROM a.journal_closing_date OR e.sale_date IS DISTINCT FROM a.sale_date OR e.shop_id IS DISTINCT FROM a.shop_id OR e.price IS DISTINCT FROM a.price
             ) AS d
     )
 SELECT

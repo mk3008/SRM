@@ -32,6 +32,7 @@ public class ReverseMaterializer : IMaterializer
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, destination, request);
+		CleanUpRequestMaterial(connection, request, destination);
 
 		var query = CreateReverseMaterialQuery(destination, request, injector);
 		var reverse = this.CreateMaterial(connection, transaction, query);
@@ -47,6 +48,56 @@ public class ReverseMaterializer : IMaterializer
 		var reverse = this.CreateMaterial(connection, transaction, query);
 
 		return ToReverseMaterial(reverse);
+	}
+
+	private void CleanUpRequestMaterial(IDbConnection connection, Material request, InterlinkDestination destination)
+	{
+		var query = CreateCleanUpRequestMaterialQuery(request, destination);
+		connection.Execute(query, commandTimeout: CommandTimeout);
+	}
+
+	private DeleteQuery CreateCleanUpRequestMaterialQuery(Material material, InterlinkDestination destination)
+	{
+		var request = destination.GetReverseRequestTable(Environment);
+		var relation = destination.GetInterlinkRelationTable(Environment);
+
+		var sq = new SelectQuery();
+		sq.AddComment("Exclude irreversible data.");
+		var (f, d) = sq.From(CreateCleanUpRequestMaterialQuery_SubQuery(material, destination)).As("d");
+
+		sq.Select(d, request.RequestIdColumn);
+
+		sq.Where(() =>
+		{
+			var v = new ColumnValue(d, "row_num").Equal("1");
+			v.And(d, relation.OriginIdColumn).Equal(d, relation.DestinationIdColumn);
+			return new NegativeValue(v.ToGroup());
+		});
+
+		return sq.ToDeleteQuery(material.MaterialName);
+	}
+
+	private SelectQuery CreateCleanUpRequestMaterialQuery_SubQuery(Material material, InterlinkDestination destination)
+	{
+		var request = destination.GetReverseRequestTable(Environment);
+		var relation = destination.GetInterlinkRelationTable(Environment);
+
+		var sq = new SelectQuery();
+		var (f, d) = sq.From(material.SelectQuery).As("d");
+
+		sq.Select(d, request.RequestIdColumn);
+		sq.Select(d, relation.OriginIdColumn);
+		sq.Select(d, relation.DestinationIdColumn);
+
+		sq.Select(new FunctionValue("row_number", () =>
+		{
+			var value = new OverClause();
+			value.AddPartition(new ColumnValue(d, relation.RootIdColumn));
+			value.AddOrder(new SortableItem(new ColumnValue(d, relation.DestinationIdColumn), isAscending: false));
+			return value;
+		})).As("row_num");
+
+		return sq;
 	}
 
 	private ReverseMaterial ToReverseMaterial(Material material)
@@ -108,24 +159,17 @@ public class ReverseMaterializer : IMaterializer
 		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
 
 		var sq = new SelectQuery();
-		sq.AddComment("Only original slips can be reversed.(where id = origin_id)");
-		sq.AddComment("Only unprocessed slips can be reversed.(where reverse is null)");
-		var (f, d) = sq.From(request.Definition.TableFullName).As("d");
-		var r = f.InnerJoin(relation.Definition.TableFullName).As("r").On(d, request.DestinationIdColumn);
-		var rev = f.LeftJoin(relation.Definition.TableFullName).As("rev").On(x =>
-		{
-			x.Condition(r, relation.InterlinkDestinationIdColumn).Equal(x.Table, relation.OriginIdColumn);
-			x.Condition(x.Table, relation.InterlinkDestinationIdColumn).NotEqual(x.Table, relation.RootIdColumn);
-		});
-		var p = f.InnerJoin(process.TableFullName).As("p").On(r, relation.InterlinkProcessIdColumn);
+		var (f, d) = sq.From(request.Definition.TableFullName).As("req");
+		var r = f.InnerJoin(relation.Definition.TableFullName).As("rel").On(d, request.DestinationIdColumn);
+		var p = f.InnerJoin(process.TableFullName).As("proc").On(r, relation.InterlinkProcessIdColumn);
 
 		sq.Select(d, request.RequestIdColumn);
+
 		sq.Select(r, request.DestinationIdColumn);
 		sq.Select(r, relation.RootIdColumn);
-		sq.Select(p, source.GetSequence().ColumnName);
+		sq.Select(r, relation.OriginIdColumn);
 
-		sq.Where(r, relation.InterlinkDestinationIdColumn).Equal(r, relation.OriginIdColumn);
-		sq.Where(rev, relation.InterlinkDestinationIdColumn).IsNull();
+		sq.Select(p, source.GetSequence().ColumnName);
 
 		return sq.ToCreateTableQuery(RequestMaterialName);
 	}

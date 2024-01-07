@@ -30,11 +30,35 @@ public class AdditionalMaterializer : IMaterializer
 		if (request.Count == 0) return null;
 
 		DeleteOriginRequest(connection, datasource, request);
+		CleanUpRequestMaterial(connection, request, datasource);
 
 		var query = CreateAdditionalMaterialQuery(datasource, request, injector);
 		var additional = this.CreateMaterial(connection, transaction, query);
 
 		return ToAdditionalMaterial(datasource, additional);
+	}
+
+	private void CleanUpRequestMaterial(IDbConnection connection, Material request, InterlinkDatasource datasource)
+	{
+		var query = CreateCleanUpRequestMaterialQuery(request, datasource);
+		connection.Execute(query, commandTimeout: CommandTimeout);
+	}
+
+	private DeleteQuery CreateCleanUpRequestMaterialQuery(Material request, InterlinkDatasource datasource)
+	{
+		var req = datasource.GetInsertRequestTable(Environment);
+
+		var keys = datasource.KeyColumns.Select(x => x.ColumnName).ToList();
+		var keymap = datasource.GetKeyMapTable(Environment);
+
+		var sq = new SelectQuery();
+		sq.AddComment("The data existing in KeyMap has been transformed, so delete it.");
+		var (f, d) = sq.From(request.SelectQuery).As("d");
+		var km = f.InnerJoin(keymap.Definition.TableFullName).As("keymap").On(d, keys);
+
+		sq.Select(d, req.RequestIdColumn);
+
+		return sq.ToDeleteQuery(request.MaterialName);
 	}
 
 	public AdditionalMaterial Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Material request)
