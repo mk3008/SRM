@@ -53,6 +53,8 @@ public abstract class MaterializeResult
 
 	public required int CommandTimeout { get; set; }
 
+	private string CteName { get; set; } = "additional_material";
+
 	//public required string KeyRelationTable { get; set; }
 
 	//public required List<string> DatasourceKeyColumns { get; set; }
@@ -83,7 +85,7 @@ public abstract class MaterializeResult
 	internal SelectQuery CreateRelationInsertSelectQuery(long processId, string keyRelationTable, List<string> datasourceKeyColumns)
 	{
 		var sq = new SelectQuery();
-		var ct = sq.With(SelectQuery).As("d");
+		var ct = sq.With(SelectQuery).As(CteName);
 
 		var (f, d) = sq.From(ct).As("d");
 		var kr = f.LeftJoin(CreateFirstKeyRelationSelectQuery(keyRelationTable, datasourceKeyColumns)).As("kr").On(d, datasourceKeyColumns);
@@ -147,7 +149,7 @@ public abstract class MaterializeResult
 	private SelectQuery CreateKeyRelationSelectQuery(string keyRelationTable, List<string> datasourceKeyColumns)
 	{
 		var sq = new SelectQuery();
-		var ct = sq.With(SelectQuery).As("d");
+		var ct = sq.With(SelectQuery).As(CteName);
 		var (f, kr) = sq.From(keyRelationTable).As("kr");
 		var d = f.InnerJoin(ct).As("d").On(kr, datasourceKeyColumns);
 

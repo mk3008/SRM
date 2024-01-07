@@ -98,7 +98,7 @@ CREATE TEMPORARY TABLE
     __additional_datasource
 AS
 WITH
-    _target_datasource AS (
+    target_datasource AS (
         /* inject request material filter */
         SELECT
             d.journal_closing_date,
@@ -128,7 +128,7 @@ SELECT
     d.price,
     d.sale_id
 FROM
-    _target_datasource AS d
+    target_datasource AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -314,7 +314,7 @@ FROM
 		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1, material.KeyRelationTableFullName, material.DatasourceKeyColumns);
 		var expect = """
 WITH
-    d AS (
+    additional_material AS (
         SELECT
             t.sale_journal_id,
             t.journal_closing_date,
@@ -332,7 +332,7 @@ SELECT
     d.sale_journal_id AS origin__sale_journal_id,
     '' AS interlink_remarks
 FROM
-    d
+    additional_material AS d
     LEFT JOIN (
         /* if reverse transfer is performed, one or more rows exist. */
         SELECT
@@ -351,7 +351,7 @@ FROM
                     ) AS _row_num
                 FROM
                     sale_journals__key_r_sales AS kr
-                    INNER JOIN d ON kr.sale_id = d.sale_id
+                    INNER JOIN additional_material AS d ON kr.sale_id = d.sale_id
             ) AS kr
         WHERE
             kr._row_num = 1

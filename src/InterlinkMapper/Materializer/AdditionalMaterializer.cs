@@ -211,9 +211,9 @@ public class AdditionalMaterializer : IMaterializer
 	private CreateTableQuery CreateAdditionalMaterialQuery(InterlinkDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		var sq = new SelectQuery();
-		var _datasource = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As("_target_datasource");
+		var target = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As("target_datasource");
 
-		var (_, d) = sq.From(_datasource).As("d");
+		var (_, d) = sq.From(target).As("d");
 		sq.Select(datasource.Destination.DbSequence);
 		sq.Select(d);
 
