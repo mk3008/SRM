@@ -55,7 +55,7 @@ WITH
             sale_detail AS s
             INNER JOIN __additional_request AS rm ON s.sale_id = rm.sale_id
     ),
-    target_datasource AS (
+    additional_data AS (
         /* inject request material filter */
         SELECT
             d.journal_closing_date,
@@ -90,7 +90,7 @@ SELECT
     d.price,
     d.sale_id
 FROM
-    target_datasource AS d
+    additional_data AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

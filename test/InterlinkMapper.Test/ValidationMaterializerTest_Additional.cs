@@ -48,7 +48,7 @@ CREATE TEMPORARY TABLE
     __additional_datasource
 AS
 WITH
-    target_datasource AS (
+    additional_data AS (
         /* inject request material filter */
         SELECT
             d.journal_closing_date,
@@ -78,7 +78,7 @@ SELECT
     d.price,
     d.sale_id
 FROM
-    target_datasource AS d
+    additional_data AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

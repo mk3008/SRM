@@ -20,6 +20,10 @@ public class ReverseMaterializer : IMaterializer
 
 	public string DatasourceMaterialName { get; set; } = "__reverse_datasource";
 
+	private string CteName { get; set; } = "reverse_data";
+
+	private string RowNumberColumnName { get; set; } = "row_num";
+
 	public ReverseMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var destination = transaction.InterlinkDestination;
@@ -69,7 +73,7 @@ public class ReverseMaterializer : IMaterializer
 
 		sq.Where(() =>
 		{
-			var v = new ColumnValue(d, "row_num").Equal("1");
+			var v = new ColumnValue(d, RowNumberColumnName).Equal("1");
 			v.And(d, relation.OriginIdColumn).Equal(d, relation.DestinationIdColumn);
 			return new NegativeValue(v.ToGroup());
 		});
@@ -95,7 +99,7 @@ public class ReverseMaterializer : IMaterializer
 			value.AddPartition(new ColumnValue(d, relation.RootIdColumn));
 			value.AddOrder(new SortableItem(new ColumnValue(d, relation.DestinationIdColumn), isAscending: false));
 			return value;
-		})).As("row_num");
+		})).As(RowNumberColumnName);
 
 		return sq;
 	}
@@ -244,9 +248,9 @@ public class ReverseMaterializer : IMaterializer
 	private CreateTableQuery CreateReverseMaterialQuery(InterlinkDestination destination, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
-		var _datasource = sq.With(CreateReverseDatasourceSelectQuery(destination, request)).As("_target_datasource");
+		var target = sq.With(CreateReverseDatasourceSelectQuery(destination, request)).As(CteName);
 
-		var (f, d) = sq.From(_datasource).As("d");
+		var (f, d) = sq.From(target).As("d");
 
 		sq.Select(destination.DbSequence);
 		sq.Select(d);

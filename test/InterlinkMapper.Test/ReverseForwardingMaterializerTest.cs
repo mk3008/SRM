@@ -208,7 +208,7 @@ CREATE TEMPORARY TABLE
     __reverse_datasource
 AS
 WITH
-    _target_datasource AS (
+    reverse_data AS (
         /* data source to be added */
         SELECT
             rm.root__sale_journal_id,
@@ -247,7 +247,7 @@ SELECT
     d.interlink_datasource_id,
     d.interlink_remarks
 FROM
-    _target_datasource AS d
+    reverse_data AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

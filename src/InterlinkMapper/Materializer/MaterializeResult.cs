@@ -53,7 +53,9 @@ public abstract class MaterializeResult
 
 	public required int CommandTimeout { get; set; }
 
-	private string CteName { get; set; } = "additional_material";
+	private string CteName { get; set; } = "material_data";
+
+	private string RowNumberColumnName { get; set; } = "row_num";
 
 	//public required string KeyRelationTable { get; set; }
 
@@ -142,7 +144,7 @@ public abstract class MaterializeResult
 		var (_, kr) = sq.From(CreateKeyRelationSelectQuery(keyRelationTable, datasourceKeyColumns)).As("kr");
 		datasourceKeyColumns.ForEach(key => sq.Select(kr, key));
 		sq.Select(kr, DestinationSeqColumn).As(RootIdColumn);
-		sq.Where(kr, "_row_num").Equal(1);
+		sq.Where(kr, RowNumberColumnName).Equal(1);
 		return sq;
 	}
 
@@ -162,7 +164,7 @@ public abstract class MaterializeResult
 
 		datasourceKeyColumns.ForEach(key => sq.Select(kr, key));
 		sq.Select(kr, DestinationSeqColumn);
-		sq.Select(new FunctionValue("row_number", over)).As("_row_num");
+		sq.Select(new FunctionValue("row_number", over)).As(RowNumberColumnName);
 
 		return sq;
 	}

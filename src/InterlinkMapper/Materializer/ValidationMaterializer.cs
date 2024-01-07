@@ -23,6 +23,12 @@ public class ValidationMaterializer : IMaterializer
 
 	public string RowNumberColumnName { get; set; } = "row_num";
 
+	private string ExprectCteName = "expect_data";
+
+	private string ActualCteName = "actual_data";
+
+	private string DiffCteName = "diff_data";
+
 	public ValidationMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var destination = transaction.InterlinkDestination;
@@ -214,8 +220,8 @@ public class ValidationMaterializer : IMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("reverse only");
 
-		var expect = sq.With(CreateExpectValueSelectQuery(datasource, request)).As("_expect");
-		var actual = sq.With(CreateActualValueSelectQuery(datasource, request)).As("_actual");
+		var expect = sq.With(CreateExpectValueSelectQuery(datasource, request)).As(ExprectCteName);
+		var actual = sq.With(CreateActualValueSelectQuery(datasource, request)).As(ActualCteName);
 
 		var key = datasource.KeyColumns.First().ColumnName;
 
@@ -243,8 +249,8 @@ public class ValidationMaterializer : IMaterializer
 		var op = datasource.Destination.ReverseOption;
 
 		var sq = new SelectQuery();
-		var expect = sq.With(CreateExpectValueSelectQuery(datasource, request)).As("_expect");
-		var actual = sq.With(CreateActualValueSelectQuery(datasource, request)).As("_actual");
+		var expect = sq.With(CreateExpectValueSelectQuery(datasource, request)).As(ExprectCteName);
+		var actual = sq.With(CreateActualValueSelectQuery(datasource, request)).As(ActualCteName);
 
 		var key = datasource.KeyColumns.First().ColumnName;
 
@@ -345,9 +351,9 @@ public class ValidationMaterializer : IMaterializer
 	private CreateTableQuery CreateValidationMaterialQuery(InterlinkDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var sq = new SelectQuery();
-		var _datasource = sq.With(CreateValidationDatasourceSelectQuery(datasource, request)).As("_target_datasource");
+		var diff = sq.With(CreateValidationDatasourceSelectQuery(datasource, request)).As(DiffCteName);
 
-		var (_, d) = sq.From(_datasource).As("d");
+		var (_, d) = sq.From(diff).As("d");
 
 		sq.Select(d);
 

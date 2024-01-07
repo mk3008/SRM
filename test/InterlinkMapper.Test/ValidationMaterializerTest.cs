@@ -176,7 +176,7 @@ FROM
 		var expect = """
 /* reverse only */
 WITH
-    _expect AS (
+    expect_data AS (
         /* inject request material filter */
         SELECT
             d.sale_journal_id,
@@ -200,7 +200,7 @@ WITH
             ) AS d
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
-    _actual AS (
+    actual_data AS (
         /* inject request material filter */
         /* does not exist if physically deleted */
         SELECT
@@ -229,8 +229,8 @@ SELECT
     a.sale_id,
     '{"deleted":true}' AS interlink_remarks
 FROM
-    _expect AS e
-    LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+    expect_data AS e
+    LEFT JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
 WHERE
     a.sale_id IS null
 UNION ALL
@@ -256,8 +256,8 @@ FROM
                 WHEN e.price IS DISTINCT FROM a.price THEN '"price",'
             END) AS interlink_remarks
         FROM
-            _expect AS e
-            INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+            expect_data AS e
+            INNER JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             false OR e.sale_journal_id IS DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS DISTINCT FROM a.journal_closing_date OR e.sale_date IS DISTINCT FROM a.sale_date OR e.shop_id IS DISTINCT FROM a.shop_id OR e.price IS DISTINCT FROM a.price
     ) AS d
@@ -281,7 +281,7 @@ CREATE TEMPORARY TABLE
     __validation_datasource
 AS
 WITH
-    _expect AS (
+    expect_data AS (
         /* inject request material filter */
         SELECT
             d.sale_journal_id,
@@ -305,7 +305,7 @@ WITH
             ) AS d
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
-    _actual AS (
+    actual_data AS (
         /* inject request material filter */
         /* does not exist if physically deleted */
         SELECT
@@ -329,15 +329,15 @@ WITH
             ) AS d
             INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     ),
-    _target_datasource AS (
+    diff_data AS (
         /* reverse only */
         SELECT
             e.sale_journal_id,
             a.sale_id,
             '{"deleted":true}' AS interlink_remarks
         FROM
-            _expect AS e
-            LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+            expect_data AS e
+            LEFT JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             a.sale_id IS null
         UNION ALL
@@ -363,8 +363,8 @@ WITH
                         WHEN e.price IS DISTINCT FROM a.price THEN '"price",'
                     END) AS interlink_remarks
                 FROM
-                    _expect AS e
-                    INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+                    expect_data AS e
+                    INNER JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
                 WHERE
                     false OR e.sale_journal_id IS DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS DISTINCT FROM a.journal_closing_date OR e.sale_date IS DISTINCT FROM a.sale_date OR e.shop_id IS DISTINCT FROM a.shop_id OR e.price IS DISTINCT FROM a.price
             ) AS d
@@ -374,7 +374,7 @@ SELECT
     d.sale_id,
     d.interlink_remarks
 FROM
-    _target_datasource AS d
+    diff_data AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -397,7 +397,7 @@ FROM
 		var expect = """
 /* reverse only */
 WITH
-    _expect AS (
+    expect_data AS (
         /* inject request material filter */
         SELECT
             d.sale_journal_id,
@@ -421,7 +421,7 @@ WITH
             ) AS d
             INNER JOIN __validation_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     ),
-    _actual AS (
+    actual_data AS (
         /* inject request material filter */
         /* does not exist if physically deleted */
         SELECT
@@ -450,8 +450,8 @@ SELECT
     a.sale_id,
     '{"deleted":true}' AS interlink_remarks
 FROM
-    _expect AS e
-    LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+    expect_data AS e
+    LEFT JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
 WHERE
     a.sale_id IS null
 UNION ALL
@@ -477,8 +477,8 @@ FROM
                 WHEN e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null) THEN '"price",'
             END) AS interlink_remarks
         FROM
-            _expect AS e
-            INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+            expect_data AS e
+            INNER JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             false OR e.sale_journal_id <> a.sale_journal_id OR (e.sale_journal_id IS NOT null AND a.sale_journal_id IS null) OR (e.sale_journal_id IS null AND a.sale_journal_id IS NOT null) OR e.journal_closing_date <> a.journal_closing_date OR (e.journal_closing_date IS NOT null AND a.journal_closing_date IS null) OR (e.journal_closing_date IS null AND a.journal_closing_date IS NOT null) OR e.sale_date <> a.sale_date OR (e.sale_date IS NOT null AND a.sale_date IS null) OR (e.sale_date IS null AND a.sale_date IS NOT null) OR e.shop_id <> a.shop_id OR (e.shop_id IS NOT null AND a.shop_id IS null) OR (e.shop_id IS null AND a.shop_id IS NOT null) OR e.price <> a.price OR (e.price IS NOT null AND a.price IS null) OR (e.price IS null AND a.price IS NOT null)
     ) AS d
@@ -502,7 +502,7 @@ CREATE TEMPORARY TABLE
     __validation_datasource
 AS
 WITH
-    _expect AS (
+    expect_data AS (
         /* inject request material filter */
         SELECT
             d.sale_journal_id,
@@ -540,7 +540,7 @@ WITH
             sale_detail AS s
             INNER JOIN __validation_request AS rm ON s.sale_id = rm.sale_id
     ),
-    _actual AS (
+    actual_data AS (
         /* inject request material filter */
         /* does not exist if physically deleted */
         SELECT
@@ -569,15 +569,15 @@ WITH
             ) AS d
             INNER JOIN __validation_request AS rm ON d.sale_id = rm.sale_id
     ),
-    _target_datasource AS (
+    diff_data AS (
         /* reverse only */
         SELECT
             e.sale_journal_id,
             a.sale_id,
             '{"deleted":true}' AS interlink_remarks
         FROM
-            _expect AS e
-            LEFT JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+            expect_data AS e
+            LEFT JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
         WHERE
             a.sale_id IS null
         UNION ALL
@@ -603,8 +603,8 @@ WITH
                         WHEN e.price IS DISTINCT FROM a.price THEN '"price",'
                     END) AS interlink_remarks
                 FROM
-                    _expect AS e
-                    INNER JOIN _actual AS a ON e.sale_journal_id = a.sale_journal_id
+                    expect_data AS e
+                    INNER JOIN actual_data AS a ON e.sale_journal_id = a.sale_journal_id
                 WHERE
                     false OR e.sale_journal_id IS DISTINCT FROM a.sale_journal_id OR e.journal_closing_date IS DISTINCT FROM a.journal_closing_date OR e.sale_date IS DISTINCT FROM a.sale_date OR e.shop_id IS DISTINCT FROM a.shop_id OR e.price IS DISTINCT FROM a.price
             ) AS d
@@ -614,7 +614,7 @@ SELECT
     d.sale_id,
     d.interlink_remarks
 FROM
-    _target_datasource AS d
+    diff_data AS d
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);

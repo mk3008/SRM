@@ -22,6 +22,8 @@ public class AdditionalMaterializer : IMaterializer
 
 	public string DatasourceMaterialName { get; set; } = "__additional_datasource";
 
+	private string CteName { get; set; } = "additional_data";
+
 	public AdditionalMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var requestMaterialQuery = CreateRequestMaterialQuery(datasource);
@@ -211,7 +213,7 @@ public class AdditionalMaterializer : IMaterializer
 	private CreateTableQuery CreateAdditionalMaterialQuery(InterlinkDatasource datasource, Material request, Func<SelectQuery, SelectQuery>? injector = null)
 	{
 		var sq = new SelectQuery();
-		var target = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As("target_datasource");
+		var target = sq.With(CreateAdditionalDatasourceSelectQuery(datasource, request)).As(CteName);
 
 		var (_, d) = sq.From(target).As("d");
 		sq.Select(datasource.Destination.DbSequence);
