@@ -42,7 +42,7 @@
 		<Compile Include="Services\ValidationForwardingService.cs" />
 		<Compile Include="Services\ReverseForwardingService.cs" />
 		<Compile Include="Services\AdditionalForwardingService.cs" />
-		<Compile Include="Services\ValidationMaterializer.cs" />
+		<Compile Include="Services\ValidationDatasourceMaterializer.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -11,12 +11,15 @@ public class ValidationForwardingService
 	public ValidationForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Materializer = new ValidationMaterializer(Environment);
+		DatasourceMaterializer = new ValidationDatasourceMaterializer(Environment);
+		RequestMaterializer = new ValidationRequestMaterializer(Environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private ValidationMaterializer Materializer { get; init; }
+	private ValidationDatasourceMaterializer DatasourceMaterializer { get; init; }
+
+	private ValidationRequestMaterializer RequestMaterializer { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
@@ -27,17 +30,32 @@ public class ValidationForwardingService
 
 	public void Execute(IDbConnection connection, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
+		if (datasource.Destination == null) throw new NullReferenceException(nameof(datasource.Destination));
+
 		var destination = datasource.Destination;
 
-		var transaction = CreateTransactionAsNew(destination);
+		var transaction = CreateTransactionAsNew(datasource.Destination);
 		connection.Save(transaction);
 
-		var material = Materializer.Create(connection, transaction, datasource, injector);
-		if (material == null) return;
+		var request = RequestMaterializer.Create(connection, transaction, datasource, injector);
+		if (request.Count == 0) return;
 
-		//transfer
-		ExecuteReverse(connection, transaction, datasource, material);
-		ExecuteAdditional(connection, transaction, datasource, material);
+		var material = DatasourceMaterializer.Create(connection, transaction, datasource, request);
+		//if (material.Count == 0) return;
+
+		//material.ExecuteTransfer(connection);
+
+
+
+		//var transaction = CreateTransactionAsNew(destination);
+		//connection.Save(transaction);
+
+		//var material = Materializer.Create(connection, transaction, datasource, injector);
+		//if (material == null) return;
+
+		////transfer
+		//ExecuteReverse(connection, transaction, datasource, material);
+		//ExecuteAdditional(connection, transaction, datasource, material);
 	}
 
 	private void ExecuteReverse(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, ValidationMaterial validation)

@@ -1,6 +1,7 @@
 ﻿using Carbunql;
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
+using InterlinkMapper.Services;
 
 namespace InterlinkMapper.Test;
 
@@ -52,8 +53,8 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 
 	private SelectQuery GetValidationRequestQuery()
 	{
-		var m = new ValidationMaterializer(environment);
-		return m.AsPrivateProxy().CreateRequestMaterialQuery(DatasourceRepository.sales).ToSelectQuery();
+		var m = new ValidationRequestMaterializer(environment);
+		return m.AsPrivateProxy().CreateRequestMaterialQuery(DatasourceRepository.sales, (SelectQuery x) => x).ToSelectQuery();
 	}
 
 	public AdditionalMaterial AdditinalMeterial => CreateAdditionalMaterialQuery();
@@ -118,11 +119,10 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = ValidationRequestMeterial;
-		var service = new ValidationMaterializer(environment);
+		var service = new ValidationDatasourceMaterializer(environment);
 		var query = service.AsPrivateProxy().CreateValidationMaterialQuery(
 			datasource,
-			request,
-			(SelectQuery x) => x
+			request
 		);
 
 		var material = new Material

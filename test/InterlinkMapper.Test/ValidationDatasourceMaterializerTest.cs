@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class ValidationMaterializerTest
+public class ValidationDatasourceMaterializerTest
 {
-	public ValidationMaterializerTest(ITestOutputHelper output)
+	public ValidationDatasourceMaterializerTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -17,7 +17,7 @@ public class ValidationMaterializerTest
 			DbConnetionConfig = new DummyDB(),
 		};
 
-		Proxy = new ValidationMaterializer(Environment).AsPrivateProxy();
+		Proxy = new ValidationDatasourceMaterializer(Environment).AsPrivateProxy();
 		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
@@ -25,70 +25,12 @@ public class ValidationMaterializerTest
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly ValidationMaterializerProxy Proxy;
+	public readonly ValidationDatasourceMaterializerProxy Proxy;
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
 	[Fact]
-	public void TestCreateRequestMaterialQuery()
-	{
-		var datasource = DatasourceRepository.sales;
-		var query = Proxy.CreateRequestMaterialQuery(datasource);
-
-		var expect = """
-CREATE TEMPORARY TABLE
-    __validation_request
-AS
-SELECT
-    r.sale_journals__req_v_sales_id,
-    m.sale_journal_id,
-    m.sale_id
-FROM
-    sale_journals__req_v_sales AS r
-    INNER JOIN sale_journals__key_m_sales AS m ON r.sale_id = m.sale_id
-WHERE
-    m.sale_journal_id IS NOT null
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void TestCreateOriginDeleteQuery()
-	{
-		var datasource = DatasourceRepository.sales;
-		var request = MaterialRepository.ValidationRequestMeterial;
-		var query = Proxy.CreateOriginDeleteQuery(datasource, request);
-
-		var expect = """
-DELETE FROM
-    sale_journals__req_v_sales AS d
-WHERE
-    (d.sale_journals__req_v_sales_id) IN (
-        /* data that has been materialized will be deleted from the original. */
-        SELECT
-            r.sale_journals__req_v_sales_id
-        FROM
-            (
-                SELECT
-                    t.sale_journals__req_v_sales_id,
-                    t.sale_journal_id,
-                    t.sale_id
-                FROM
-                    __validation_request AS t
-            ) AS r
-    )
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void TestCreateExpectValueSelectQuery()
+	public void CreateExpectValueSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = MaterialRepository.ValidationRequestMeterial;
@@ -126,7 +68,7 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateActualValueSelectQuery()
+	public void CreateActualValueSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = MaterialRepository.ValidationRequestMeterial;
@@ -164,7 +106,7 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateValidationDatasourceSelectQuery()
+	public void CreateValidationDatasourceSelectQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = MaterialRepository.ValidationRequestMeterial;
@@ -267,12 +209,12 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateMaterialQuery()
+	public void CreateValidationMaterialQuery()
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateValidationMaterialQuery(datasource, request, (SelectQuery x) => x);
+		var query = Proxy.CreateValidationMaterialQuery(datasource, request);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -381,14 +323,14 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateValidationDatasourceSelectQuery_verbose()
+	public void CreateValidationDatasourceSelectQuery_verbose()
 	{
 		var datasource = DatasourceRepository.sales;
 		var request = MaterialRepository.ValidationRequestMeterial;
 
 		var env = new SystemEnvironment();
 		env.DbEnvironment.NullSafeEqualityOperator = string.Empty;
-		var proxy = new ValidationMaterializer(env).AsPrivateProxy();
+		var proxy = new ValidationDatasourceMaterializer(env).AsPrivateProxy();
 
 		var query = proxy.CreateValidationDatasourceSelectQuery(datasource, request);
 
@@ -488,12 +430,12 @@ FROM
 	}
 
 	[Fact]
-	public void TestCreateDatasourceMaterialQuery_CTE()
+	public void CreateValidationMaterialQuery_CTE()
 	{
 		var datasource = DatasourceRepository.cte_sales;
 		var request = MaterialRepository.ValidationRequestMeterial;
 
-		var query = Proxy.CreateValidationMaterialQuery(datasource, request, (SelectQuery x) => x);
+		var query = Proxy.CreateValidationMaterialQuery(datasource, request);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -621,7 +563,7 @@ FROM
 	}
 
 	[Fact]
-	public void TestToAdditionalRequestMaterial()
+	public void ToAdditionalRequestMaterial()
 	{
 		var material = MaterialRepository.ValidationMaterial;
 		var additional = material.ToAdditionalRequestMaterial();
@@ -654,7 +596,7 @@ WHERE
 	}
 
 	[Fact]
-	public void TestToReverseRequestMaterial()
+	public void ToReverseRequestMaterial()
 	{
 		var material = MaterialRepository.ValidationMaterial;
 		var reverse = material.ToReverseRequestMaterial();

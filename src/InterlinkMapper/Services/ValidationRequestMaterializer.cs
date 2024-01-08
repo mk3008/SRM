@@ -44,18 +44,15 @@ public class ValidationRequestMaterializer : IRequestMaterializer
 
 	private DeleteQuery CreateCleanUpRequestMaterialQuery(Material request, InterlinkDatasource datasource)
 	{
-		var req = datasource.GetInsertRequestTable(Environment);
-
-		var keys = datasource.KeyColumns.Select(x => x.ColumnName).ToList();
-		var keymap = datasource.GetKeyMapTable(Environment);
+		var destination = datasource.Destination;
+		var req = datasource.GetValidationRequestTable(Environment);
 
 		var sq = new SelectQuery();
 		sq.AddComment("Data that does not exist in the KeyMap is not transferred and is not subject to verification.");
-		var (f, d) = sq.From(request.SelectQuery).As("d");
-		var km = f.LeftJoin(keymap.Definition.TableFullName).As("keymap").On(d, keys);
+		var (_, d) = sq.From(request.SelectQuery).As("d");
 
 		sq.Select(d, req.RequestIdColumn);
-		sq.Where(km, keys.First()).IsNull();
+		sq.Where(d, destination.DbSequence.ColumnName).IsNull();
 
 		return sq.ToDeleteQuery(request.MaterialName);
 	}
@@ -70,18 +67,22 @@ public class ValidationRequestMaterializer : IRequestMaterializer
 	{
 		var request = datasource.GetValidationRequestTable(Environment);
 		var relation = datasource.GetKeyRelationTable(Environment);
+		var keymap = datasource.GetKeyMapTable(Environment);
+		var keys = datasource.KeyColumns.Select(x => x.ColumnName).ToList();
 
 		var sq = new SelectQuery();
 		var (f, r) = sq.From(request.Definition.TableFullName).As("r");
+		var km = f.LeftJoin(keymap.Definition.TableFullName).As("keymap").On(r, keys);
 
 		sq.Select(r, request.RequestIdColumn);
 
-		var args = new ValueCollection();
-		datasource.KeyColumns.ForEach(key =>
+		//var args = new ValueCollection();
+		keys.ForEach(key =>
 		{
-			args.Add(new ColumnValue(r, key.ColumnName));
-			sq.Select(r, key.ColumnName);
+			//args.Add(new ColumnValue(r, key));
+			sq.Select(r, key);
 		});
+		sq.Select(km, datasource.Destination.DbSequence.ColumnName);
 
 		if (injector != null) sq = injector(sq);
 
@@ -90,7 +91,7 @@ public class ValidationRequestMaterializer : IRequestMaterializer
 
 	private DeleteQuery CreateOriginDeleteQuery(InterlinkDatasource datasource, Material result)
 	{
-		var request = datasource.GetInsertRequestTable(Environment);
+		var request = datasource.GetValidationRequestTable(Environment);
 		var requestTable = request.Definition.TableFullName;
 		var requestId = request.RequestIdColumn;
 
@@ -106,4 +107,4 @@ public class ValidationRequestMaterializer : IRequestMaterializer
 }
 
 [GeneratePrivateProxy(typeof(ValidationRequestMaterializer))]
-public partial struct VValidationRequestMaterializerProxy;
+public partial struct ValidationRequestMaterializerProxy;
