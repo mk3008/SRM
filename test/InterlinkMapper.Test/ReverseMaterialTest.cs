@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class ReverseDatasourceMaterialTest
+public class ReverseMaterialTest
 {
-	public ReverseDatasourceMaterialTest(ITestOutputHelper output)
+	public ReverseMaterialTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 

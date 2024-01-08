@@ -28,9 +28,9 @@ public class DatasourceReverseMaterial : DatasourceMaterial
 		if (cnt != count) throw new InvalidOperationException();
 
 		// create system relation mapping
-		cnt = connection.Execute(CreateKeyRelationInsertQuery(process), commandTimeout: CommandTimeout);
+		cnt = connection.Execute(CreateKeyRelationInsertQuery(), commandTimeout: CommandTimeout);
 		if (cnt != count) throw new InvalidOperationException();
-		cnt = connection.Execute(CreateKeyMapDeleteQuery(process), commandTimeout: CommandTimeout);
+		cnt = connection.Execute(CreateKeyMapDeleteQuery(), commandTimeout: CommandTimeout);
 		if (cnt != count) throw new InvalidOperationException();
 	}
 
@@ -58,38 +58,27 @@ public class DatasourceReverseMaterial : DatasourceMaterial
 		return connection.ExecuteScalar<int>(sq);
 	}
 
-	private InsertQuery CreateKeyRelationInsertQuery(InterlinkProcess proc)
+	private InsertQuery CreateKeyRelationInsertQuery()
 	{
 		var keycolumns = InterlinkDatasource.KeyColumns.Select(x => x.ColumnName).ToList();
 
 		var sq = new SelectQuery();
-		var (_, d) = sq.From(CreateMaterialSelectQuery(proc)).As("d");
+		var (_, d) = sq.From(SelectQuery).As("d");
 
 		sq.Select(d, DestinationIdColumn);
 		keycolumns.ForEach(x => sq.Select(d, x));
 
-		return sq.ToInsertQuery(proc.InterlinkDatasource.GetKeyRelationTable(Environment).Definition.TableFullName);
+		return sq.ToInsertQuery(InterlinkDatasource.GetKeyRelationTable(Environment).Definition.TableFullName);
 	}
 
-	private DeleteQuery CreateKeyMapDeleteQuery(InterlinkProcess proc)
-	{
-		var sq = new SelectQuery();
-		var (_, d) = sq.From(CreateMaterialSelectQuery(proc)).As("d");
-
-		sq.Select(d, OriginIdColumn).As(DestinationIdColumn);
-
-		return sq.ToDeleteQuery(proc.InterlinkDatasource.GetKeyMapTable(Environment).Definition.TableFullName);
-	}
-
-	private SelectQuery CreateMaterialSelectQuery(InterlinkProcess proc)
+	private DeleteQuery CreateKeyMapDeleteQuery()
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(SelectQuery).As("d");
-		//sq.Where(d, InterlinkDatasourceIdColumn).Equal(proc.InterlinkDatasource.InterlinkDatasourceId.ToString());
 
-		sq.Select(d);
+		sq.Select(d, OriginIdColumn).As(DestinationIdColumn);
 
-		return sq;
+		return sq.ToDeleteQuery(InterlinkDatasource.GetKeyMapTable(Environment).Definition.TableFullName);
 	}
 }
 

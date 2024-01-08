@@ -26,133 +26,63 @@ public class DatasourceReverseMaterialTest
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
-	[Fact]
-	public void CreateKeyRelationInsertQuery()
-	{
-		var material = MaterialRepository.AdditinalMeterial;
+	public InterlinkProcess ProcessRow => SystemRepository.GetDummyProcess(DatasourceRepository.sales);
 
-		var query = material.AsPrivateProxy().CreateKeyRelationInsertQuery();
+	[Fact]
+	public void CreateRelationInsertQuery()
+	{
+		var relation = ProcessRow.InterlinkDatasource.GetKeyRelationTable(Environment);
+		var keys = ProcessRow.InterlinkDatasource.KeyColumns.Select(x => x.ColumnName).ToList();
+
+		var material = MaterialRepository.DatasourceReverseMaterial;
+		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateRelationInsertQuery(1, relation.Definition.TableFullName, keys);
+
 		var expect = """
 INSERT INTO
-    sale_journals__key_r_sales (
-        sale_journal_id, sale_id
+    sale_journals__relation (
+        interlink_process_id, sale_journal_id, root__sale_journal_id, origin__sale_journal_id, interlink_remarks
     )
-SELECT
-    d.sale_journal_id,
-    d.sale_id
-FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.journal_closing_date,
-            t.sale_date,
-            t.shop_id,
-            t.price,
-            t.sale_id
-        FROM
-            __additional_datasource AS t
-    ) AS d
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void CreateKeyMapInsertQuery()
-	{
-		var material = MaterialRepository.AdditinalMeterial;
-
-		var query = material.AsPrivateProxy().CreateKeyMapInsertQuery();
-		var expect = """
-INSERT INTO
-    sale_journals__key_m_sales (
-        sale_journal_id, sale_id
-    )
-SELECT
-    d.sale_journal_id,
-    d.sale_id
-FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.journal_closing_date,
-            t.sale_date,
-            t.shop_id,
-            t.price,
-            t.sale_id
-        FROM
-            __additional_datasource AS t
-    ) AS d
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void CreateDestinationInsertQuery()
-	{
-		var material = MaterialRepository.AdditinalMeterial;
-
-		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateDestinationInsertQuery();
-		var expect = """
-INSERT INTO
-    sale_journals (
-        sale_journal_id, journal_closing_date, sale_date, shop_id, price
-    )
-SELECT
-    d.sale_journal_id,
-    d.journal_closing_date,
-    d.sale_date,
-    d.shop_id,
-    d.price
-FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.journal_closing_date,
-            t.sale_date,
-            t.shop_id,
-            t.price,
-            t.sale_id
-        FROM
-            __additional_datasource AS t
-    ) AS d
-""";
-		var actual = query.ToText();
-		Logger.LogInformation(actual);
-
-		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
-	}
-
-	[Fact]
-	public void CreateRelationInsertSelectQuery()
-	{
-		var material = MaterialRepository.AdditinalMeterial;
-
-		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1, material.KeyRelationTableFullName, material.DatasourceKeyColumns);
-		var expect = """
 WITH
     material_data AS (
+        /* filterd by datasource */
         SELECT
-            t.sale_journal_id,
-            t.journal_closing_date,
-            t.sale_date,
-            t.shop_id,
-            t.price,
-            t.sale_id
+            d.sale_journal_id,
+            d.root__sale_journal_id,
+            d.origin__sale_journal_id,
+            d.journal_closing_date,
+            d.sale_date,
+            d.shop_id,
+            d.price,
+            d.remarks,
+            d.interlink_datasource_id,
+            d.interlink_remarks,
+            keymap.sale_id
         FROM
-            __additional_datasource AS t
+            (
+                SELECT
+                    t.sale_journal_id,
+                    t.root__sale_journal_id,
+                    t.origin__sale_journal_id,
+                    t.journal_closing_date,
+                    t.sale_date,
+                    t.shop_id,
+                    t.price,
+                    t.remarks,
+                    t.interlink_datasource_id,
+                    t.interlink_remarks
+                FROM
+                    __reverse_datasource AS t
+            ) AS d
+            INNER JOIN sale_journals__key_m_sales AS keymap ON d.origin__sale_journal_id = keymap.sale_journal_id
+        WHERE
+            d.interlink_datasource_id = 1
     )
 SELECT
     1 AS interlink_process_id,
     d.sale_journal_id,
     COALESCE(kr.root__sale_journal_id, d.sale_journal_id) AS root__sale_journal_id,
-    d.sale_journal_id AS origin__sale_journal_id,
-    '' AS interlink_remarks
+    d.origin__sale_journal_id,
+    d.interlink_remarks
 FROM
     material_data AS d
     LEFT JOIN (
@@ -178,6 +108,178 @@ FROM
         WHERE
             kr.row_num = 1
     ) AS kr ON d.sale_id = kr.sale_id
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void CreateDestinationInsertQuery()
+	{
+		var material = MaterialRepository.DatasourceReverseMaterial;
+		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateDestinationInsertQuery();
+
+		var expect = """
+INSERT INTO
+    sale_journals (
+        sale_journal_id, journal_closing_date, sale_date, shop_id, price, remarks
+    )
+SELECT
+    d.sale_journal_id,
+    d.journal_closing_date,
+    d.sale_date,
+    d.shop_id,
+    d.price,
+    d.remarks
+FROM
+    (
+        /* filterd by datasource */
+        SELECT
+            d.sale_journal_id,
+            d.root__sale_journal_id,
+            d.origin__sale_journal_id,
+            d.journal_closing_date,
+            d.sale_date,
+            d.shop_id,
+            d.price,
+            d.remarks,
+            d.interlink_datasource_id,
+            d.interlink_remarks,
+            keymap.sale_id
+        FROM
+            (
+                SELECT
+                    t.sale_journal_id,
+                    t.root__sale_journal_id,
+                    t.origin__sale_journal_id,
+                    t.journal_closing_date,
+                    t.sale_date,
+                    t.shop_id,
+                    t.price,
+                    t.remarks,
+                    t.interlink_datasource_id,
+                    t.interlink_remarks
+                FROM
+                    __reverse_datasource AS t
+            ) AS d
+            INNER JOIN sale_journals__key_m_sales AS keymap ON d.origin__sale_journal_id = keymap.sale_journal_id
+        WHERE
+            d.interlink_datasource_id = 1
+    ) AS d
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void CreateKeyRelationInsertQuery()
+	{
+		var material = MaterialRepository.DatasourceReverseMaterial;
+		var query = material.AsPrivateProxy().CreateKeyRelationInsertQuery();
+
+		var expect = """
+INSERT INTO
+    sale_journals__key_r_sales (
+        sale_journal_id, sale_id
+    )
+SELECT
+    d.sale_journal_id,
+    d.sale_id
+FROM
+    (
+        /* filterd by datasource */
+        SELECT
+            d.sale_journal_id,
+            d.root__sale_journal_id,
+            d.origin__sale_journal_id,
+            d.journal_closing_date,
+            d.sale_date,
+            d.shop_id,
+            d.price,
+            d.remarks,
+            d.interlink_datasource_id,
+            d.interlink_remarks,
+            keymap.sale_id
+        FROM
+            (
+                SELECT
+                    t.sale_journal_id,
+                    t.root__sale_journal_id,
+                    t.origin__sale_journal_id,
+                    t.journal_closing_date,
+                    t.sale_date,
+                    t.shop_id,
+                    t.price,
+                    t.remarks,
+                    t.interlink_datasource_id,
+                    t.interlink_remarks
+                FROM
+                    __reverse_datasource AS t
+            ) AS d
+            INNER JOIN sale_journals__key_m_sales AS keymap ON d.origin__sale_journal_id = keymap.sale_journal_id
+        WHERE
+            d.interlink_datasource_id = 1
+    ) AS d
+""";
+		var actual = query.ToText();
+		Logger.LogInformation(actual);
+
+		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
+	}
+
+	[Fact]
+	public void CreateKeyMapDeleteQuery()
+	{
+		var material = MaterialRepository.DatasourceReverseMaterial;
+		var query = material.AsPrivateProxy().CreateKeyMapDeleteQuery();
+
+		var expect = """
+DELETE FROM
+    sale_journals__key_m_sales AS d
+WHERE
+    (d.sale_journal_id) IN (
+        SELECT
+            d.origin__sale_journal_id AS sale_journal_id
+        FROM
+            (
+                /* filterd by datasource */
+                SELECT
+                    d.sale_journal_id,
+                    d.root__sale_journal_id,
+                    d.origin__sale_journal_id,
+                    d.journal_closing_date,
+                    d.sale_date,
+                    d.shop_id,
+                    d.price,
+                    d.remarks,
+                    d.interlink_datasource_id,
+                    d.interlink_remarks,
+                    keymap.sale_id
+                FROM
+                    (
+                        SELECT
+                            t.sale_journal_id,
+                            t.root__sale_journal_id,
+                            t.origin__sale_journal_id,
+                            t.journal_closing_date,
+                            t.sale_date,
+                            t.shop_id,
+                            t.price,
+                            t.remarks,
+                            t.interlink_datasource_id,
+                            t.interlink_remarks
+                        FROM
+                            __reverse_datasource AS t
+                    ) AS d
+                    INNER JOIN sale_journals__key_m_sales AS keymap ON d.origin__sale_journal_id = keymap.sale_journal_id
+                WHERE
+                    d.interlink_datasource_id = 1
+            ) AS d
+    )
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
