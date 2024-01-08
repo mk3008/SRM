@@ -10,14 +10,15 @@ public class ReverseForwardingService
 	public ReverseForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Materializer = new ReverseMaterializer(Environment);
+		RequestMaterializer = new ReverseRequestMaterializer(Environment);
+		DatasourceMaterializer = new ReverseDatasourceMaterializer(Environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private ReverseMaterializer Materializer { get; init; }
+	private ReverseRequestMaterializer RequestMaterializer { get; init; }
 
-	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
+	private ReverseDatasourceMaterializer DatasourceMaterializer { get; init; }
 
 	public void Execute(IDbConnection connection, InterlinkDestination destination)
 	{
@@ -29,7 +30,10 @@ public class ReverseForwardingService
 		var transaction = CreateTransactionAsNew(destination);
 		connection.Save(transaction);
 
-		var material = Materializer.Create(connection, transaction, injector);
+		var request = RequestMaterializer.Create(connection, transaction, injector);
+		if (request.Count == 0) return;
+
+		var material = DatasourceMaterializer.Create(connection, transaction, request);
 		if (material == null || material.Count == 0) return;
 
 		material.ExecuteTransfer(connection);

@@ -1,4 +1,4 @@
-﻿using Carbunql;
+using Carbunql;
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class ValidationMaterializerTest_Reverse
+public class ReverseDatasourceMaterializerTest
 {
-	public ValidationMaterializerTest_Reverse(ITestOutputHelper output)
+	public ReverseDatasourceMaterializerTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -25,23 +25,19 @@ public class ValidationMaterializerTest_Reverse
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly ReverseDatasourceMaterializerProxy Proxy;
-
 	public readonly DummyMaterialRepository MaterialRepository;
 
-	public Material GetRequestMaterialFromValidation()
-	{
-		var validation = MaterialRepository.ValidationMaterial;
-		return validation.ToAdditionalRequestMaterial();
-	}
+	public readonly ReverseDatasourceMaterializerProxy Proxy;
+
+	public InterlinkProcess ProcessRow => SystemRepository.GetDummyProcess(DatasourceRepository.sales);
 
 	[Fact]
 	public void TestCreateMaterialQuery()
 	{
-		var datasource = DatasourceRepository.sales;
-		var requestMaterial = GetRequestMaterialFromValidation();
+		var destination = DestinationRepository.sale_journals;
+		var requestMaterial = MaterialRepository.ReverseRequestMeterial;
 
-		var query = Proxy.CreateReverseMaterialQuery(datasource.Destination, requestMaterial);
+		var query = Proxy.CreateReverseMaterialQuery(destination, requestMaterial);
 
 		var expect = """
 CREATE TEMPORARY TABLE
@@ -73,7 +69,7 @@ WITH
                 FROM
                     sale_journals AS d
             ) AS d
-            INNER JOIN __validation_datasource AS rm ON d.sale_journal_id = rm.sale_journal_id
+            INNER JOIN __reverse_request AS rm ON d.sale_journal_id = rm.sale_journal_id
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
@@ -94,5 +90,4 @@ FROM
 
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
-
 }

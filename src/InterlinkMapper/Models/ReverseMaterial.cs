@@ -1,5 +1,4 @@
 ﻿using InterlinkMapper.Models;
-using InterlinkMapper.Services;
 using PrivateProxy;
 using RedOrb;
 using System.Data;
@@ -57,28 +56,20 @@ public class ReverseMaterial : DatasourceMaterial
 		var proc = ObjectRelationMapper.FindFirst<InterlinkProcess>();
 		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
 
-		return connection.Load<InterlinkDatasource>(sq =>
+		return connection.Load<InterlinkDatasource>(query =>
 		{
-			var seqName = source.GetSequence().ColumnName;
+			var seqColumn = source.GetSequence().ColumnName;
 
-			var xsq = new SelectQuery();
-			xsq.AddComment("filterd by request");
-			var (f, x) = xsq.From(SelectQuery).As("x");
-			xsq.Select(x, seqName);
-			xsq.Where(sq.FromClause!, seqName).Equal(x, seqName);
+			var sq = new SelectQuery();
+			sq.AddComment("filterd by request");
+			var (_, x) = sq.From(SelectQuery).As("x");
+			sq.SelectAll();
+			sq.Where(query.FromClause!, seqColumn).Equal(x, seqColumn);
 
-			sq.Where(xsq.ToExists());
+			query.Where(sq.ToExists());
 		});
 	}
 }
 
 [GeneratePrivateProxy(typeof(ReverseMaterial))]
 public partial struct ReverseMaterialProxy;
-
-public static class DbColumnDefinitionsExtension
-{
-	public static DbColumnDefinition FindFirstByColumn(this IEnumerable<DbColumnDefinition> source, string columnName)
-	{
-		return source.Where(x => x.ColumnName.IsEqualNoCase(columnName)).First();
-	}
-}

@@ -18,6 +18,11 @@ public class AdditionalRequestMaterializer : IRequestMaterializer
 
 	public string MaterialName { get; set; } = "__additional_request";
 
+	public Material Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource)
+	{
+		return Create(connection, transaction, datasource, null);
+	}
+
 	public Material Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
 		var query = CreateRequestMaterialQuery(datasource, injector);

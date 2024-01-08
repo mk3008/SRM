@@ -1,10 +1,9 @@
 ﻿using InterlinkMapper;
 using InterlinkMapper.Materializer;
-using InterlinkMapper.Models;
 using RedOrb;
 using System.Data;
 
-namespace InterlinkMapper.Services;
+namespace InterlinkMapper.Models;
 
 public class DatasourceReverseMaterial : DatasourceMaterial
 {

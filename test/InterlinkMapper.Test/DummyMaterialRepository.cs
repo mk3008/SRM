@@ -37,8 +37,8 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 
 	private SelectQuery GetReverseRequestQuery()
 	{
-		var m = new ReverseMaterializer(environment);
-		return m.AsPrivateProxy().CreateRequestMaterialQuery(DestinationRepository.sale_journals).ToSelectQuery();
+		var m = new ReverseRequestMaterializer(environment);
+		return m.AsPrivateProxy().CreateRequestMaterialQuery(DestinationRepository.sale_journals, (SelectQuery x) => x).ToSelectQuery();
 	}
 
 	public Material ValidationRequestMeterial =>
@@ -88,11 +88,10 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 	{
 		var destination = DestinationRepository.sale_journals;
 		var request = ReverseRequestMeterial;
-		var service = new ReverseMaterializer(environment);
+		var service = new ReverseDatasourceMaterializer(environment);
 		var query = service.AsPrivateProxy().CreateReverseMaterialQuery(
 			destination,
-			request,
-			(SelectQuery x) => x
+			request
 		);
 
 		var material = new Material
