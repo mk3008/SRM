@@ -2,6 +2,7 @@
 using InterlinkMapper.Materializer;
 using RedOrb;
 using System.Data;
+using PrivateProxy;
 
 namespace InterlinkMapper.Models;
 
@@ -91,3 +92,6 @@ public class DatasourceReverseMaterial : DatasourceMaterial
 		return sq;
 	}
 }
+
+[GeneratePrivateProxy(typeof(DatasourceReverseMaterial))]
+public partial struct DatasourceReverseMaterialProxy;

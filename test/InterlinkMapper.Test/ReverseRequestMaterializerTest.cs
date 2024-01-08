@@ -60,7 +60,7 @@ FROM
 	}
 
 	[Fact]
-	public void TestCelanUpRequestMaterialQuery()
+	public void CreateCleanUpRequestMaterialQuery()
 	{
 		var destination = DestinationRepository.sale_journals;
 		var material = MaterialRepository.ReverseRequestMeterial;

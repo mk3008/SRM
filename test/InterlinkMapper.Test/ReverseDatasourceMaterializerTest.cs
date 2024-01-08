@@ -32,7 +32,7 @@ public class ReverseDatasourceMaterializerTest
 	public InterlinkProcess ProcessRow => SystemRepository.GetDummyProcess(DatasourceRepository.sales);
 
 	[Fact]
-	public void TestCreateMaterialQuery()
+	public void CreateReverseMaterialQuery()
 	{
 		var destination = DestinationRepository.sale_journals;
 		var requestMaterial = MaterialRepository.ReverseRequestMeterial;

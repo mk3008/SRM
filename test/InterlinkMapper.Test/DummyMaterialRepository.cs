@@ -60,6 +60,8 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 
 	public ReverseMaterial ReverseMeterial => CreateReverseMeterial();
 
+	public DatasourceReverseMaterial DatasourceReverseMaterial => CreateDatasourceReverseMaterial();
+
 	public ValidationMaterial ValidationMaterial => CreateValidationMaterial();
 
 	private AdditionalMaterial CreateAdditionalMaterialQuery()
@@ -103,6 +105,13 @@ public class DummyMaterialRepository(SystemEnvironment environment)
 		};
 
 		return service.AsPrivateProxy().ToReverseMaterial(material);
+	}
+
+	private DatasourceReverseMaterial CreateDatasourceReverseMaterial()
+	{
+		var reverse = CreateReverseMeterial();
+		var m = reverse.AsPrivateProxy().ToDatasourceReverseMaterial(DatasourceRepository.sales);
+		return m;
 	}
 
 	private ValidationMaterial CreateValidationMaterial()
