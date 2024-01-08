@@ -133,17 +133,7 @@ public class ReverseRequestMaterializer : IRequestMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("data that has been materialized will be deleted from the original.");
 
-		var (f, r) = sq.From(requestTable).As("r");
-
-		sq.Where(() =>
-		{
-			// exists (select * from REQUEST x where d.key = x.key)
-			var q = new SelectQuery();
-			var (_, x) = q.From(result.MaterialName).As("x");
-			q.Where(x, requestId).Equal(r, requestId);
-			q.SelectAll();
-			return q.ToExists();
-		});
+		var (_, r) = sq.From(result.SelectQuery).As("r");
 
 		sq.Select(r, requestId);
 

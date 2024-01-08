@@ -38,6 +38,7 @@
 		<Compile Include="Services\Materializer.cs" />
 		<Compile Include="Services\ReverseRequestMaterializer.cs" />
 		<Compile Include="Services\ReverseDatasourceMaterializer.cs" />
+		<Compile Include="Services\ValidationRequestMaterializer.cs" />
 		<Compile Include="Services\ValidationForwardingService.cs" />
 		<Compile Include="Services\ReverseForwardingService.cs" />
 		<Compile Include="Services\AdditionalForwardingService.cs" />

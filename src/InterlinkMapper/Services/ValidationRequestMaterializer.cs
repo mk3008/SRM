@@ -1,13 +1,13 @@
 ﻿using InterlinkMapper.Models;
-using InterlinkMapper.Services;
 using PrivateProxy;
+using RedOrb;
 using System.Data;
 
-namespace InterlinkMapper.Materializer;
+namespace InterlinkMapper.Services;
 
-public class AdditionalRequestMaterializer : IRequestMaterializer
+public class ValidationRequestMaterializer : IRequestMaterializer
 {
-	public AdditionalRequestMaterializer(SystemEnvironment environment)
+	public ValidationRequestMaterializer(SystemEnvironment environment)
 	{
 		Environment = environment;
 	}
@@ -16,7 +16,7 @@ public class AdditionalRequestMaterializer : IRequestMaterializer
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public string MaterialName { get; set; } = "__additional_request";
+	public string MaterialName { get; set; } = "__validation_request";
 
 	public Material Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource)
 	{
@@ -50,11 +50,12 @@ public class AdditionalRequestMaterializer : IRequestMaterializer
 		var keymap = datasource.GetKeyMapTable(Environment);
 
 		var sq = new SelectQuery();
-		sq.AddComment("The data existing in KeyMap has been transformed, so delete it.");
+		sq.AddComment("Data that does not exist in the KeyMap is not transferred and is not subject to verification.");
 		var (f, d) = sq.From(request.SelectQuery).As("d");
-		var km = f.InnerJoin(keymap.Definition.TableFullName).As("keymap").On(d, keys);
+		var km = f.LeftJoin(keymap.Definition.TableFullName).As("keymap").On(d, keys);
 
 		sq.Select(d, req.RequestIdColumn);
+		sq.Where(km, keys.First()).IsNull();
 
 		return sq.ToDeleteQuery(request.MaterialName);
 	}
@@ -67,7 +68,7 @@ public class AdditionalRequestMaterializer : IRequestMaterializer
 
 	private CreateTableQuery CreateRequestMaterialQuery(InterlinkDatasource datasource, Func<SelectQuery, SelectQuery>? injector)
 	{
-		var request = datasource.GetInsertRequestTable(Environment);
+		var request = datasource.GetValidationRequestTable(Environment);
 		var relation = datasource.GetKeyRelationTable(Environment);
 
 		var sq = new SelectQuery();
@@ -97,11 +98,12 @@ public class AdditionalRequestMaterializer : IRequestMaterializer
 		sq.AddComment("data that has been materialized will be deleted from the original.");
 
 		var (_, r) = sq.From(result.SelectQuery).As("r");
+
 		sq.Select(r, requestId);
 
 		return sq.ToDeleteQuery(requestTable);
 	}
 }
 
-[GeneratePrivateProxy(typeof(AdditionalRequestMaterializer))]
-public partial struct AdditionalRequestMaterializerProxy;
+[GeneratePrivateProxy(typeof(ValidationRequestMaterializer))]
+public partial struct VValidationRequestMaterializerProxy;

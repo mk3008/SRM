@@ -67,16 +67,13 @@ WHERE
         SELECT
             r.sale_journals__req_i_sales_id
         FROM
-            sale_journals__req_i_sales AS r
-        WHERE
-            EXISTS (
+            (
                 SELECT
-                    *
+                    t.sale_journals__req_i_sales_id,
+                    t.sale_id
                 FROM
-                    __additional_request AS x
-                WHERE
-                    x.sale_journals__req_i_sales_id = r.sale_journals__req_i_sales_id
-            )
+                    __additional_request AS t
+            ) AS r
     )
 """;
 		var actual = query.ToText();

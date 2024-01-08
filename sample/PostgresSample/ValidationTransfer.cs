@@ -38,7 +38,7 @@ where
 	public static void Execute()
 	{
 		using var cn = PostgresDB.ConnectionOpenAsNew(new ConsoleLogger());
-		//using var trn = cn.BeginTransaction();
+		using var trn = cn.BeginTransaction();
 
 		// load datasource
 		var datasource = cn.Load(new InterlinkDatasource()
@@ -60,6 +60,6 @@ where
 		 */
 		service.Execute(cn, datasource);
 
-		//trn.Commit();
+		trn.Commit();
 	}
 }

@@ -125,16 +125,16 @@ WHERE
         SELECT
             r.sale_journals__req_reverse_id
         FROM
-            sale_journals__req_reverse AS r
-        WHERE
-            EXISTS (
+            (
                 SELECT
-                    *
+                    t.sale_journals__req_reverse_id,
+                    t.sale_journal_id,
+                    t.root__sale_journal_id,
+                    t.origin__sale_journal_id,
+                    t.interlink_datasource_id
                 FROM
-                    __reverse_request AS x
-                WHERE
-                    x.sale_journals__req_reverse_id = r.sale_journals__req_reverse_id
-            )
+                    __reverse_request AS t
+            ) AS r
     )
 """;
 		var actual = query.ToText();
