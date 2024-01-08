@@ -1,10 +1,12 @@
-﻿using InterlinkMapper.Models;
+﻿using InterlinkMapper;
+using InterlinkMapper.Materializer;
+using InterlinkMapper.Models;
 using RedOrb;
 using System.Data;
 
-namespace InterlinkMapper.Materializer;
+namespace InterlinkMapper.Services;
 
-internal class DatasourceReverseMaterial : MaterializeResult
+public class DatasourceReverseMaterial : DatasourceMaterial
 {
 	public required InterlinkDatasource InterlinkDatasource { get; set; }
 
@@ -63,7 +65,7 @@ internal class DatasourceReverseMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(CreateMaterialSelectQuery(proc)).As("d");
 
-		sq.Select(d, DestinationSeqColumn);
+		sq.Select(d, DestinationIdColumn);
 		keycolumns.ForEach(x => sq.Select(d, x));
 
 		return sq.ToInsertQuery(proc.InterlinkDatasource.GetKeyRelationTable(Environment).Definition.TableFullName);
@@ -74,7 +76,7 @@ internal class DatasourceReverseMaterial : MaterializeResult
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(CreateMaterialSelectQuery(proc)).As("d");
 
-		sq.Select(d, OriginIdColumn).As(DestinationSeqColumn);
+		sq.Select(d, OriginIdColumn).As(DestinationIdColumn);
 
 		return sq.ToDeleteQuery(proc.InterlinkDatasource.GetKeyMapTable(Environment).Definition.TableFullName);
 	}

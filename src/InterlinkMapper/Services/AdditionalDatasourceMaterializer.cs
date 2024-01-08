@@ -1,7 +1,7 @@
-﻿using Carbunql.Building;
-using Carbunql.Tables;
+﻿using Carbunql.Tables;
 using InterlinkMapper;
 using InterlinkMapper.Models;
+using InterlinkMapper.Services;
 using PrivateProxy;
 using RedOrb;
 using System.Data;
@@ -53,24 +53,6 @@ public class AdditionalDatasourceMaterializer : IRequestMaterializer
 		return sq;
 	}
 
-	private SelectQuery InjectRequestMaterialFilter(SelectQuery sq, InterlinkDatasource datasource, Material request)
-	{
-		sq.AddComment("inject request material filter");
-
-		var f = sq.FromClause!;
-		var d = f.Root;
-
-		var rm = f.InnerJoin(request.MaterialName).As("rm").On(x =>
-		{
-			datasource.KeyColumns.ForEach(key =>
-			{
-				x.Condition(d, key.ColumnName).Equal(x.Table, key.ColumnName);
-			});
-		});
-
-		return sq;
-	}
-
 	private CreateTableQuery CreateAdditionalMaterialQuery(InterlinkDatasource datasource, Material request)
 	{
 		return CreateAdditionalMaterialQuery(datasource, request, null);
@@ -85,10 +67,7 @@ public class AdditionalDatasourceMaterializer : IRequestMaterializer
 		sq.Select(datasource.Destination.DbSequence);
 		sq.Select(d);
 
-		if (injector != null)
-		{
-			sq = injector(sq);
-		}
+		if (injector != null) sq = injector(sq);
 
 		return sq.ToCreateTableQuery(MaterialName);
 	}
@@ -116,7 +95,7 @@ public class AdditionalDatasourceMaterializer : IRequestMaterializer
 			InterlinkRemarksColumn = relation.RemarksColumn,
 			DestinationTable = datasource.Destination.DbTable.TableFullName,
 			DestinationColumns = datasource.Destination.DbTable.ColumnNames,
-			DestinationSeqColumn = datasource.Destination.DbSequence.ColumnName,
+			DestinationIdColumn = datasource.Destination.DbSequence.ColumnName,
 			KeyMapTableFullName = keymap.Definition.TableFullName,
 			KeyRelationTableFullName = keyrelation.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,

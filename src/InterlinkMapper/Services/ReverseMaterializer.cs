@@ -1,4 +1,5 @@
 ﻿using InterlinkMapper.Models;
+using InterlinkMapper.Services;
 using PrivateProxy;
 using RedOrb;
 using System.Data;
@@ -128,7 +129,7 @@ public class ReverseMaterializer : IRequestMaterializer
 			InterlinkRemarksColumn = relation.RemarksColumn,
 			DestinationTable = destination.DbTable.TableFullName,
 			DestinationColumns = destination.DbTable.ColumnNames,
-			DestinationSeqColumn = destination.DbSequence.ColumnName,
+			DestinationIdColumn = destination.DbSequence.ColumnName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
 			CommandTimeout = Environment.DbEnvironment.CommandTimeout,
 			InterlinkProcessIdColumn = procId.ColumnName,

@@ -1,7 +1,7 @@
 ﻿using InterlinkMapper.Models;
 using System.Data;
 
-namespace InterlinkMapper.Materializer;
+namespace InterlinkMapper.Services;
 
 internal interface IRequestMaterializer
 {

@@ -1,5 +1,6 @@
 ﻿using Carbunql.Tables;
 using InterlinkMapper.Models;
+using InterlinkMapper.Services;
 using PrivateProxy;
 using RedOrb;
 using System.Data;
@@ -73,7 +74,7 @@ public class ValidationMaterializer : IRequestMaterializer
 			InterlinkRemarksColumn = relation.RemarksColumn,
 			DestinationTable = datasource.Destination.DbTable.TableFullName,
 			DestinationColumns = datasource.Destination.DbTable.ColumnNames,
-			DestinationSeqColumn = datasource.Destination.DbSequence.ColumnName,
+			DestinationIdColumn = datasource.Destination.DbSequence.ColumnName,
 			KeyMapTableFullName = keymap.Definition.TableFullName,
 			KeyRelationTableFullName = keyrelation.Definition.TableFullName,
 			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,

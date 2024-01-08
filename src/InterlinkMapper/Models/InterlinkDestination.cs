@@ -168,7 +168,7 @@ public partial class InterlinkDestination
 		return sq;
 	}
 
-	public InsertQuery CreateInsertQueryFrom(MaterializeResult datasourceMaterial)
+	public InsertQuery CreateInsertQueryFrom(DatasourceMaterial datasourceMaterial)
 	{
 		var sq = new SelectQuery();
 		var (_, d) = sq.From(datasourceMaterial.SelectQuery).As("d");

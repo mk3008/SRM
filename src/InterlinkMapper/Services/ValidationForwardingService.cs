@@ -56,7 +56,7 @@ public class ValidationForwardingService
 		{
 			CommandTimeout = CommandTimeout,
 			DestinationColumns = destination.DbTable.ColumnNames,
-			DestinationSeqColumn = destination.DbSequence.ColumnName,
+			DestinationIdColumn = destination.DbSequence.ColumnName,
 			DestinationTable = destination.TableFullName,
 			Environment = Environment,
 			InterlinkDatasource = datasource,

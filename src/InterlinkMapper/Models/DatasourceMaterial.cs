@@ -3,7 +3,7 @@ using PrivateProxy;
 
 namespace InterlinkMapper.Materializer;
 
-public abstract class MaterializeResult
+public abstract class DatasourceMaterial
 {
 	public required SelectQuery SelectQuery { get; set; }
 
@@ -41,7 +41,7 @@ public abstract class MaterializeResult
 	/// Column name that stores forwarding destination ID
 	/// ex."sale_id", "shop_id" etc
 	/// </summary>
-	public required string DestinationSeqColumn { get; set; }
+	public required string DestinationIdColumn { get; set; }
 
 	public required List<string> DestinationColumns { get; set; }
 
@@ -56,27 +56,6 @@ public abstract class MaterializeResult
 	private string CteName { get; set; } = "material_data";
 
 	private string RowNumberColumnName { get; set; } = "row_num";
-
-	//public required string KeyRelationTable { get; set; }
-
-	//public required List<string> DatasourceKeyColumns { get; set; }
-
-	//public required string KeyMapTableNameColumn { get; set; }
-
-	//public required string KeyRelationTableNameColumn { get; set; }
-
-	//public required string ActionColumn { get; set; }
-
-	//public required string InsertCountColumn { get; set; }
-
-	//public required string ProcessTableName { get; set; }
-
-	//internal InsertQuery CreateRelationInsertQuery(InterlinkProcessRow row)
-	//{
-	//	//datasource を読み込んでキー構造を取得する
-	//	//var sq = CreateRelationInsertSelectQuery(processId);
-	//	return sq.ToInsertQuery(InterlinkRelationTable);
-	//}
 
 	internal InsertQuery CreateRelationInsertQuery(long processId, string keyRelationTable, List<string> datasourceKeyColumns)
 	{
@@ -93,8 +72,8 @@ public abstract class MaterializeResult
 		var kr = f.LeftJoin(CreateFirstKeyRelationSelectQuery(keyRelationTable, datasourceKeyColumns)).As("kr").On(d, datasourceKeyColumns);
 
 		sq.Select(processId.ToString()).As(InterlinkProcessIdColumn);
-		sq.Select(d, DestinationSeqColumn);
-		sq.Select(GetCoalesceValue(new ColumnValue(kr, RootIdColumn), new ColumnValue(d, DestinationSeqColumn))).As(RootIdColumn);
+		sq.Select(d, DestinationIdColumn);
+		sq.Select(GetCoalesceValue(new ColumnValue(kr, RootIdColumn), new ColumnValue(d, DestinationIdColumn))).As(RootIdColumn);
 
 		if (ct.GetColumnNames().Where(x => x.IsEqualNoCase(OriginIdColumn)).Any())
 		{
@@ -103,7 +82,7 @@ public abstract class MaterializeResult
 		else
 		{
 			// Record this document as an original document
-			sq.Select(d, DestinationSeqColumn).As(OriginIdColumn);
+			sq.Select(d, DestinationIdColumn).As(OriginIdColumn);
 		}
 		if (ct.GetColumnNames().Where(x => x.IsEqualNoCase(InterlinkRemarksColumn)).Any())
 		{
@@ -143,7 +122,7 @@ public abstract class MaterializeResult
 
 		var (_, kr) = sq.From(CreateKeyRelationSelectQuery(keyRelationTable, datasourceKeyColumns)).As("kr");
 		datasourceKeyColumns.ForEach(key => sq.Select(kr, key));
-		sq.Select(kr, DestinationSeqColumn).As(RootIdColumn);
+		sq.Select(kr, DestinationIdColumn).As(RootIdColumn);
 		sq.Where(kr, RowNumberColumnName).Equal(1);
 		return sq;
 	}
@@ -160,15 +139,15 @@ public abstract class MaterializeResult
 
 		var over = new OverClause();
 		over.AddPartition(dskeys);
-		over.AddOrder(new SortableItem(new ColumnValue(kr, DestinationSeqColumn)));
+		over.AddOrder(new SortableItem(new ColumnValue(kr, DestinationIdColumn)));
 
 		datasourceKeyColumns.ForEach(key => sq.Select(kr, key));
-		sq.Select(kr, DestinationSeqColumn);
+		sq.Select(kr, DestinationIdColumn);
 		sq.Select(new FunctionValue("row_number", over)).As(RowNumberColumnName);
 
 		return sq;
 	}
 }
 
-[GeneratePrivateProxy(typeof(MaterializeResult))]
-public partial struct MaterializeResultProxy;
+[GeneratePrivateProxy(typeof(DatasourceMaterial))]
+public partial struct DatasourceMaterialProxy;

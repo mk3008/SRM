@@ -370,7 +370,7 @@ FROM
 	public void TestCreateDestinationInsertQuery()
 	{
 		var material = MaterialRepository.ReverseMeterial;
-		var query = ((MaterializeResult)material).AsPrivateProxy().CreateDestinationInsertQuery();
+		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateDestinationInsertQuery();
 
 		var expect = """
 INSERT INTO

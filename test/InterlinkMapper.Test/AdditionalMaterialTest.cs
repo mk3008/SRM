@@ -97,7 +97,7 @@ FROM
 	{
 		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = ((MaterializeResult)material).AsPrivateProxy().CreateDestinationInsertQuery();
+		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateDestinationInsertQuery();
 		var expect = """
 INSERT INTO
     sale_journals (
@@ -133,7 +133,7 @@ FROM
 	{
 		var material = MaterialRepository.AdditinalMeterial;
 
-		var query = ((MaterializeResult)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1, material.KeyRelationTableFullName, material.DatasourceKeyColumns);
+		var query = ((DatasourceMaterial)material).AsPrivateProxy().CreateRelationInsertSelectQuery(1, material.KeyRelationTableFullName, material.DatasourceKeyColumns);
 		var expect = """
 WITH
     material_data AS (

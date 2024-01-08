@@ -1,11 +1,12 @@
 ﻿using InterlinkMapper.Models;
+using InterlinkMapper.Services;
 using PrivateProxy;
 using RedOrb;
 using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class ReverseMaterial : MaterializeResult
+public class ReverseMaterial : DatasourceMaterial
 {
 	public required int Count { get; set; }
 
@@ -31,7 +32,7 @@ public class ReverseMaterial : MaterializeResult
 			{
 				CommandTimeout = CommandTimeout,
 				DestinationColumns = DestinationColumns,
-				DestinationSeqColumn = DestinationSeqColumn,
+				DestinationIdColumn = DestinationIdColumn,
 				DestinationTable = DestinationTable,
 				Environment = Environment,
 				InterlinkDatasource = datasource,
