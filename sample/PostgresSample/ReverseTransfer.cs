@@ -14,7 +14,7 @@ internal static class ReverseTransfer
 		/*
 		NOTE:
 		The sample creates the request manually.
-		Actually, make the request with an update trigger or something like that.
+		Reversal processing is intended for exceptional operation, so normally use Validation.
 		*/
 		cn.Execute("""
 insert into interlink.sale_journal__req_reverse (sale_journal_id)

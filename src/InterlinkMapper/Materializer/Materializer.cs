@@ -3,14 +3,14 @@ using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-internal interface IMaterializer
+internal interface IRequestMaterializer
 {
 	int CommandTimeout { get; }
 }
 
-internal static class IMaterializerExtension
+internal static class RequestMaterializerExtension
 {
-	internal static Material CreateMaterial(this IMaterializer materializer, IDbConnection connection, InterlinkTransaction transaction, CreateTableQuery query)
+	internal static Material CreateMaterial(this IRequestMaterializer materializer, IDbConnection connection, InterlinkTransaction transaction, CreateTableQuery query)
 	{
 		var tableName = query.TableFullName;
 

@@ -5,7 +5,7 @@ using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class ReverseMaterializer : IMaterializer
+public class ReverseMaterializer : IRequestMaterializer
 {
 	public ReverseMaterializer(SystemEnvironment environment)
 	{

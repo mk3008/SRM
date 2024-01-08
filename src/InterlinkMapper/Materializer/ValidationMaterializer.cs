@@ -6,7 +6,7 @@ using System.Data;
 
 namespace InterlinkMapper.Materializer;
 
-public class ValidationMaterializer : IMaterializer
+public class ValidationMaterializer : IRequestMaterializer
 {
 	public ValidationMaterializer(SystemEnvironment environment)
 	{

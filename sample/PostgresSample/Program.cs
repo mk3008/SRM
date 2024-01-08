@@ -1,7 +1,4 @@
-﻿using Dapper;
-using InterlinkMapper.Services;
-using PostgresSample;
-using RedOrb;
+﻿using PostgresSample;
 
 using (var connection = PostgresDB.ConnectionOpenAsNew(new ConsoleLogger()))
 {
@@ -11,8 +8,17 @@ using (var connection = PostgresDB.ConnectionOpenAsNew(new ConsoleLogger()))
 	ApplicationInitializer.CreateApplicationTransactionData(connection);
 }
 
+Console.WriteLine("------------------------------------------------------------------------------");
+
 AdditionalTransfer.CreateRequest();
 AdditionalTransfer.Execute();
+
+Console.WriteLine("------------------------------------------------------------------------------");
+
+//ValidationTransfer.CreateRequest();
+//ValidationTransfer.Execute();
+
+Console.WriteLine("------------------------------------------------------------------------------");
 
 ReverseTransfer.CreateRequest();
 ReverseTransfer.Execute();

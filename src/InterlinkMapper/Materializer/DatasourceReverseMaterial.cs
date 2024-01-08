@@ -19,7 +19,7 @@ internal class DatasourceReverseMaterial : MaterializeResult
 		var keyrelation = InterlinkDatasource.GetKeyRelationTable(Environment).Definition.GetTableFullName();
 		var keycolumns = InterlinkDatasource.KeyColumns.Select(x => x.ColumnName).ToList();
 
-		// transfer datasource
+		// transfer datasource		
 		var cnt = connection.Execute(CreateRelationInsertQuery(process.InterlinkProcessId, keyrelation, keycolumns), commandTimeout: CommandTimeout);
 		if (cnt != count) throw new InvalidOperationException();
 		cnt = connection.Execute(CreateDestinationInsertQuery(), commandTimeout: CommandTimeout);

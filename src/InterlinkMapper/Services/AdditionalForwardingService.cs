@@ -10,12 +10,15 @@ public class AdditionalForwardingService
 	public AdditionalForwardingService(SystemEnvironment environment)
 	{
 		Environment = environment;
-		Materializer = new AdditionalMaterializer(Environment);
+		RequestMaterializer = new AdditionalRequestMaterializer(Environment);
+		DatasourceMaterializer = new AdditionalDatasourceMaterializer(Environment);
 	}
 
 	private SystemEnvironment Environment { get; init; }
 
-	private AdditionalMaterializer Materializer { get; init; }
+	private AdditionalRequestMaterializer RequestMaterializer { get; init; }
+
+	private AdditionalDatasourceMaterializer DatasourceMaterializer { get; init; }
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
@@ -31,8 +34,11 @@ public class AdditionalForwardingService
 		var transaction = CreateTransactionAsNew(datasource.Destination);
 		connection.Save(transaction);
 
-		var material = Materializer.Create(connection, transaction, datasource, injector);
-		if (material == null || material.Count == 0) return;
+		var request = RequestMaterializer.Create(connection, transaction, datasource, injector);
+		if (request.Count == 0) return;
+
+		var material = DatasourceMaterializer.Create(connection, transaction, datasource, request);
+		if (material.Count == 0) return;
 
 		material.ExecuteTransfer(connection);
 	}

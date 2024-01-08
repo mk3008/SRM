@@ -1,4 +1,4 @@
-﻿using Carbunql;
+using Carbunql;
 using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using Microsoft.Extensions.Logging;
@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class ValidationMaterializerTest_Additional
+public class AdditionalDatasourceMaterializerTestCTE
 {
-	public ValidationMaterializerTest_Additional(ITestOutputHelper output)
+	public AdditionalDatasourceMaterializerTestCTE(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -29,25 +29,32 @@ public class ValidationMaterializerTest_Additional
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
-	public Material GetRequestMaterialFromValidation()
-	{
-		var validation = MaterialRepository.ValidationMaterial;
-		return validation.ToAdditionalRequestMaterial();
-	}
-
 	[Fact]
-	public void TestCreateMaterialQuery()
+	public void CreateAdditionalMaterialQuery()
 	{
-		var datasource = DatasourceRepository.sales;
-		var requestMaterial = GetRequestMaterialFromValidation();
+		var datasource = DatasourceRepository.cte_sales;
+		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
-		var query = Proxy.CreateAdditionalMaterialQuery(datasource, requestMaterial);
+		var query = Proxy.CreateAdditionalMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
 
 		var expect = """
 CREATE TEMPORARY TABLE
     __additional_datasource
 AS
 WITH
+    __raw AS (
+        /* inject request material filter */
+        SELECT
+            s.sale_date AS journal_closing_date,
+            s.sale_date,
+            s.shop_id,
+            s.price,
+            s.sale_id,
+            s.sale_detail_id
+        FROM
+            sale_detail AS s
+            INNER JOIN __additional_request AS rm ON s.sale_id = rm.sale_id
+    ),
     additional_data AS (
         /* inject request material filter */
         SELECT
@@ -60,15 +67,20 @@ WITH
             (
                 /* raw data source */
                 SELECT
-                    s.sale_date AS journal_closing_date,
-                    s.sale_date,
-                    s.shop_id,
-                    s.price,
-                    s.sale_id
+                    d.journal_closing_date,
+                    d.sale_date,
+                    d.shop_id,
+                    SUM(d.price) AS price,
+                    d.sale_id
                 FROM
-                    sales AS s
+                    __raw AS d
+                GROUP BY
+                    d.journal_closing_date,
+                    d.sale_date,
+                    d.shop_id,
+                    d.sale_id
             ) AS d
-            INNER JOIN __validation_datasource AS rm ON d.sale_id = rm.sale_id
+            INNER JOIN __additional_request AS rm ON d.sale_id = rm.sale_id
     )
 SELECT
     NEXTVAL('sale_journals_sale_journal_id_seq'::regclass) AS sale_journal_id,
@@ -85,5 +97,4 @@ FROM
 
 		Assert.Equal(expect.ToValidateText(), actual.ToValidateText());
 	}
-
 }

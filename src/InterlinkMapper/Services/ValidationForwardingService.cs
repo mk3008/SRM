@@ -79,9 +79,9 @@ public class ValidationForwardingService
 	{
 		var request = validation.ToAdditionalRequestMaterial();
 
-		var materializer = new AdditionalMaterializer(Environment)
+		var materializer = new AdditionalDatasourceMaterializer(Environment)
 		{
-			DatasourceMaterialName = "__validation_additional_datasource"
+			MaterialName = "__validation_additional_datasource"
 		};
 		var material = materializer.Create(connection, transaction, datasource, request);
 		material.ExecuteTransfer(connection);

@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 
 namespace InterlinkMapper.Test;
 
-public class AdditionalForwardingMaterializerCTE
+public class AdditionalDatasourceMaterializerTest
 {
-	public AdditionalForwardingMaterializerCTE(ITestOutputHelper output)
+	public AdditionalDatasourceMaterializerTest(ITestOutputHelper output)
 	{
 		Logger = new UnitTestLogger(output);
 
@@ -17,7 +17,7 @@ public class AdditionalForwardingMaterializerCTE
 			DbConnetionConfig = new DummyDB(),
 		};
 
-		Proxy = new AdditionalMaterializer(Environment).AsPrivateProxy();
+		Proxy = new AdditionalDatasourceMaterializer(Environment).AsPrivateProxy();
 		MaterialRepository = new DummyMaterialRepository(Environment);
 	}
 
@@ -25,14 +25,14 @@ public class AdditionalForwardingMaterializerCTE
 
 	public readonly SystemEnvironment Environment;
 
-	public readonly AdditionaMaterializerProxy Proxy;
+	public readonly AdditionalDatasourceMaterializerProxy Proxy;
 
 	public readonly DummyMaterialRepository MaterialRepository;
 
 	[Fact]
-	public void TestCreateMaterialQuery_Has_raw_CTE()
+	public void CreateAdditionalMaterialQuery()
 	{
-		var datasource = DatasourceRepository.cte_sales;
+		var datasource = DatasourceRepository.sales;
 		var requestMaterial = MaterialRepository.AdditionalRequestMeterial;
 
 		var query = Proxy.CreateAdditionalMaterialQuery(datasource, requestMaterial, (SelectQuery x) => x);
@@ -42,19 +42,6 @@ CREATE TEMPORARY TABLE
     __additional_datasource
 AS
 WITH
-    __raw AS (
-        /* inject request material filter */
-        SELECT
-            s.sale_date AS journal_closing_date,
-            s.sale_date,
-            s.shop_id,
-            s.price,
-            s.sale_id,
-            s.sale_detail_id
-        FROM
-            sale_detail AS s
-            INNER JOIN __additional_request AS rm ON s.sale_id = rm.sale_id
-    ),
     additional_data AS (
         /* inject request material filter */
         SELECT
@@ -67,18 +54,13 @@ WITH
             (
                 /* raw data source */
                 SELECT
-                    d.journal_closing_date,
-                    d.sale_date,
-                    d.shop_id,
-                    SUM(d.price) AS price,
-                    d.sale_id
+                    s.sale_date AS journal_closing_date,
+                    s.sale_date,
+                    s.shop_id,
+                    s.price,
+                    s.sale_id
                 FROM
-                    __raw AS d
-                GROUP BY
-                    d.journal_closing_date,
-                    d.sale_date,
-                    d.shop_id,
-                    d.sale_id
+                    sales AS s
             ) AS d
             INNER JOIN __additional_request AS rm ON d.sale_id = rm.sale_id
     )
