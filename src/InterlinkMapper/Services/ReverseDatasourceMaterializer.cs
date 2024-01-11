@@ -17,7 +17,7 @@ public class ReverseDatasourceMaterializer : IRequestMaterializer
 
 	public int CommandTimeout => Environment.DbEnvironment.CommandTimeout;
 
-	public string DatasourceMaterialName { get; set; } = "__reverse_datasource";
+	public string MaterialName { get; set; } = "__reverse_datasource";
 
 	private string CteName { get; set; } = "reverse_data";
 
@@ -41,7 +41,7 @@ public class ReverseDatasourceMaterializer : IRequestMaterializer
 		sq.Select(destination.DbSequence);
 		sq.Select(d);
 
-		return sq.ToCreateTableQuery(DatasourceMaterialName);
+		return sq.ToCreateTableQuery(MaterialName);
 	}
 
 	private SelectQuery CreateReverseDatasourceSelectQuery(InterlinkDestination destination, Material request)
@@ -53,6 +53,15 @@ public class ReverseDatasourceMaterializer : IRequestMaterializer
 		var sq = new SelectQuery();
 		sq.AddComment("data source to be added");
 		var (f, d) = sq.From(destination.ToSelectQuery()).As("d");
+		//SelectableTable rm;
+		//if (!string.IsNullOrEmpty(request.MaterialName))
+		//{
+		//	rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.DbSequence.ColumnName);
+		//}
+		//else
+		//{
+		//	rm = f.InnerJoin(request.SelectQuery).As("rm").On(d, destination.DbSequence.ColumnName);
+		//}
 		var rm = f.InnerJoin(request.MaterialName).As("rm").On(d, destination.DbSequence.ColumnName);
 
 		sq.Select(rm, relation.RootIdColumn);
@@ -75,7 +84,15 @@ public class ReverseDatasourceMaterializer : IRequestMaterializer
 		};
 
 		sq.Select(rm, source.GetSequence().ColumnName);
-		sq.Select("'force'").As(relation.RemarksColumn);//interlink remarks
+
+		if (request.SelectQuery.GetColumnNames().Where(x => x.IsEqualNoCase(relation.RemarksColumn)).Any())
+		{
+			sq.Select(rm, relation.RemarksColumn);
+		}
+		else
+		{
+			sq.Select("'force'").As(relation.RemarksColumn);
+		}
 
 		return sq;
 	}

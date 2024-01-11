@@ -1,4 +1,5 @@
-﻿using InterlinkMapper.Materializer;
+﻿using Carbunql.Building;
+using InterlinkMapper.Materializer;
 using InterlinkMapper.Models;
 using PrivateProxy;
 using RedOrb;
@@ -41,56 +42,25 @@ public class ValidationForwardingService
 		if (request.Count == 0) return;
 
 		var material = DatasourceMaterializer.Create(connection, transaction, datasource, request);
-		//if (material.Count == 0) return;
+		if (material.Count == 0) return;
 
-		//material.ExecuteTransfer(connection);
-
-
-
-		//var transaction = CreateTransactionAsNew(destination);
-		//connection.Save(transaction);
-
-		//var material = Materializer.Create(connection, transaction, datasource, injector);
-		//if (material == null) return;
-
-		////transfer
-		//ExecuteReverse(connection, transaction, datasource, material);
-		//ExecuteAdditional(connection, transaction, datasource, material);
+		ExecuteReverse(connection, transaction, datasource, material);
+		ExecuteAdditional(connection, transaction, datasource, material);
 	}
 
 	private void ExecuteReverse(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, ValidationMaterial validation)
 	{
-		var destination = transaction.InterlinkDestination;
+		var requeset = validation.ToReverseDatasourceRequestMaterial();
 
-		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
-		var sourceId = source.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkDatasource.InterlinkDatasourceId)).First();
-
-		var proc = ObjectRelationMapper.FindFirst<InterlinkProcess>();
-		var procId = proc.ColumnDefinitions.Where(x => x.Identifer == nameof(InterlinkProcess.InterlinkProcessId)).First();
-
-		var relation = transaction.InterlinkDestination.GetInterlinkRelationTable(Environment);
-
-		var m = new DatasourceReverseMaterial
+		var materializer = new ReverseDatasourceMaterializer(Environment)
 		{
-			CommandTimeout = CommandTimeout,
-			DestinationColumns = destination.DbTable.ColumnNames,
-			DestinationIdColumn = destination.DbSequence.ColumnName,
-			DestinationTable = destination.TableFullName,
-			Environment = Environment,
-			InterlinkDatasource = datasource,
-			InterlinkDatasourceIdColumn = sourceId.ColumnName,
-			InterlinkProcessIdColumn = procId.ColumnName,
-			InterlinkRelationTable = relation.Definition.TableFullName,
-			InterlinkRemarksColumn = relation.RemarksColumn,
-			InterlinkTransaction = transaction,
-			MaterialName = validation.MaterialName,
-			OriginIdColumn = relation.OriginIdColumn,
-			PlaceHolderIdentifer = Environment.DbEnvironment.PlaceHolderIdentifer,
-			RootIdColumn = relation.RootIdColumn,
-			SelectQuery = validation.SelectQuery,
+			MaterialName = "__validation_reverse_datasource"
 		};
 
-		m.ExecuteTransfer(connection);
+		var material = materializer.Create(connection, transaction, requeset);
+		if (material.Count == 0) return;
+
+		material.ExecuteTransfer(connection);
 	}
 
 	private void ExecuteAdditional(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, ValidationMaterial validation)
@@ -101,7 +71,10 @@ public class ValidationForwardingService
 		{
 			MaterialName = "__validation_additional_datasource"
 		};
+
 		var material = materializer.Create(connection, transaction, datasource, request);
+		if (material.Count == 0) return;
+
 		material.ExecuteTransfer(connection);
 	}
 

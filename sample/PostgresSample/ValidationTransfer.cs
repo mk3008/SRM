@@ -17,12 +17,6 @@ internal static class ValidationTransfer
 		Actually, make the request with an update trigger or something like that.
 		*/
 		cn.Execute("""
-update sale
-set
-	price = price + 30
-where
-	sale_id = 1
-;
 insert into interlink.sale_journal__req_v_sale (sale_id)
 select
 	s.sale_id
@@ -30,8 +24,16 @@ from
 	sale as s
 where
 	s.sale_id not in (select x.sale_id from interlink.sale_journal__req_v_sale as x)
-	and s.sale_id = 1
 ;
+update sale
+set
+	price = price + 30
+where
+	sale_id = 1
+;
+delete from sale
+where
+	sale_id = 2
 """);
 	}
 

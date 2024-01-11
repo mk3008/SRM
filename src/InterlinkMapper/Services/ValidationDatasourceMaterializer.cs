@@ -30,7 +30,7 @@ public class ValidationDatasourceMaterializer : IRequestMaterializer
 
 	private string DiffCteName = "diff_data";
 
-	public ValidationMaterial? Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Material request)
+	public ValidationMaterial Create(IDbConnection connection, InterlinkTransaction transaction, InterlinkDatasource datasource, Material request)
 	{
 		var destination = transaction.InterlinkDestination;
 
@@ -45,12 +45,22 @@ public class ValidationDatasourceMaterializer : IRequestMaterializer
 
 	private CreateTableQuery CreateValidationMaterialQuery(InterlinkDatasource datasource, Material request)
 	{
+		var destination = datasource.Destination;
+		var relation = destination.GetInterlinkRelationTable(Environment);
+		var process = ObjectRelationMapper.FindFirst<InterlinkProcess>();
+		var source = ObjectRelationMapper.FindFirst<InterlinkDatasource>();
+
 		var sq = new SelectQuery();
 		var diff = sq.With(CreateValidationDatasourceSelectQuery(datasource, request)).As(DiffCteName);
 
-		var (_, d) = sq.From(diff).As("d");
+		var (f, d) = sq.From(diff).As("d");
+		var r = f.InnerJoin(relation.Definition.TableFullName).As("rel").On(d, destination.DbSequence.ColumnName);
+		var p = f.InnerJoin(process.TableFullName).As("proc").On(r, relation.InterlinkProcessIdColumn);
 
 		sq.Select(d);
+		sq.Select(r, relation.RootIdColumn);
+		sq.Select(r, relation.OriginIdColumn);
+		sq.Select(p, source.GetSequence().ColumnName);
 
 		return sq.ToCreateTableQuery(DatasourceMaterialName);
 	}
@@ -265,7 +275,7 @@ public class ValidationDatasourceMaterializer : IRequestMaterializer
 
 		return new ValidationMaterial
 		{
-			//Count = material.Count,
+			Count = material.Count,
 			MaterialName = material.MaterialName,
 			SelectQuery = material.SelectQuery,
 

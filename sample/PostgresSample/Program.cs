@@ -8,17 +8,17 @@ using (var connection = PostgresDB.ConnectionOpenAsNew(new ConsoleLogger()))
 	ApplicationInitializer.CreateApplicationTransactionData(connection);
 }
 
-Console.WriteLine("------------------------------------------------------------------------------");
+Console.WriteLine("--AdditionalTransfer ----------------------------------------------------------------------------");
 
 AdditionalTransfer.CreateRequest();
 AdditionalTransfer.Execute();
 
-Console.WriteLine("------------------------------------------------------------------------------");
+Console.WriteLine("--ValidationTransfer----------------------------------------------------------------------------");
 
-//ValidationTransfer.CreateRequest();
-//ValidationTransfer.Execute();
+ValidationTransfer.CreateRequest();
+ValidationTransfer.Execute();
 
-Console.WriteLine("------------------------------------------------------------------------------");
+//Console.WriteLine("--ReverseTransfer----------------------------------------------------------------------------");
 
-ReverseTransfer.CreateRequest();
-ReverseTransfer.Execute();
+//ReverseTransfer.CreateRequest();
+//ReverseTransfer.Execute();

@@ -134,7 +134,7 @@ where
 		// not changed
 		cnt = cn.ExecuteScalar<int>("select count(*) from sale_journal");
 		totalprice = cn.ExecuteScalar<int>("select sum(price) from sale_journal");
-		Assert.Equal(10, cnt);
+		Assert.Equal(12, cnt);
 		Assert.NotEqual(0, totalprice);
 	}
 }

@@ -59,7 +59,7 @@ WITH
             d.price * -1 AS price,
             d.remarks,
             rm.interlink_datasource_id,
-            'force' AS interlink_remarks
+            rm.interlink_remarks
         FROM
             (
                 /* destination */

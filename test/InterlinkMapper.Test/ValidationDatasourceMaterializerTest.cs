@@ -312,9 +312,14 @@ WITH
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    d.interlink_remarks
+    d.interlink_remarks,
+    rel.root__sale_journal_id,
+    rel.origin__sale_journal_id,
+    proc.interlink_datasource_id
 FROM
     diff_data AS d
+    INNER JOIN sale_journals__relation AS rel ON d.sale_journal_id = rel.sale_journal_id
+    INNER JOIN interlink.interlink_process AS proc ON rel.interlink_process_id = proc.interlink_process_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -552,9 +557,14 @@ WITH
 SELECT
     d.sale_journal_id,
     d.sale_id,
-    d.interlink_remarks
+    d.interlink_remarks,
+    rel.root__sale_journal_id,
+    rel.origin__sale_journal_id,
+    proc.interlink_datasource_id
 FROM
     diff_data AS d
+    INNER JOIN sale_journals__relation AS rel ON d.sale_journal_id = rel.sale_journal_id
+    INNER JOIN interlink.interlink_process AS proc ON rel.interlink_process_id = proc.interlink_process_id
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -570,24 +580,15 @@ FROM
 		var query = additional.SelectQuery;
 
 		var expect = """
-/* since the keymap is assumed to have been deleted in the reverses process, we will not check its existence here. */
 SELECT
-    d.sale_id,
-    r.root__sale_journal_id,
-    r.origin__sale_journal_id,
-    d.interlink_remarks
+    t.sale_journal_id,
+    t.sale_id,
+    t.interlink_remarks,
+    t.root__sale_journal_id,
+    t.origin__sale_journal_id,
+    t.interlink_datasource_id
 FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.sale_id,
-            t.interlink_remarks
-        FROM
-            __validation_datasource AS t
-    ) AS d
-    INNER JOIN sale_journals__relation AS r ON d.sale_journal_id = r.origin__sale_journal_id
-WHERE
-    d.sale_id IS NOT null
+    __validation_datasource AS t
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
@@ -599,22 +600,19 @@ WHERE
 	public void ToReverseRequestMaterial()
 	{
 		var material = MaterialRepository.ValidationMaterial;
-		var reverse = material.ToReverseRequestMaterial();
+		var reverse = material.ToReverseDatasourceRequestMaterial();
 		var query = reverse.SelectQuery;
 
 		var expect = """
 SELECT
-    d.sale_journal_id,
-    d.interlink_remarks
+    t.sale_journal_id,
+    t.sale_id,
+    t.interlink_remarks,
+    t.root__sale_journal_id,
+    t.origin__sale_journal_id,
+    t.interlink_datasource_id
 FROM
-    (
-        SELECT
-            t.sale_journal_id,
-            t.sale_id,
-            t.interlink_remarks
-        FROM
-            __validation_datasource AS t
-    ) AS d
+    __validation_datasource AS t
 """;
 		var actual = query.ToText();
 		Logger.LogInformation(actual);
