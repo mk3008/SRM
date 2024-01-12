@@ -147,58 +147,54 @@ erDiagram
     }
 ```
 
-
+### Insert request
 
 ```mermaid
 erDiagram
-    datasource_x ||..o| x_KEY_MAP : DATASOURCE_X_KEY
-    datasource_x ||..o{ x_KEY_RELATION : DATASOURCE_X_KEY
-    x_KEY_MAP |o--|| destination_a : DESTINATION_A_SEQ
-    x_KEY_RELATION }|--|| destination_a : DESTINATION_A_SEQ
+    datasource_x ||..o| destination_a__REQ_I_datasource_x : datasource_x_id
 
-    destination_a ||--|| a_RELATION : DESTINATION_A_SEQ
-    a_RELATION }|--|| INTERLINK_PROCESS : INTERLINK_PROCESS_ID
-    INTERLINK_PROCESS }|--|| INTERLINK_TRANSACTION : INTERLINK_TRANSACTION_ID
+    datasource_x {
+        int datasource_x_id PK
+        any values
+    }
 
-  datasource_x {
-  }
-
-  x_KEY_MAP {
-    int DESTINATION_A_SEQ PK
-    int DATASOURCE_X_KEY FK
-  }
-
-  x_KEY_RELATION {
-    int DESTINATION_A_SEQ PK
-    int DATASOURCE_X_KEY FK
-  }
-
-  destination_a {
-  }
-
-  a_RELATION{
-    int DESTINATION_A_SEQ PK
-    int ROOT_DESTINATION_SEQ
-    int ORIGIN_DESTINATION_SEQ
-    int INTERLINK_PROCESS_ID FK
-    string REMARKS
-  }
-
-  INTERLINK_PROCESS{
-    int INTERLINK_PROCESS_ID PK
-    int INTERLINK_TRANSACTION_ID FK
-    int INTERLINK_DATASOURCE_ID FK
-    string ACTION_NAME
-    int INSERT_COUNT
-  }
-
-  INTERLINK_TRANSACTION{
-    int INTERLINK_TRANSACTION_ID PK
-    int INTERLINK_DESTINATION_ID FK
-    string SERVICE_NAME
-    string ARGUMENT
-  }
+    destination_a__REQ_I_datasource_x {
+        int datasource_x_id PK
+    }
 ```
+
+### Validation request
+
+```mermaid
+erDiagram
+    datasource_x ||..o| destination_a__REQ_V_datasource_x : datasource_x_id
+
+    datasource_x {
+        int datasource_x_id PK
+        any values
+    }
+
+    destination_a__REQ_V_datasource_x {
+        int datasource_x_id PK
+    }
+```
+
+### Reverse request
+
+```mermaid
+erDiagram
+    destination_a ||..o| destination_a__REQ_REVERSE : destination_a_id
+
+    destination_a {
+        int destination_a_id PK
+        any values
+    }
+
+    destination_a__REQ_REVERSE {
+        int destination_a_id PK
+    }
+```
+
 
 ### datasource_x
 "datasource_x" is the source table, query, or view. This is called a datasource. The primary key is DATASOURCE_X_KEY. There are no restrictions on the type of primary key. Composite keys are also supported.
